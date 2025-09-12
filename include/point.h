@@ -20,6 +20,12 @@ struct Point {
         return !(*this == other);
     }
     
+    // Less than operator for use in std::set and std::map
+    bool operator<(const Point& other) const {
+        if (y != other.y) return y < other.y;
+        return x < other.x;
+    }
+    
     Point operator+(const Point& other) const {
         return Point(x + other.x, y + other.y);
     }

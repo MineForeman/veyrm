@@ -1,6 +1,9 @@
 #include "map_validator.h"
 #include "map.h"
+#include "map_generator.h"
 #include <queue>
+#include <algorithm>
+#include <limits>
 
 MapValidator::ValidationResult MapValidator::validate(const Map& map) {
     ValidationResult result;
@@ -206,4 +209,238 @@ bool MapValidator::isWalkable(const Map& map, int x, int y) {
     // Get walkability from tile properties
     auto props = map.getTileProperties(tile);
     return props.walkable;
+}
+
+bool MapValidator::isWalkable(const Map& map, const Point& p) {
+    return isWalkable(map, p.x, p.y);
+}
+
+bool MapValidator::validateAndFix(Map& map) {
+    // Check advanced connectivity
+    auto connectivity = checkAdvancedConnectivity(map);
+    
+    // If not fully connected, try to fix
+    if (!connectivity.isFullyConnected && connectivity.numComponents > 1) {
+        connectComponents(map, connectivity.components);
+        
+        // Re-check after fixing
+        connectivity = checkAdvancedConnectivity(map);
+        if (!connectivity.isFullyConnected) {
+            return false; // Could not fix
+        }
+    }
+    
+    // Check if map is too small
+    if (connectivity.largestComponent.size() < MIN_PLAYABLE_TILES) {
+        return false; // Map too small, need to regenerate
+    }
+    
+    // Ensure stairs are reachable
+    if (!ensureStairsReachable(map)) {
+        return false; // Could not ensure stairs reachable
+    }
+    
+    return true;
+}
+
+ConnectivityResult MapValidator::checkAdvancedConnectivity(const Map& map) {
+    ConnectivityResult result;
+    result.totalFloorTiles = countWalkableTiles(map);
+    
+    if (result.totalFloorTiles == 0) {
+        result.isFullyConnected = false;
+        result.numComponents = 0;
+        result.reachableFloorTiles = 0;
+        return result;
+    }
+    
+    // Find all components
+    result.components = findAllComponents(map);
+    result.numComponents = result.components.size();
+    
+    // Find largest component
+    if (!result.components.empty()) {
+        size_t maxSize = 0;
+        size_t maxIdx = 0;
+        for (size_t i = 0; i < result.components.size(); i++) {
+            if (result.components[i].size() > maxSize) {
+                maxSize = result.components[i].size();
+                maxIdx = i;
+            }
+        }
+        result.largestComponent = result.components[maxIdx];
+        result.reachableFloorTiles = result.largestComponent.size();
+    }
+    
+    // Check if fully connected
+    result.isFullyConnected = (result.numComponents == 1);
+    
+    // Find unreachable tiles
+    for (int y = 0; y < map.getHeight(); y++) {
+        for (int x = 0; x < map.getWidth(); x++) {
+            if (isWalkable(map, x, y)) {
+                Point p(x, y);
+                if (result.largestComponent.find(p) == result.largestComponent.end()) {
+                    result.unreachableTiles.insert(p);
+                }
+            }
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::set<Point>> MapValidator::findAllComponents(const Map& map) {
+    std::vector<std::set<Point>> components;
+    std::set<Point> visited;
+    
+    for (int y = 0; y < map.getHeight(); y++) {
+        for (int x = 0; x < map.getWidth(); x++) {
+            Point p(x, y);
+            if (isWalkable(map, x, y) && visited.find(p) == visited.end()) {
+                // Found new component
+                std::set<Point> component = bfsFloodFill(map, p);
+                components.push_back(component);
+                
+                // Mark all as visited
+                for (const auto& cp : component) {
+                    visited.insert(cp);
+                }
+            }
+        }
+    }
+    
+    return components;
+}
+
+std::set<Point> MapValidator::bfsFloodFill(const Map& map, const Point& start) {
+    std::set<Point> visited;
+    std::queue<Point> queue;
+    queue.push(start);
+    
+    const int dx[] = {0, 1, 0, -1};
+    const int dy[] = {-1, 0, 1, 0};
+    
+    while (!queue.empty()) {
+        Point current = queue.front();
+        queue.pop();
+        
+        if (visited.find(current) != visited.end()) continue;
+        visited.insert(current);
+        
+        // Check all 4 neighbors
+        for (int i = 0; i < 4; i++) {
+            Point next(current.x + dx[i], current.y + dy[i]);
+            
+            if (isWalkable(map, next) && visited.find(next) == visited.end()) {
+                queue.push(next);
+            }
+        }
+    }
+    
+    return visited;
+}
+
+bool MapValidator::isReachable(const Map& map, const Point& from, const Point& to) {
+    if (!isWalkable(map, from) || !isWalkable(map, to)) {
+        return false;
+    }
+    
+    std::set<Point> reachable = bfsFloodFill(map, from);
+    return reachable.find(to) != reachable.end();
+}
+
+std::set<Point> MapValidator::getReachableTiles(const Map& map, const Point& start) {
+    if (!isWalkable(map, start)) {
+        return std::set<Point>();
+    }
+    return bfsFloodFill(map, start);
+}
+
+void MapValidator::connectComponents(Map& map, const std::vector<std::set<Point>>& components) {
+    if (components.size() <= 1) return;
+    
+    // Connect all components to the first (largest) one
+    for (size_t i = 1; i < components.size(); i++) {
+        Point p1, p2;
+        findClosestPoints(components[0], components[i], p1, p2);
+        
+        // Use L-shaped corridor for better connectivity
+        MapGenerator::carveCorridorL(map, p1, p2);
+    }
+}
+
+void MapValidator::findClosestPoints(const std::set<Point>& comp1, 
+                                      const std::set<Point>& comp2,
+                                      Point& p1, Point& p2) {
+    int minDist = std::numeric_limits<int>::max();
+    
+    for (const auto& a : comp1) {
+        for (const auto& b : comp2) {
+            int dist = manhattanDistance(a, b);
+            if (dist < minDist) {
+                minDist = dist;
+                p1 = a;
+                p2 = b;
+            }
+        }
+    }
+}
+
+int MapValidator::manhattanDistance(const Point& a, const Point& b) {
+    return std::abs(a.x - b.x) + std::abs(a.y - b.y);
+}
+
+bool MapValidator::ensureStairsReachable(Map& map) {
+    Point stairs = findStairs(map);
+    if (stairs.x == -1) {
+        // No stairs found, that's ok
+        return true;
+    }
+    
+    Point start = findFirstFloorTile(map);
+    if (start.x == -1) {
+        return false; // No floor tiles!
+    }
+    
+    if (!isReachable(map, start, stairs)) {
+        // Try to connect stairs to main area
+        auto components = findAllComponents(map);
+        if (components.empty()) return false;
+        
+        // Find component containing stairs
+        int stairsComp = -1;
+        for (size_t i = 0; i < components.size(); i++) {
+            if (components[i].find(stairs) != components[i].end()) {
+                stairsComp = i;
+                break;
+            }
+        }
+        
+        if (stairsComp == -1) {
+            // Stairs not in any component, place on floor
+            map.setTile(stairs.x, stairs.y, TileType::FLOOR);
+        }
+        
+        // Re-validate
+        return isReachable(map, start, stairs);
+    }
+    
+    return true;
+}
+
+Point MapValidator::findStairs(const Map& map) {
+    for (int y = 0; y < map.getHeight(); y++) {
+        for (int x = 0; x < map.getWidth(); x++) {
+            TileType tile = map.getTile(x, y);
+            if (tile == TileType::STAIRS_DOWN || tile == TileType::STAIRS_UP) {
+                return Point(x, y);
+            }
+        }
+    }
+    return Point(-1, -1);
+}
+
+Point MapValidator::findFirstFloorTile(const Map& map) {
+    return findWalkableTile(map);
 }

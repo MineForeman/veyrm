@@ -16,6 +16,7 @@ add_executable(veyrm_tests
     test_message_log.cpp
     test_room_generation.cpp
     test_corridor_generation.cpp
+    test_map_validation.cpp
 )
 
 # Link with Catch2 and other dependencies

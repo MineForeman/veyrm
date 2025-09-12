@@ -1,5 +1,6 @@
 #include "map_generator.h"
 #include "map.h"
+#include "map_validator.h"
 #include <algorithm>
 #include <random>
 #include <climits>
@@ -500,18 +501,34 @@ void MapGenerator::carveRoom(Map& map, const Room& room) {
 }
 
 void MapGenerator::generateProceduralDungeon(Map& map, unsigned int seed, const CorridorOptions& options) {
-    // Generate random rooms
-    auto rooms = generateRandomRooms(map, seed);
+    const int MAX_GENERATION_ATTEMPTS = 5;
     
-    // Connect rooms using specified strategy
-    connectRooms(map, rooms, options);
-    
-    // Place stairs in the last room
-    if (!rooms.empty()) {
-        const auto& last_room = rooms.back();
-        Point stairs = last_room.center();
-        map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+    for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+        // Generate random rooms
+        auto rooms = generateRandomRooms(map, seed + attempt);
+        
+        // Connect rooms using specified strategy
+        connectRooms(map, rooms, options);
+        
+        // Place stairs in the last room
+        if (!rooms.empty()) {
+            const auto& last_room = rooms.back();
+            Point stairs = last_room.center();
+            map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+        }
+        
+        // Validate and fix the map
+        if (MapValidator::validateAndFix(map)) {
+            // Map is valid!
+            return;
+        }
+        
+        // Map invalid, try again with different seed
+        map.fill(TileType::VOID);
     }
+    
+    // Failed to generate valid map after attempts, use fallback
+    generateTestDungeon(map);
 }
 
 void MapGenerator::connectRooms(Map& map, std::vector<Room>& rooms, const CorridorOptions& options) {

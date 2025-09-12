@@ -48,6 +48,19 @@ Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for termin
 
 **IMPORTANT:** Always use `./build.sh` as the preferred way to build and run the game. It handles all build configurations, dependency management, and provides helpful utilities.
 
+### One-Liner Operations
+
+**IMPORTANT:** Prefer combining multiple operations into single command lines when possible for efficiency:
+
+- **Git operations:** `git add -A && git commit -m "message" && git tag v1.0.0 && git push && git push --tags`
+- **Build and test:** `cmake --build build -j && ./build/bin/veyrm_tests`
+- **Clean rebuild:** `rm -rf build && mkdir build && cd build && cmake .. && make -j`
+- **Test specific features:** `./build/bin/veyrm --map procedural --dump "\\q" 2>&1 | head -30`
+- **Multiple file operations:** Use `&&` to chain commands rather than separate steps
+- **Grep and process:** `grep -n "pattern" file | head -10 | cut -d: -f1`
+
+This approach reduces round-trips, speeds up development, and makes operations more atomic.
+
 ```bash
 # Preferred method - using build.sh
 ./build.sh build    # Build the game

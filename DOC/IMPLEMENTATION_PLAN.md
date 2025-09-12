@@ -211,13 +211,13 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Test:** All rooms connected
 - [ ] **Git tag:** `v0.5.2-corridors`
 
-### 5.3 Map Validation
-- [ ] Implement BFS connectivity check
-- [ ] Ensure all floor tiles reachable
-- [ ] Place stairs at farthest point
-- [ ] **Test:** Map always fully connected
-- [ ] **Documentation:** Document generation algorithm
-- [ ] **Git tag:** `v0.5.3-map-validation`
+### 5.3 Map Validation ✅ Complete
+- [x] Implement BFS connectivity check
+- [x] Ensure all floor tiles reachable
+- [x] Place stairs at farthest point
+- [x] **Test:** Map always fully connected
+- [x] **Documentation:** Document generation algorithm
+- [x] **Git tag:** `v0.5.3-map-validation`
 
 ---
 
