@@ -123,6 +123,8 @@ add_executable(veyrm
     src/turn_manager.cpp
     src/message_log.cpp
     src/test_input.cpp
+    src/game_loop.cpp
+    src/frame_stats.cpp
 )
 
 # Link libraries

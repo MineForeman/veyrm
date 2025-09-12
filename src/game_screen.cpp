@@ -2,6 +2,7 @@
 #include "input_handler.h"
 #include "turn_manager.h"
 #include "message_log.h"
+#include "frame_stats.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -47,7 +48,7 @@ Component GameScreen::CreateLogPanel() {
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
         auto tm = game_manager->getTurnManager();
-        return hbox({
+        std::vector<Element> status_elements = {
             text("HP: " + std::to_string(game_manager->player_hp) + "/" + 
                  std::to_string(game_manager->player_max_hp)) | bold,
             separator(),
@@ -55,8 +56,16 @@ Component GameScreen::CreateStatusPanel() {
             separator(),
             text("Time: " + std::to_string(tm->getWorldTime())),
             separator(),
-            text("Depth: 1"),
-        }) | border | size(HEIGHT, EQUAL, 3);
+            text("Depth: 1")
+        };
+        
+        // Add FPS counter in debug mode
+        if (game_manager->isDebugMode() && game_manager->getFrameStats()) {
+            status_elements.push_back(separator());
+            status_elements.push_back(text(game_manager->getFrameStats()->format()) | color(Color::Green));
+        }
+        
+        return hbox(status_elements) | border | size(HEIGHT, EQUAL, 3);
     });
 }
 

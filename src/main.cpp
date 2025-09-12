@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
 // FTXUI includes
 #include <ftxui/component/captured_mouse.hpp>
@@ -22,6 +23,8 @@
 #include "game_state.h"
 #include "game_screen.h"
 #include "test_input.h"
+#include "game_loop.h"
+#include "frame_stats.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -373,6 +376,12 @@ void runInterface(TestInput* test_input = nullptr) {
     screen.TrackMouse(false);
     GameManager game_manager;
     
+    // Enable debug mode if requested
+    const char* debug_env = std::getenv("VEYRM_DEBUG");
+    if (debug_env && std::string(debug_env) == "1") {
+        game_manager.setDebugMode(true);
+    }
+    
     // Create components
     Component main_menu = createMainMenu(&game_manager, &screen);
     GameScreen game_screen(&game_manager, &screen);
@@ -418,8 +427,48 @@ void runInterface(TestInput* test_input = nullptr) {
         return text("Unknown state");
     });
     
+    // Add periodic refresh for game loop simulation (60 FPS)
+    std::atomic<bool> refresh_running(true);
+    std::thread refresh_thread([&screen, &game_manager, &refresh_running]() {
+        auto last_time = std::chrono::steady_clock::now();
+        int frame_count = 0;
+        double fps_accumulator = 0.0;
+        
+        while (refresh_running) {
+            auto current_time = std::chrono::steady_clock::now();
+            double delta_time = std::chrono::duration<double>(current_time - last_time).count();
+            last_time = current_time;
+            
+            // Update FPS counter
+            fps_accumulator += delta_time;
+            frame_count++;
+            
+            if (fps_accumulator >= 1.0) {
+                double fps = frame_count / fps_accumulator;
+                if (game_manager.getFrameStats()) {
+                    game_manager.getFrameStats()->update(fps, delta_time * 1000.0, 0.0, 0.0);
+                }
+                frame_count = 0;
+                fps_accumulator = 0.0;
+            }
+            
+            // Update game logic
+            game_manager.update(delta_time);
+            
+            // Post refresh event
+            screen.PostEvent(Event::Custom);
+            
+            // Target 60 FPS (16.67ms per frame)
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        }
+    });
+    
     // State-based input handler
     auto main_component = CatchEvent(main_renderer, [&](Event event) {
+        // Handle refresh events
+        if (event == Event::Custom) {
+            return false; // Let the renderer update
+        }
         
         switch(game_manager.getState()) {
             case GameState::MENU:
@@ -463,6 +512,10 @@ void runInterface(TestInput* test_input = nullptr) {
     }
     
     screen.Loop(main_component);
+    
+    // Stop refresh thread
+    refresh_running = false;
+    refresh_thread.join();
     
     // Clean up the input thread if it exists
     if (input_thread) {
