@@ -223,12 +223,12 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 6: Field of View (Day 8)
 
-### 6.1 FOV Algorithm
-- [ ] Implement symmetric shadowcasting
-- [ ] Create `FOV` class with calculate method
-- [ ] Handle 8 octants properly
-- [ ] **Test:** FOV calculates correctly
-- [ ] **Git tag:** `v0.6.1-fov-algorithm`
+### 6.1 FOV Algorithm ✅ Complete
+- [x] Implement symmetric shadowcasting
+- [x] Create `FOV` class with calculate method
+- [x] Handle 8 octants properly
+- [x] **Test:** FOV calculates correctly
+- [x] **Git tag:** `v0.6.1-fov-algorithm`
 
 ### 6.2 Visibility System
 - [ ] Add visible/revealed states to tiles

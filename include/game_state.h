@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "map_generator.h"
 
 enum class GameState {
@@ -22,6 +23,7 @@ class FrameStats;
 class Map;
 class EntityManager;
 class Player;
+class MapMemory;
 
 class GameManager {
 public:
@@ -64,6 +66,11 @@ public:
     // Map initialization
     void initializeMap(MapType type = MapType::TEST_DUNGEON);
     
+    // FOV and visibility
+    void updateFOV();
+    MapMemory* getMapMemory() { return map_memory.get(); }
+    const std::vector<std::vector<bool>>& getCurrentFOV() const { return current_fov; }
+    
 private:
     GameState current_state = GameState::MENU;
     GameState previous_state = GameState::MENU;
@@ -73,5 +80,7 @@ private:
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
     std::unique_ptr<EntityManager> entity_manager;
+    std::unique_ptr<MapMemory> map_memory;
+    std::vector<std::vector<bool>> current_fov;
     bool debug_mode = false;
 };

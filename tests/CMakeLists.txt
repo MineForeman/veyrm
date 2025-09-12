@@ -17,6 +17,7 @@ add_executable(veyrm_tests
     test_room_generation.cpp
     test_corridor_generation.cpp
     test_map_validation.cpp
+    test_fov.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -51,6 +52,8 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/wall_connector.cpp
     ${CMAKE_SOURCE_DIR}/src/frame_stats.cpp
     ${CMAKE_SOURCE_DIR}/src/room.cpp
+    ${CMAKE_SOURCE_DIR}/src/fov.cpp
+    ${CMAKE_SOURCE_DIR}/src/map_memory.cpp
 )
 
 # Add compile definitions for tests

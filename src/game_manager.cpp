@@ -9,6 +9,8 @@
 #include "map_validator.h"
 #include "entity_manager.h"
 #include "player.h"
+#include "fov.h"
+#include "map_memory.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -84,6 +86,9 @@ void GameManager::initializeMap(MapType type) {
     message_log->addSystemMessage("Map: " + std::to_string(validation.walkable_tiles) + 
                                  " walkable tiles, " + std::to_string(validation.room_count) + 
                                  " rooms");
+    
+    // Calculate initial FOV from player position
+    updateFOV();
 }
 
 void GameManager::setState(GameState state) {
@@ -139,4 +144,30 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
 void GameManager::processInput() {
     // Input is handled by FTXUI events for now
     // This is a placeholder for future input processing
+}
+
+void GameManager::updateFOV() {
+    if (!entity_manager || !map) return;
+    
+    Player* player = getPlayer();
+    if (!player) return;
+    
+    // Calculate FOV from player position
+    Point playerPos(player->x, player->y);
+    FOV::calculate(*map, playerPos, FOV::DEFAULT_RADIUS, current_fov);
+    
+    // Update map memory with new visibility
+    if (map_memory) {
+        map_memory->updateVisibility(*map, current_fov);
+    }
+    
+    // Update map's visibility flags (for compatibility)
+    for (int y = 0; y < map->getHeight(); y++) {
+        for (int x = 0; x < map->getWidth(); x++) {
+            map->setVisible(x, y, current_fov[y][x]);
+            if (current_fov[y][x]) {
+                map->setExplored(x, y, true);
+            }
+        }
+    }
 }
