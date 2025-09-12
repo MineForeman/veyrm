@@ -21,7 +21,7 @@ enum class RenderLayer {
 
 struct RenderEntity {
     Point position;
-    char glyph;
+    std::string glyph;
     ftxui::Color foreground;
     ftxui::Color background;
     RenderLayer layer;
@@ -71,5 +71,5 @@ private:
     
     // Helper methods
     ftxui::Color getColorVariation(ftxui::Color base, int x, int y) const;
-    char getTileVariant(char base_glyph, int x, int y) const;
+    std::string getTileVariant(const std::string& base_glyph, int x, int y) const;
 };

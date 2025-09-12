@@ -125,28 +125,28 @@ TEST_CASE("Map: Tile properties", "[map]") {
         auto props = Map::getTileProperties(TileType::WALL);
         REQUIRE(props.walkable == false);
         REQUIRE(props.transparent == false);
-        REQUIRE(props.glyph == '#');
+        REQUIRE(props.glyph == "█");
     }
     
     SECTION("Floor properties") {
         auto props = Map::getTileProperties(TileType::FLOOR);
         REQUIRE(props.walkable == true);
         REQUIRE(props.transparent == true);
-        REQUIRE(props.glyph == '.');
+        REQUIRE(props.glyph == "·");
     }
     
     SECTION("Stairs properties") {
         auto props = Map::getTileProperties(TileType::STAIRS_DOWN);
         REQUIRE(props.walkable == true);
         REQUIRE(props.transparent == true);
-        REQUIRE(props.glyph == '>');
+        REQUIRE(props.glyph == "▼");
     }
     
     SECTION("Door properties") {
         auto props = Map::getTileProperties(TileType::DOOR_CLOSED);
         REQUIRE(props.walkable == false);
         REQUIRE(props.transparent == false);
-        REQUIRE(props.glyph == '+');
+        REQUIRE(props.glyph == "▦");
     }
 }
 

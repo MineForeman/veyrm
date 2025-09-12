@@ -4,7 +4,7 @@
 #include "color_scheme.h"
 
 Player::Player(int x, int y) 
-    : Entity(x, y, '@', ftxui::Color::White, "Player"),
+    : Entity(x, y, "@", ftxui::Color::White, "Player"),
       hp(BASE_HP),
       max_hp(BASE_HP),
       attack(BASE_ATTACK),

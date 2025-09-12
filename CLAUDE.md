@@ -18,16 +18,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMPORTANT:** Always test gameplay features using the build.sh dump and keys commands for automated verification:
 
 - `./build.sh dump` - Runs the game with frame dump output for visual debugging. Use this to verify rendering, map layout, and UI elements are displaying correctly.
-- `./build.sh run --keys "hjklq"` - Runs the game with automated key inputs. Use this to test movement, input handling, and game flow without manual interaction.
-- Combine both: Test complex scenarios by providing key sequences and examining the frame dumps to ensure the game responds correctly.
+- `./build.sh keys '\njjjq'` - Runs the game with automated key inputs. Use this to test movement, input handling, and game flow without manual interaction.
+- `./build.sh dump '\njjjq'` - Combines dump mode with key sequences for frame-by-frame analysis.
 
 Example testing workflow:
 ```bash
-# Test movement and rendering
-./build.sh run --keys "hjklhjkl" --dump  # Move around and check frame output
+# Test movement and rendering (no escaping needed)
+./build.sh keys '\njjjq'  # Enter to start, move down twice, quit
 
-# Test specific scenarios
-./build.sh run --keys "jjjlllkkkhhhq"    # Move to specific location and quit
+# Test with frame dump for debugging
+./build.sh dump '\njjjlllq'  # Enter, down 3x, left 3x, quit
+
+# Available key codes:
+# \n = Enter, \u = Up, \d = Down, \l = Left, \r = Right
+# h/j/k/l = vi-style movement, q = quit
 ```
 
 ## Project Overview

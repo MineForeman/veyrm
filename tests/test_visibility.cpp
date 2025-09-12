@@ -8,7 +8,7 @@
 #include <chrono>
 
 TEST_CASE("Entity: Visibility management", "[visibility]") {
-    Entity entity(10, 10, 'T', ftxui::Color::Green, "Test Entity");
+    Entity entity(10, 10, "T", ftxui::Color::Green, "Test Entity");
     
     SECTION("Default visibility") {
         REQUIRE(entity.isVisible() == true);

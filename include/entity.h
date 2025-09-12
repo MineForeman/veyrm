@@ -19,7 +19,7 @@ enum class EntityType {
 class Entity {
 public:
     // Constructor
-    Entity(int x, int y, char glyph, ftxui::Color color, const std::string& name);
+    Entity(int x, int y, const std::string& glyph, ftxui::Color color, const std::string& name);
     virtual ~Entity() = default;
     
     // Position
@@ -29,7 +29,7 @@ public:
     int prev_x, prev_y;
     
     // Rendering
-    char glyph;
+    std::string glyph;
     ftxui::Color color;
     
     // Properties

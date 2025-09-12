@@ -60,18 +60,15 @@ Color MapRenderer::getColorVariation(Color base, [[maybe_unused]] int x, [[maybe
     return base;
 }
 
-char MapRenderer::getTileVariant(char base_glyph, int x, int y) const {
-    // For walls, occasionally use different characters
-    if (base_glyph == '#') {
-        int seed = (x * 31 + y * 17) % 100;
-        if (seed < 5) return '+';  // Rare variant
-        if (seed < 15) return '*'; // Uncommon variant
+std::string MapRenderer::getTileVariant(const std::string& base_glyph, int /*x*/, int /*y*/) const {
+    // For walls, always use the block character
+    if (base_glyph == "█") {
+        return "█";  // Always solid block for walls
     }
     
-    // For floors, occasionally use different dots
-    if (base_glyph == '.') {
-        int seed = (x * 23 + y * 29) % 100;
-        if (seed < 10) return ',';  // Slightly different floor
+    // For floors, keep the middle dot consistent
+    if (base_glyph == "·") {
+        return "·";  // Keep the middle dot consistent
     }
     
     return base_glyph;
@@ -102,7 +99,7 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
             }
             
             // Get tile properties
-            char glyph = map.getGlyph(map_pos.x, map_pos.y);
+            std::string glyph = map.getGlyph(map_pos.x, map_pos.y);
             Color fg = map.getForeground(map_pos.x, map_pos.y);
             Color bg = map.getBackground(map_pos.x, map_pos.y);
             
@@ -113,7 +110,7 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
             // Check visibility
             if (map.isVisible(map_pos.x, map_pos.y)) {
                 // Fully visible
-                Element tile = text(std::string(1, glyph)) | color(fg);
+                Element tile = text(glyph) | color(fg);
                 
                 // Add highlight if this tile is selected
                 if (highlight_pos == map_pos) {
@@ -126,9 +123,9 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
             } else if (map.isExplored(map_pos.x, map_pos.y)) {
                 // Previously seen but not currently visible
                 // Use a darker color that works on both black and white terminals
-                Color memory_color = (glyph == '#') ? Color::Magenta : Color::GrayDark;
+                Color memory_color = (glyph == "█") ? Color::Magenta : Color::GrayDark;
                 row_elements.push_back(
-                    text(std::string(1, glyph)) | color(memory_color) | dim
+                    text(glyph) | color(memory_color) | dim
                 );
             } else {
                 // Never seen
@@ -171,7 +168,10 @@ Element MapRenderer::renderEntities(const GameManager& game) {
             Point screen_pos = mapToScreen(entity->x, entity->y);
             if (screen_pos.x >= 0 && screen_pos.x < viewport_width &&
                 screen_pos.y >= 0 && screen_pos.y < viewport_height) {
-                entity_grid[screen_pos.y][screen_pos.x] = entity->glyph;
+                // For now, just use first character of glyph
+                if (!entity->glyph.empty()) {
+                    entity_grid[screen_pos.y][screen_pos.x] = entity->glyph[0];
+                }
                 entity_colors[screen_pos.y][screen_pos.x] = entity->color;
             }
         }

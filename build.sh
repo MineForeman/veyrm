@@ -70,11 +70,24 @@ run_tests() {
 
 # Function to run dump mode test
 run_dump_test() {
-    local keystrokes="${1:-\\n\\u\\u\\r\\r\\d\\l}"
+    # Don't interpret escape sequences - pass them as-is
+    local keystrokes="${1:-\n\u\u\r\r\d\l}"
     echo -e "${YELLOW}Running dump mode test...${NC}"
     echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
     if [ -f "${EXECUTABLE}" ]; then
         "${EXECUTABLE}" --dump "${keystrokes}"
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to run with keys
+run_with_keys() {
+    local keystrokes="${1}"
+    echo -e "${YELLOW}Running game with automated keys...${NC}"
+    echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        "${EXECUTABLE}" --keys "${keystrokes}"
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
     fi
@@ -169,7 +182,8 @@ show_help() {
     echo "  clean                  Clean build directory"
     echo "  run [map_type]         Run the game (optionally specify map)"
     echo "  test                   Run tests"
-    echo "  dump [keystrokes]      Run dump mode test"
+    echo "  dump [keystrokes]      Run dump mode test (frame-by-frame)"
+    echo "  keys <keystrokes>      Run game with automated keys"
     echo "  check                  Run system checks"
     echo "  reset                  Reset terminal"
     echo "  menu                   Show interactive menu (default)"
@@ -186,6 +200,7 @@ show_help() {
     echo "  $0 test               # Run tests"
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
+    echo "  $0 keys '\\njjjq'      # Run game with automated keys"
     echo "  $0 reset              # Reset terminal"
     echo
 }
@@ -235,7 +250,19 @@ main() {
             ;;
         dump)
             print_header
-            run_dump_test "${2}"
+            # Pass the keystrokes without interpreting escapes
+            run_dump_test "$2"
+            ;;
+        keys)
+            if [ -z "$2" ]; then
+                echo -e "${RED}Error: keystrokes required${NC}"
+                echo "Usage: $0 keys <keystrokes>"
+                echo "Example: $0 keys '\\njjjq'"
+                exit 1
+            fi
+            print_header
+            run_with_keys "$2"
+            reset_terminal
             ;;
         check)
             print_header
@@ -283,8 +310,9 @@ main() {
                         ;;
                     8)
                         echo -e "${CYAN}Enter keystrokes (or press Enter for default):${NC}"
-                        read -p "Keystrokes: " custom_keys
-                        run_dump_test "${custom_keys}"
+                        echo -e "${CYAN}Example: \\n\\u\\r\\d\\l for Enter, Up, Right, Down, Left${NC}"
+                        read -r custom_keys
+                        run_dump_test "${custom_keys:-\n\u\u\r\r\d\l}"
                         ;;
                     9)
                         clean_build

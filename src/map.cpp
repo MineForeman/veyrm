@@ -4,16 +4,16 @@
 
 // Define tile properties for each tile type
 const std::map<TileType, TileProperties> Map::tileProperties = {
-    {TileType::FLOOR,       {'.', Color::White,     Color::Black, true,  true,  false, "Stone Floor"}},
-    {TileType::WALL,        {'#', Color::Yellow,    Color::Black, false, false, true,  "Stone Wall"}},
-    {TileType::STAIRS_DOWN, {'>', Color::Yellow,    Color::Black, true,  true,  false, "Stairs Down"}},
-    {TileType::STAIRS_UP,   {'<', Color::Yellow,    Color::Black, true,  true,  false, "Stairs Up"}},
-    {TileType::DOOR_CLOSED, {'+', Color::Yellow,    Color::Black, false, false, true,  "Closed Door"}},
-    {TileType::DOOR_OPEN,   {'/', Color::Yellow,    Color::Black, true,  true,  false, "Open Door"}},
-    {TileType::WATER,       {'~', Color::Cyan,      Color::Black, false, true,  false, "Water"}},
-    {TileType::LAVA,        {'~', Color::Red,       Color::Black, false, true,  false, "Lava"}},
-    {TileType::VOID,        {' ', Color::Black,     Color::Black, false, false, false, "Void"}},
-    {TileType::UNKNOWN,     {'?', Color::GrayDark,  Color::Black, false, false, false, "Unknown"}},
+    {TileType::FLOOR,       {"·", Color::White,     Color::Black, true,  true,  false, "Stone Floor"}},
+    {TileType::WALL,        {"█", Color::Yellow,    Color::Black, false, false, true,  "Stone Wall"}},
+    {TileType::STAIRS_DOWN, {"▼", Color::Yellow,    Color::Black, true,  true,  false, "Stairs Down"}},
+    {TileType::STAIRS_UP,   {"▲", Color::Yellow,    Color::Black, true,  true,  false, "Stairs Up"}},
+    {TileType::DOOR_CLOSED, {"▦", Color::Yellow,    Color::Black, false, false, true,  "Closed Door"}},
+    {TileType::DOOR_OPEN,   {"▢", Color::Yellow,    Color::Black, true,  true,  false, "Open Door"}},
+    {TileType::WATER,       {"≈", Color::Cyan,      Color::Black, false, true,  false, "Water"}},
+    {TileType::LAVA,        {"≈", Color::Red,       Color::Black, false, true,  false, "Lava"}},
+    {TileType::VOID,        {" ", Color::Black,     Color::Black, false, false, false, "Void"}},
+    {TileType::UNKNOWN,     {"?", Color::GrayDark,  Color::Black, false, false, false, "Unknown"}},
 };
 
 Map::Map(int w, int h) : width(w), height(h) {
@@ -120,13 +120,13 @@ void Map::setExplored(int x, int y, bool exp) {
     }
 }
 
-char Map::getGlyph(int x, int y) const {
+std::string Map::getGlyph(int x, int y) const {
     TileType tile = getTile(x, y);
     auto it = tileProperties.find(tile);
     if (it != tileProperties.end()) {
         return it->second.glyph;
     }
-    return '?';
+    return "?";
 }
 
 Color Map::getForeground(int x, int y) const {
@@ -193,7 +193,7 @@ TileProperties Map::getTileProperties(TileType type) {
         return it->second;
     }
     // Return default properties for unknown tile
-    return {' ', Color::White, Color::Black, false, false, false, "Unknown"};
+    return {" ", Color::White, Color::Black, false, false, false, "Unknown"};
 }
 
 void Map::createCorridor(const Point& start, const Point& end) {

@@ -24,7 +24,7 @@ TEST_CASE("Player: Initialization", "[player]") {
     }
     
     SECTION("Entity properties") {
-        REQUIRE(player.glyph == '@');
+        REQUIRE(player.glyph == "@");
         REQUIRE(player.color == Color::White);
         REQUIRE(player.is_player == true);
         REQUIRE(player.is_monster == false);

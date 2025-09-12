@@ -26,7 +26,7 @@ enum class TileType {
 };
 
 struct TileProperties {
-    char glyph;           // Display character
+    std::string glyph;    // Display character (supports Unicode)
     Color foreground;     // Text color
     Color background;     // Background color
     bool walkable;        // Can entities move through

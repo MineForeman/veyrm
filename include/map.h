@@ -34,7 +34,7 @@ public:
     void setExplored(int x, int y, bool explored);
     
     // Rendering
-    char getGlyph(int x, int y) const;
+    std::string getGlyph(int x, int y) const;
     ftxui::Color getForeground(int x, int y) const;
     ftxui::Color getBackground(int x, int y) const;
     

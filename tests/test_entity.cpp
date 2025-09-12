@@ -6,7 +6,7 @@
 using namespace ftxui;
 
 TEST_CASE("Entity: Basic properties", "[entity]") {
-    Entity entity(10, 15, '@', Color::White, "test_entity");
+    Entity entity(10, 15, "@", Color::White, "test_entity");
     
     SECTION("Initial position") {
         REQUIRE(entity.x == 10);
@@ -14,7 +14,7 @@ TEST_CASE("Entity: Basic properties", "[entity]") {
     }
     
     SECTION("Rendering properties") {
-        REQUIRE(entity.glyph == '@');
+        REQUIRE(entity.glyph == "@");
         REQUIRE(entity.color == Color::White);
     }
     
@@ -35,7 +35,7 @@ TEST_CASE("Entity: Basic properties", "[entity]") {
 
 TEST_CASE("Entity: Movement validation", "[entity]") {
     Map map(50, 50);
-    Entity entity(10, 10, '@', Color::White, "test_entity");
+    Entity entity(10, 10, "@", Color::White, "test_entity");
     
     SECTION("Can move to floor tiles") {
         map.setTile(15, 15, TileType::FLOOR);
@@ -65,26 +65,26 @@ TEST_CASE("Entity: Movement validation", "[entity]") {
 
 TEST_CASE("Entity: Component flags", "[entity]") {
     SECTION("Default entity has no components") {
-        Entity entity(0, 0, '?', Color::White, "unknown");
+        Entity entity(0, 0, "?", Color::White, "unknown");
         REQUIRE(entity.is_player == false);
         REQUIRE(entity.is_monster == false);
         REQUIRE(entity.is_item == false);
     }
     
     SECTION("Entity doesn't block movement by default") {
-        Entity entity(0, 0, '?', Color::White, "unknown");
+        Entity entity(0, 0, "?", Color::White, "unknown");
         REQUIRE(entity.blocks_movement == false);  // Default is false
     }
     
     SECTION("Non-blocking entity") {
-        Entity entity(0, 0, '!', Color::Red, "item");
+        Entity entity(0, 0, "!", Color::Red, "item");
         entity.blocks_movement = false;
         REQUIRE(entity.blocks_movement == false);
     }
 }
 
 TEST_CASE("Entity: Virtual functions", "[entity]") {
-    Entity entity(5, 5, 'E', Color::Green, "entity");
+    Entity entity(5, 5, "E", Color::Green, "entity");
     Map map(20, 20);
     
     SECTION("Update does nothing by default") {
@@ -98,7 +98,7 @@ TEST_CASE("Entity: Virtual functions", "[entity]") {
     }
     
     SECTION("onInteract does nothing by default") {
-        Entity other(6, 6, 'O', Color::Blue, "other");
+        Entity other(6, 6, "O", Color::Blue, "other");
         // Should not crash or throw
         REQUIRE_NOTHROW(entity.onInteract(other));
     }
@@ -106,7 +106,7 @@ TEST_CASE("Entity: Virtual functions", "[entity]") {
 
 TEST_CASE("Entity: Different entity types", "[entity]") {
     SECTION("Monster-like entity") {
-        Entity monster(10, 10, 'g', Color::Red, "goblin");
+        Entity monster(10, 10, "g", Color::Red, "goblin");
         monster.is_monster = true;
         monster.blocks_movement = true;
         
@@ -117,7 +117,7 @@ TEST_CASE("Entity: Different entity types", "[entity]") {
     }
     
     SECTION("Item-like entity") {
-        Entity item(15, 15, '!', Color::Magenta, "potion");
+        Entity item(15, 15, "!", Color::Magenta, "potion");
         item.is_item = true;
         item.blocks_movement = false;
         
@@ -128,7 +128,7 @@ TEST_CASE("Entity: Different entity types", "[entity]") {
     }
     
     SECTION("Player-like entity") {
-        Entity player(20, 20, '@', Color::White, "player");
+        Entity player(20, 20, "@", Color::White, "player");
         player.is_player = true;
         player.blocks_movement = true;
         

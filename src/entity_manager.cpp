@@ -18,14 +18,14 @@ std::shared_ptr<Entity> EntityManager::createEntity(EntityType type, int x, int 
             
         case EntityType::MONSTER:
             // Placeholder for monster creation
-            entity = std::make_shared<Entity>(x, y, 'M', ftxui::Color::Red, "Monster");
+            entity = std::make_shared<Entity>(x, y, "M", ftxui::Color::Red, "Monster");
             entity->is_monster = true;
             entity->blocks_movement = true;
             break;
             
         case EntityType::ITEM:
             // Placeholder for item creation
-            entity = std::make_shared<Entity>(x, y, '!', ftxui::Color::Yellow, "Item");
+            entity = std::make_shared<Entity>(x, y, "!", ftxui::Color::Yellow, "Item");
             entity->is_item = true;
             entity->blocks_movement = false;
             break;

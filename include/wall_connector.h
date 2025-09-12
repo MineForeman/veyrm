@@ -9,7 +9,7 @@ class Map;
 class WallConnector {
 public:
     // Get the appropriate wall character based on neighboring walls
-    static char getWallChar(const Map& map, int x, int y);
+    static std::string getWallChar(const Map& map, int x, int y);
     static std::string getWallString(const Map& map, int x, int y);
     
     // Check if using Unicode mode

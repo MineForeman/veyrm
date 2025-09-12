@@ -2,7 +2,7 @@
 #include "map.h"
 #include <cmath>
 
-Entity::Entity(int x, int y, char glyph, ftxui::Color color, const std::string& name)
+Entity::Entity(int x, int y, const std::string& glyph, ftxui::Color color, const std::string& name)
     : x(x), y(y), prev_x(x), prev_y(y), glyph(glyph), color(color), name(name) {
 }
 

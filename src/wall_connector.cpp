@@ -31,21 +31,9 @@ bool WallConnector::hasWallWest(const Map& map, int x, int y) {
            map.getTile(x - 1, y) == TileType::DOOR_CLOSED;
 }
 
-char WallConnector::getASCIIWall(bool n, bool s, bool e, bool w) {
-    // Count connections
-    int connections = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
-    
-    // Use different ASCII characters based on connections
-    switch (connections) {
-        case 0: return '#';  // Isolated wall (pillar)
-        case 1: return '#';  // Dead end
-        case 2:
-            if ((n && s) || (e && w)) return '#';  // Straight wall
-            return '#';  // Corner
-        case 3: return '#';  // T-junction
-        case 4: return '#';  // Cross
-        default: return '#';
-    }
+char WallConnector::getASCIIWall(bool /*n*/, bool /*s*/, bool /*e*/, bool /*w*/) {
+    // Always return '#' for ASCII mode (can't use Unicode in char)
+    return '#';
 }
 
 std::string WallConnector::getUnicodeWall(bool n, bool s, bool e, bool w) {
@@ -79,37 +67,20 @@ std::string WallConnector::getUnicodeWall(bool n, bool s, bool e, bool w) {
     return "●";
 }
 
-char WallConnector::getWallChar(const Map& map, int x, int y) {
+std::string WallConnector::getWallChar(const Map& map, int x, int y) {
     if (map.getTile(x, y) != TileType::WALL) {
-        return '#';  // Not a wall
+        return "█";  // Not a wall but return block anyway
     }
     
-    bool n = hasWallNorth(map, x, y);
-    bool s = hasWallSouth(map, x, y);
-    bool e = hasWallEast(map, x, y);
-    bool w = hasWallWest(map, x, y);
-    
-    if (unicode_enabled) {
-        // For char return, we'll use ASCII fallback since Unicode needs string
-        return getASCIIWall(n, s, e, w);
-    } else {
-        return getASCIIWall(n, s, e, w);
-    }
+    // Always return the block character for walls
+    return "█";
 }
 
 std::string WallConnector::getWallString(const Map& map, int x, int y) {
     if (map.getTile(x, y) != TileType::WALL) {
-        return "#";  // Not a wall
+        return "█";  // Not a wall but return block anyway
     }
     
-    bool n = hasWallNorth(map, x, y);
-    bool s = hasWallSouth(map, x, y);
-    bool e = hasWallEast(map, x, y);
-    bool w = hasWallWest(map, x, y);
-    
-    if (unicode_enabled) {
-        return getUnicodeWall(n, s, e, w);
-    } else {
-        return std::string(1, getASCIIWall(n, s, e, w));
-    }
+    // Always return the block character for walls
+    return "█";
 }
