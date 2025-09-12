@@ -191,6 +191,9 @@ void MapGenerator::generate(Map& map, MapType type) {
         case MapType::STRESS_TEST:
             generateStressTest(map);
             break;
+        case MapType::PROCEDURAL:
+            generateProceduralDungeon(map);
+            break;
     }
 }
 
@@ -242,16 +245,17 @@ Point MapGenerator::getDefaultSpawnPoint(MapType type) {
             // Arena is at (20, 5, 40, 18), floor is at (21-59, 6-22)
             return Point(40, 14);  // Center of arena floor
         case MapType::STRESS_TEST:
-            // Stress test has random rooms, use fallback center
-            return Point(40, 12);
+        case MapType::PROCEDURAL:
+            // Random/procedural maps need to find a safe spawn point
+            return Point(40, 12);  // Fallback, will be validated
         default:
             return Point(40, 12);
     }
 }
 
 Point MapGenerator::getDefaultSpawnPoint(const Map& map, MapType type) {
-    // For stress test and other random maps, find a safe spawn point
-    if (type == MapType::STRESS_TEST) {
+    // For random/procedural maps, find a safe spawn point
+    if (type == MapType::STRESS_TEST || type == MapType::PROCEDURAL) {
         return findSafeSpawnPoint(map);
     }
     
@@ -396,4 +400,99 @@ void MapGenerator::carveCorridorL(Map& map, const Point& start, const Point& end
             }
         }
     }
+}
+
+std::vector<Room> MapGenerator::generateRandomRooms(Map& map, unsigned int seed) {
+    std::mt19937 rng(seed == 0 ? std::random_device{}() : seed);
+    return generateRandomRooms(map, rng);
+}
+
+std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng) {
+    std::vector<Room> rooms;
+    
+    // Distribution for room dimensions and positions
+    std::uniform_int_distribution<int> room_width(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
+    std::uniform_int_distribution<int> room_height(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
+    std::uniform_int_distribution<int> x_pos(1, std::max(1, map.getWidth() - MAX_ROOM_SIZE - 1));
+    std::uniform_int_distribution<int> y_pos(1, std::max(1, map.getHeight() - MAX_ROOM_SIZE - 1));
+    std::uniform_int_distribution<int> room_count(MIN_ROOMS, MAX_ROOMS);
+    
+    int target_rooms = room_count(rng);
+    int attempts = 0;
+    
+    // Clear map first
+    map.fill(TileType::VOID);
+    
+    while (static_cast<int>(rooms.size()) < target_rooms && attempts < MAX_PLACEMENT_ATTEMPTS) {
+        // Generate random room dimensions
+        int w = room_width(rng);
+        int h = room_height(rng);
+        int x = x_pos(rng);
+        int y = y_pos(rng);
+        
+        // Ensure room fits in map bounds
+        if (x + w >= map.getWidth() - 1 || y + h >= map.getHeight() - 1) {
+            attempts++;
+            continue;
+        }
+        
+        Room new_room(x, y, w, h);
+        
+        // Check for overlaps with existing rooms (with 2 tile padding)
+        bool overlaps = false;
+        for (const auto& room : rooms) {
+            if (new_room.overlaps(room, 2)) {
+                overlaps = true;
+                break;
+            }
+        }
+        
+        if (!overlaps && new_room.isValid()) {
+            rooms.push_back(new_room);
+            carveRoom(map, new_room);
+        }
+        
+        attempts++;
+    }
+    
+    // Ensure at least one room was created
+    if (rooms.empty()) {
+        // Force create a room in the center
+        int w = MIN_ROOM_SIZE + 2;
+        int h = MIN_ROOM_SIZE + 2;
+        int x = map.getWidth() / 2 - w / 2;
+        int y = map.getHeight() / 2 - h / 2;
+        Room emergency_room(x, y, w, h);
+        rooms.push_back(emergency_room);
+        carveRoom(map, emergency_room);
+    }
+    
+    return rooms;
+}
+
+void MapGenerator::generateProceduralDungeon(Map& map, unsigned int seed) {
+    // Generate random rooms
+    auto rooms = generateRandomRooms(map, seed);
+    
+    // Connect rooms with corridors (simple approach: connect each room to the next)
+    for (size_t i = 1; i < rooms.size(); i++) {
+        Point start = rooms[i-1].center();
+        Point end = rooms[i].center();
+        carveCorridorL(map, start, end);
+    }
+    
+    // Place stairs in the last room
+    if (!rooms.empty()) {
+        const auto& last_room = rooms.back();
+        Point stairs = last_room.center();
+        map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+    }
+}
+
+bool MapGenerator::canPlaceRoom(const Map& map, const Room& room) {
+    return canPlaceRoom(map, room.x, room.y, room.width, room.height);
+}
+
+void MapGenerator::carveRoom(Map& map, const Room& room) {
+    carveRoom(map, room.x, room.y, room.width, room.height);
 }

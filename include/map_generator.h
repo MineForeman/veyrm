@@ -1,8 +1,10 @@
 #pragma once
 
 #include "point.h"
+#include "room.h"
 #include <string>
 #include <vector>
+#include <random>
 
 class Map;
 
@@ -11,7 +13,8 @@ enum class MapType {
     TEST_DUNGEON,   // Multi-room layout (current 5-room design)
     CORRIDOR_TEST,  // Long corridors for testing
     COMBAT_ARENA,   // Open space for combat
-    STRESS_TEST     // Large map for performance testing
+    STRESS_TEST,    // Large map for performance testing
+    PROCEDURAL      // Procedurally generated dungeon
 };
 
 struct RoomDef {
@@ -40,6 +43,13 @@ struct RoomDef {
 
 class MapGenerator {
 public:
+    // Room generation parameters
+    static constexpr int MIN_ROOM_SIZE = 4;
+    static constexpr int MAX_ROOM_SIZE = 12;
+    static constexpr int MIN_ROOMS = 5;
+    static constexpr int MAX_ROOMS = 15;
+    static constexpr int MAX_PLACEMENT_ATTEMPTS = 1000;
+    
     // Test map generators
     static void generateTestRoom(Map& map, int width = 20, int height = 20);
     static void generateTestDungeon(Map& map);
@@ -49,6 +59,11 @@ public:
     
     // General generation based on type
     static void generate(Map& map, MapType type);
+    
+    // Random room generation
+    static std::vector<Room> generateRandomRooms(Map& map, unsigned int seed = 0);
+    static std::vector<Room> generateRandomRooms(Map& map, std::mt19937& rng);
+    static void generateProceduralDungeon(Map& map, unsigned int seed = 0);
     
     // Utilities
     static Point findSafeSpawnPoint(const Map& map);
@@ -62,7 +77,9 @@ public:
 private:
     // Room generation helpers
     static bool canPlaceRoom(const Map& map, int x, int y, int w, int h);
+    static bool canPlaceRoom(const Map& map, const Room& room);
     static void carveRoom(Map& map, int x, int y, int w, int h);
+    static void carveRoom(Map& map, const Room& room);
     static void carveCorridor(Map& map, const Point& start, const Point& end);
     
     // Create L-shaped corridor between two points

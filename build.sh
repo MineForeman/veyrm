@@ -84,31 +84,46 @@ run_dump_test() {
 run_game() {
     if [ -f "${EXECUTABLE}" ]; then
         echo -e "${YELLOW}Starting Veyrm...${NC}"
+        echo
         # Ask for map type
         echo -e "${CYAN}Select map type:${NC}"
-        echo -e "${BLUE}1)${NC} Test Dungeon (default, 5 rooms)"
-        echo -e "${BLUE}2)${NC} Test Room (single 20x20 room)"
-        echo -e "${BLUE}3)${NC} Corridor Test (long corridors)"
-        echo -e "${BLUE}4)${NC} Combat Arena (open space)"
-        echo -e "${BLUE}5)${NC} Stress Test (large map)"
+        echo -e "${BLUE}1)${NC} Procedural Dungeon ${GREEN}(default)${NC} - Random room generation"
+        echo -e "${BLUE}2)${NC} Test Dungeon - Fixed 5-room layout"
+        echo -e "${BLUE}3)${NC} Test Room - Single 20x20 room"
+        echo -e "${BLUE}4)${NC} Corridor Test - Long corridors"
+        echo -e "${BLUE}5)${NC} Combat Arena - Open space"
+        echo -e "${BLUE}6)${NC} Stress Test - Large map with many rooms"
         echo
-        read -p "Select map (1-5, or Enter for default): " map_choice
+        read -p "Press Enter for Procedural, or select (1-6): " map_choice
         
         case "${map_choice}" in
+            1|"")
+                echo -e "${GREEN}Loading Procedural Dungeon...${NC}"
+                "${EXECUTABLE}" --map procedural
+                ;;
             2)
-                "${EXECUTABLE}" --map room
+                echo -e "${GREEN}Loading Test Dungeon...${NC}"
+                "${EXECUTABLE}" --map dungeon
                 ;;
             3)
-                "${EXECUTABLE}" --map corridor
+                echo -e "${GREEN}Loading Test Room...${NC}"
+                "${EXECUTABLE}" --map room
                 ;;
             4)
-                "${EXECUTABLE}" --map arena
+                echo -e "${GREEN}Loading Corridor Test...${NC}"
+                "${EXECUTABLE}" --map corridor
                 ;;
             5)
+                echo -e "${GREEN}Loading Combat Arena...${NC}"
+                "${EXECUTABLE}" --map arena
+                ;;
+            6)
+                echo -e "${GREEN}Loading Stress Test...${NC}"
                 "${EXECUTABLE}" --map stress
                 ;;
             *)
-                "${EXECUTABLE}" --map dungeon
+                echo -e "${RED}Invalid selection. Loading default...${NC}"
+                "${EXECUTABLE}" --map procedural
                 ;;
         esac
         reset_terminal  # Auto-reset terminal after game exits

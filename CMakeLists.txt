@@ -135,6 +135,7 @@ add_executable(veyrm
     src/entity.cpp
     src/player.cpp
     src/entity_manager.cpp
+    src/room.cpp
 )
 
 # Link libraries
