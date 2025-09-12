@@ -39,8 +39,10 @@ public:
     // Component access
     InputHandler* getInputHandler() { return input_handler.get(); }
     TurnManager* getTurnManager() { return turn_manager.get(); }
+    TurnManager* getTurnManager() const { return turn_manager.get(); }
     MessageLog* getMessageLog() { return message_log.get(); }
     FrameStats* getFrameStats() { return frame_stats.get(); }
+    FrameStats* getFrameStats() const { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
     EntityManager* getEntityManager() { return entity_manager.get(); }
     const EntityManager* getEntityManager() const { return entity_manager.get(); }
@@ -53,6 +55,7 @@ public:
     // Debug mode
     bool isDebugMode() const { return debug_mode; }
     void setDebugMode(bool enabled) { debug_mode = enabled; }
+    void enableFrameStats() { /* Frame stats are always enabled if available */ }
     
     // Game data (deprecated - use entity_manager->getPlayer() instead)
     int player_hp = 10;      // DEPRECATED
