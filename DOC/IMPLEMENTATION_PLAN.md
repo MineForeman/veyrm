@@ -248,12 +248,12 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 7: UI Framework (Day 9)
 
-### 7.1 Message Log
-- [ ] Create `MessageLog` class
-- [ ] Implement 5-line display
-- [ ] Add message history storage
-- [ ] **Test:** Messages display and scroll
-- [ ] **Git tag:** `v0.7.1-message-log`
+### 7.1 Message Log ✅ Complete
+- [x] Create `MessageLog` class
+- [x] Implement 5-line display
+- [x] Add message history storage
+- [x] **Test:** Messages display and scroll
+- [x] **Git tag:** `v0.7.1-message-log`
 
 ### 7.2 Status Bar
 - [ ] Create status bar component
