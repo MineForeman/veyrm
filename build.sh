@@ -68,6 +68,18 @@ run_tests() {
     fi
 }
 
+# Function to run dump mode test
+run_dump_test() {
+    local keystrokes="${1:-\\n\\u\\u\\r\\r\\d\\l}"
+    echo -e "${YELLOW}Running dump mode test...${NC}"
+    echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        "${EXECUTABLE}" --dump "${keystrokes}"
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
 # Function to run the game
 run_game() {
     if [ -f "${EXECUTABLE}" ]; then
@@ -99,8 +111,9 @@ show_menu() {
     echo -e "${BLUE}5)${NC} Run Game"
     echo -e "${BLUE}6)${NC} Run Tests"
     echo -e "${BLUE}7)${NC} Run System Check"
-    echo -e "${BLUE}8)${NC} Clean"
-    echo -e "${BLUE}9)${NC} Reset Terminal"
+    echo -e "${BLUE}8)${NC} Run Dump Mode Test"
+    echo -e "${BLUE}9)${NC} Clean"
+    echo -e "${BLUE}10)${NC} Reset Terminal"
     echo -e "${BLUE}0)${NC} Exit"
     echo
 }
@@ -115,6 +128,7 @@ show_help() {
     echo "  clean                  Clean build directory"
     echo "  run                    Run the game"
     echo "  test                   Run tests"
+    echo "  dump [keystrokes]      Run dump mode test"
     echo "  check                  Run system checks"
     echo "  reset                  Reset terminal"
     echo "  menu                   Show interactive menu (default)"
@@ -127,6 +141,8 @@ show_help() {
     echo "  $0 clean build        # Clean and build"
     echo "  $0 run                # Run the game"
     echo "  $0 test               # Run tests"
+    echo "  $0 dump               # Run dump test with default keys"
+    echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
     echo "  $0 reset              # Reset terminal"
     echo
 }
@@ -159,6 +175,10 @@ main() {
         test)
             print_header
             run_tests
+            ;;
+        dump)
+            print_header
+            run_dump_test "${2}"
             ;;
         check)
             print_header
@@ -205,9 +225,14 @@ main() {
                         run_with_args --test
                         ;;
                     8)
-                        clean_build
+                        echo -e "${CYAN}Enter keystrokes (or press Enter for default):${NC}"
+                        read -p "Keystrokes: " custom_keys
+                        run_dump_test "${custom_keys}"
                         ;;
                     9)
+                        clean_build
+                        ;;
+                    10)
                         reset_terminal
                         ;;
                     0)
