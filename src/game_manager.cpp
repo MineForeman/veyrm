@@ -5,8 +5,10 @@
 #include "frame_stats.h"
 #include "map.h"
 #include "color_scheme.h"
+#include "map_generator.h"
+#include "map_validator.h"
 
-GameManager::GameManager() 
+GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
       previous_state(GameState::MENU),
       input_handler(std::make_unique<InputHandler>()),
@@ -19,29 +21,8 @@ GameManager::GameManager()
     // Initialize color scheme with auto-detection
     ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
     
-    // Create a larger test map to demonstrate viewport
-    map->fill(TileType::VOID);
-    
-    // Create multiple rooms
-    map->createRoom(10, 5, 20, 10);   // Top-left room
-    map->createRoom(35, 5, 20, 10);   // Top-right room
-    map->createRoom(10, 18, 20, 10);  // Bottom-left room
-    map->createRoom(35, 18, 25, 10);  // Bottom-right room (larger)
-    map->createRoom(22, 10, 16, 12);  // Central room
-    
-    // Connect rooms with corridors
-    map->createCorridor(Point(20, 10), Point(30, 10));  // Top-left to central
-    map->createCorridor(Point(37, 10), Point(45, 10));  // Central to top-right
-    map->createCorridor(Point(20, 22), Point(30, 22));  // Bottom-left to central
-    map->createCorridor(Point(37, 22), Point(45, 22));  // Central to bottom-right
-    map->createCorridor(Point(30, 15), Point(30, 18));  // Central vertical
-    
-    // Place stairs in bottom-right room
-    map->setTile(55, 25, TileType::STAIRS_DOWN);
-    
-    // Place player in central room initially
-    player_x = 30;
-    player_y = 15;
+    // Initialize map with MapGenerator
+    initializeMap(initial_map);
     
     // Set everything visible for now (no FOV yet)
     for (int y = 0; y < map->getHeight(); y++) {
@@ -53,6 +34,45 @@ GameManager::GameManager()
 }
 
 GameManager::~GameManager() = default;
+
+void GameManager::initializeMap(MapType type) {
+    // Generate the map
+    MapGenerator::generate(*map, type);
+    
+    // Validate the map
+    auto validation = MapValidator::validate(*map);
+    if (!validation.valid) {
+        // Log errors
+        for (const auto& error : validation.errors) {
+            message_log->addSystemMessage("Map Error: " + error);
+        }
+    }
+    
+    // Log warnings
+    for (const auto& warning : validation.warnings) {
+        message_log->addSystemMessage("Map Warning: " + warning);
+    }
+    
+    // Set player spawn point
+    Point spawn = MapGenerator::getDefaultSpawnPoint(type);
+    
+    // Verify spawn point is walkable
+    if (Map::getTileProperties(map->getTile(spawn.x, spawn.y)).walkable) {
+        player_x = spawn.x;
+        player_y = spawn.y;
+    } else {
+        // Fallback to finding any safe spawn point
+        spawn = MapGenerator::findSafeSpawnPoint(*map);
+        player_x = spawn.x;
+        player_y = spawn.y;
+        message_log->addSystemMessage("Using fallback spawn point");
+    }
+    
+    // Log map statistics
+    message_log->addSystemMessage("Map: " + std::to_string(validation.walkable_tiles) + 
+                                 " walkable tiles, " + std::to_string(validation.room_count) + 
+                                 " rooms");
+}
 
 void GameManager::setState(GameState state) {
     // Don't update previous state if we're going to quit

@@ -25,6 +25,7 @@
 #include "test_input.h"
 #include "game_loop.h"
 #include "frame_stats.h"
+#include "map_generator.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -244,10 +245,10 @@ void signalHandler(int signum) {
 /**
  * Run in frame dump mode for testing
  */
-void runFrameDumpMode(TestInput* test_input) {
+void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST_DUNGEON) {
     using namespace ftxui;
     
-    GameManager game_manager;
+    GameManager game_manager(initial_map);
     
     // Create components
     auto screen = ScreenInteractive::TerminalOutput();
@@ -362,7 +363,7 @@ void runFrameDumpMode(TestInput* test_input) {
 /**
  * Run FTXUI interface
  */
-void runInterface(TestInput* test_input = nullptr) {
+void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType::TEST_DUNGEON) {
     using namespace ftxui;
     
     // Set up cleanup handlers for unexpected exits
@@ -374,7 +375,7 @@ void runInterface(TestInput* test_input = nullptr) {
     
     // Disable mouse tracking to prevent terminal artifacts
     screen.TrackMouse(false);
-    GameManager game_manager;
+    GameManager game_manager(initial_map);
     
     // Enable debug mode if requested
     const char* debug_env = std::getenv("VEYRM_DEBUG");
@@ -534,6 +535,35 @@ int main(int argc, char* argv[]) {
     // Initialize platform-specific settings
     initializePlatform();
     
+    // Default map type
+    MapType map_type = MapType::TEST_DUNGEON;
+    
+    // Parse command-line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        
+        // Check for map type argument
+        if (arg == "--map" && i + 1 < argc) {
+            std::string map_arg = argv[++i];
+            if (map_arg == "room") {
+                map_type = MapType::TEST_ROOM;
+            } else if (map_arg == "dungeon") {
+                map_type = MapType::TEST_DUNGEON;
+            } else if (map_arg == "corridor") {
+                map_type = MapType::CORRIDOR_TEST;
+            } else if (map_arg == "arena") {
+                map_type = MapType::COMBAT_ARENA;
+            } else if (map_arg == "stress") {
+                map_type = MapType::STRESS_TEST;
+            } else {
+                std::cerr << "Unknown map type: " << map_arg << "\n";
+                std::cerr << "Valid types: room, dungeon, corridor, arena, stress\n";
+                return 1;
+            }
+            continue;
+        }
+    }
+    
     // Handle command-line arguments
     if (argc > 1) {
         std::string arg = argv[1];
@@ -553,6 +583,9 @@ int main(int argc, char* argv[]) {
             std::cout << "  --no-ui             Run without UI (test mode)\n";
             std::cout << "  --keys <keystrokes> Run with automated keystrokes\n";
             std::cout << "  --dump <keystrokes> Run in frame dump mode (slideshow)\n";
+            std::cout << "  --map <type>        Start with specific map type\n";
+            std::cout << "                      Types: room, dungeon (default), corridor,\n";
+            std::cout << "                             arena, stress\n";
             std::cout << "\nKeystroke format:\n";
             std::cout << "  Regular characters are sent as-is\n";
             std::cout << "  Escape sequences:\n";
@@ -587,24 +620,25 @@ int main(int argc, char* argv[]) {
             TestInput test_input;
             test_input.loadKeystrokes(argv[2]);
             std::cout << "Running with automated input: " << argv[2] << "\n";
-            runInterface(&test_input);
+            runInterface(&test_input, map_type);
             return 0;
         } else if (arg == "--dump" && argc > 2) {
             // Run in frame dump mode
             TestInput test_input;
             test_input.loadKeystrokes(argv[2]);
             test_input.setFrameDumpMode(true);
-            runFrameDumpMode(&test_input);
+            runFrameDumpMode(&test_input, map_type);
             return 0;
-        } else {
+        } else if (arg != "--map") {
+            // --map is already handled above, only show error for truly unknown options
             std::cerr << "Unknown option: " << arg << "\n";
             std::cerr << "Use --help for usage information\n";
             return 1;
         }
     }
     
-    // Run the interface normally
-    runInterface();
+    // Run the interface normally with selected map type
+    runInterface(nullptr, map_type);
     
     return 0;
 }

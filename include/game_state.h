@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include "map_generator.h"
 
 enum class GameState {
     MENU,
@@ -22,7 +23,7 @@ class Map;
 
 class GameManager {
 public:
-    GameManager();
+    GameManager(MapType initial_map = MapType::TEST_DUNGEON);
     ~GameManager();
     
     // State management
@@ -55,6 +56,9 @@ public:
     // Game flow
     void processPlayerAction(ActionSpeed speed);
     bool isGameRunning() const { return current_state != GameState::QUIT; }
+    
+    // Map initialization
+    void initializeMap(MapType type = MapType::TEST_DUNGEON);
     
 private:
     GameState current_state = GameState::MENU;

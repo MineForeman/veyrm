@@ -130,6 +130,8 @@ add_executable(veyrm
     src/renderer.cpp
     src/color_scheme.cpp
     src/wall_connector.cpp
+    src/map_generator.cpp
+    src/map_validator.cpp
 )
 
 # Link libraries

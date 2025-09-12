@@ -47,6 +47,9 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
     
+    // Get tile properties for a given tile type
+    static TileProperties getTileProperties(TileType type);
+    
 private:
     int width;
     int height;

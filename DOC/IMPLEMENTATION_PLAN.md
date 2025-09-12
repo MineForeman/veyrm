@@ -103,11 +103,19 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Complete rendering system with viewport, adaptive colors, and wall visibility fix
 
 ### 2.3 Simple Test Map
-- [ ] Create hardcoded 20x20 room for testing
-- [ ] Add walls around perimeter
-- [ ] Place stairs in corner
-- [ ] **Test:** Test map loads and displays
+
+- [x] Create `MapGenerator` class for map generation
+- [x] Extract existing 5-room dungeon from GameManager
+- [x] Implement `generateTestRoom()` - single 20x20 room
+- [x] Implement `generateTestDungeon()` - current multi-room layout
+- [x] Create `MapValidator` class for map validation
+- [x] Ensure connectivity and spawn point validation
+- [x] Add map selection system to GameManager
+- [x] Add command-line map selection (`--map <type>`)
+- [x] Fix corridor wall generation and room connections
+- [x] **Test:** All test maps load and are playable
 - [ ] **Git tag:** `v0.2.3-test-map`
+- **Notes:** Complete map system with 5 types (room, dungeon, corridor, arena, stress), validation, proper walls
 
 ---
 

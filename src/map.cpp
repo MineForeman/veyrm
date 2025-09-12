@@ -187,6 +187,15 @@ void Map::createRoom(int x, int y, int w, int h) {
     }
 }
 
+TileProperties Map::getTileProperties(TileType type) {
+    auto it = tileProperties.find(type);
+    if (it != tileProperties.end()) {
+        return it->second;
+    }
+    // Return default properties for unknown tile
+    return {' ', Color::White, Color::Black, false, false, false, "Unknown"};
+}
+
 void Map::createCorridor(const Point& start, const Point& end) {
     // Simple L-shaped corridor
     Point current = start;

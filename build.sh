@@ -84,7 +84,33 @@ run_dump_test() {
 run_game() {
     if [ -f "${EXECUTABLE}" ]; then
         echo -e "${YELLOW}Starting Veyrm...${NC}"
-        "${EXECUTABLE}"
+        # Ask for map type
+        echo -e "${CYAN}Select map type:${NC}"
+        echo -e "${BLUE}1)${NC} Test Dungeon (default, 5 rooms)"
+        echo -e "${BLUE}2)${NC} Test Room (single 20x20 room)"
+        echo -e "${BLUE}3)${NC} Corridor Test (long corridors)"
+        echo -e "${BLUE}4)${NC} Combat Arena (open space)"
+        echo -e "${BLUE}5)${NC} Stress Test (large map)"
+        echo
+        read -p "Select map (1-5, or Enter for default): " map_choice
+        
+        case "${map_choice}" in
+            2)
+                "${EXECUTABLE}" --map room
+                ;;
+            3)
+                "${EXECUTABLE}" --map corridor
+                ;;
+            4)
+                "${EXECUTABLE}" --map arena
+                ;;
+            5)
+                "${EXECUTABLE}" --map stress
+                ;;
+            *)
+                "${EXECUTABLE}" --map dungeon
+                ;;
+        esac
         reset_terminal  # Auto-reset terminal after game exits
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
@@ -126,7 +152,7 @@ show_help() {
     echo -e "${BOLD}Commands:${NC}"
     echo "  build [debug|release]  Build the project"
     echo "  clean                  Clean build directory"
-    echo "  run                    Run the game"
+    echo "  run [map_type]         Run the game (optionally specify map)"
     echo "  test                   Run tests"
     echo "  dump [keystrokes]      Run dump mode test"
     echo "  check                  Run system checks"
@@ -139,7 +165,9 @@ show_help() {
     echo "  $0 build              # Build in debug mode"
     echo "  $0 build release      # Build in release mode"
     echo "  $0 clean build        # Clean and build"
-    echo "  $0 run                # Run the game"
+    echo "  $0 run                # Run the game (interactive map selection)"
+    echo "  $0 run dungeon        # Run with dungeon map"
+    echo "  $0 run arena          # Run with arena map"
     echo "  $0 test               # Run tests"
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
@@ -170,7 +198,21 @@ main() {
             ;;
         run)
             print_header
-            run_game
+            # Check if a map type was specified
+            if [ -n "${2}" ]; then
+                case "${2}" in
+                    room|dungeon|corridor|arena|stress)
+                        run_with_args --map "${2}"
+                        reset_terminal
+                        ;;
+                    *)
+                        echo -e "${RED}Unknown map type: ${2}${NC}"
+                        echo -e "Valid types: room, dungeon, corridor, arena, stress"
+                        ;;
+                esac
+            else
+                run_game
+            fi
             ;;
         test)
             print_header
