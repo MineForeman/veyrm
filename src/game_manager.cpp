@@ -3,6 +3,7 @@
 #include "turn_manager.h"
 #include "message_log.h"
 #include "frame_stats.h"
+#include "map.h"
 
 GameManager::GameManager() 
     : current_state(GameState::MENU),
@@ -11,7 +12,24 @@ GameManager::GameManager()
       turn_manager(std::make_unique<TurnManager>(this)),
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
+      map(std::make_unique<Map>()),
       debug_mode(false) {
+    
+    // Create a simple test map
+    map->fill(TileType::VOID);
+    map->createRoom(20, 5, 40, 14);  // Main room
+    map->createRoom(5, 8, 12, 8);     // Left room
+    map->createCorridor(Point(16, 12), Point(20, 12));  // Connect rooms
+    
+    // Place stairs
+    map->setTile(55, 15, TileType::STAIRS_DOWN);
+    
+    // Set everything visible for now (no FOV yet)
+    for (int y = 0; y < map->getHeight(); y++) {
+        for (int x = 0; x < map->getWidth(); x++) {
+            map->setVisible(x, y, true);
+        }
+    }
 }
 
 GameManager::~GameManager() = default;

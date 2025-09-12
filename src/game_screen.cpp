@@ -3,6 +3,7 @@
 #include "turn_manager.h"
 #include "message_log.h"
 #include "frame_stats.h"
+#include "map.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -15,25 +16,35 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive*)
 
 Component GameScreen::CreateMapPanel() {
     return Renderer([this] {
-        // Temporary test map display
-        std::vector<Element> map_lines;
-        
-        // Create a simple test room
-        for (int y = 0; y < 20; y++) {
-            std::string line;
-            for (int x = 0; x < 60; x++) {
-                if (y == 0 || y == 19 || x == 0 || x == 59) {
-                    line += "#";  // Walls
-                } else if (x == game_manager->player_x && y == game_manager->player_y) {
-                    line += "@";  // Player at dynamic position
-                } else {
-                    line += ".";  // Floor
-                }
-            }
-            map_lines.push_back(text(line));
+        auto* map = game_manager->getMap();
+        if (!map) {
+            return text("No map loaded") | border;
         }
         
-        return vbox(map_lines) | border | size(WIDTH, EQUAL, 62) | size(HEIGHT, EQUAL, 22);
+        std::vector<Element> map_lines;
+        
+        for (int y = 0; y < map->getHeight(); y++) {
+            std::vector<Element> row_elements;
+            
+            for (int x = 0; x < map->getWidth(); x++) {
+                // Check for player position
+                if (x == game_manager->player_x && y == game_manager->player_y) {
+                    row_elements.push_back(text("@") | color(Color::White));
+                } else if (map->isVisible(x, y)) {
+                    char glyph = map->getGlyph(x, y);
+                    Color fg = map->getForeground(x, y);
+                    row_elements.push_back(text(std::string(1, glyph)) | color(fg));
+                } else if (map->isExplored(x, y)) {
+                    char glyph = map->getGlyph(x, y);
+                    row_elements.push_back(text(std::string(1, glyph)) | color(Color::GrayDark));
+                } else {
+                    row_elements.push_back(text(" "));
+                }
+            }
+            map_lines.push_back(hbox(row_elements));
+        }
+        
+        return vbox(map_lines) | border;
     });
 }
 
@@ -95,37 +106,53 @@ Component GameScreen::Create() {
                 game_manager->setState(GameState::MENU);
                 return true;
                 
-            case InputAction::MOVE_UP:
-                if (game_manager->player_y > 1) {
-                    game_manager->player_y--;
+            case InputAction::MOVE_UP: {
+                auto* map = game_manager->getMap();
+                int new_x = game_manager->player_x;
+                int new_y = game_manager->player_y - 1;
+                if (map && map->isWalkable(new_x, new_y)) {
+                    game_manager->player_y = new_y;
                     game_manager->processPlayerAction(ActionSpeed::NORMAL);
                     game_manager->getMessageLog()->addMessage("You move north.");
                 }
                 return true;
+            }
                 
-            case InputAction::MOVE_DOWN:
-                if (game_manager->player_y < 18) {
-                    game_manager->player_y++;
+            case InputAction::MOVE_DOWN: {
+                auto* map = game_manager->getMap();
+                int new_x = game_manager->player_x;
+                int new_y = game_manager->player_y + 1;
+                if (map && map->isWalkable(new_x, new_y)) {
+                    game_manager->player_y = new_y;
                     game_manager->processPlayerAction(ActionSpeed::NORMAL);
                     game_manager->getMessageLog()->addMessage("You move south.");
                 }
                 return true;
+            }
                 
-            case InputAction::MOVE_LEFT:
-                if (game_manager->player_x > 1) {
-                    game_manager->player_x--;
+            case InputAction::MOVE_LEFT: {
+                auto* map = game_manager->getMap();
+                int new_x = game_manager->player_x - 1;
+                int new_y = game_manager->player_y;
+                if (map && map->isWalkable(new_x, new_y)) {
+                    game_manager->player_x = new_x;
                     game_manager->processPlayerAction(ActionSpeed::NORMAL);
                     game_manager->getMessageLog()->addMessage("You move west.");
                 }
                 return true;
+            }
                 
-            case InputAction::MOVE_RIGHT:
-                if (game_manager->player_x < 58) {
-                    game_manager->player_x++;
+            case InputAction::MOVE_RIGHT: {
+                auto* map = game_manager->getMap();
+                int new_x = game_manager->player_x + 1;
+                int new_y = game_manager->player_y;
+                if (map && map->isWalkable(new_x, new_y)) {
+                    game_manager->player_x = new_x;
                     game_manager->processPlayerAction(ActionSpeed::NORMAL);
                     game_manager->getMessageLog()->addMessage("You move east.");
                 }
                 return true;
+            }
                 
             case InputAction::WAIT:
                 game_manager->processPlayerAction(ActionSpeed::NORMAL);

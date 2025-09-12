@@ -125,6 +125,8 @@ add_executable(veyrm
     src/test_input.cpp
     src/game_loop.cpp
     src/frame_stats.cpp
+    src/map.cpp
+    src/point.cpp
 )
 
 # Link libraries

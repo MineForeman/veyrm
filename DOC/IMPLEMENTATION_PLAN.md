@@ -83,12 +83,13 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 2: Map Foundation (Day 3)
 
-### 2.1 Tile System
-- [ ] Create `Tile` enum (WALL, FLOOR, STAIRS)
-- [ ] Create `Map` class with 2D tile array
-- [ ] Implement coordinate system (Point struct)
-- [ ] **Test:** Map stores and retrieves tiles correctly
-- [ ] **Git tag:** `v0.2.1-tile-system`
+### 2.1 Tile System ✅
+- [x] Create `Tile` enum (WALL, FLOOR, STAIRS)
+- [x] Create `Map` class with 2D tile array
+- [x] Implement coordinate system (Point struct)
+- [x] **Test:** Map stores and retrieves tiles correctly
+- [x] **Git tag:** `v0.2.1-tile-system`
+- **Notes:** Full tile system with properties, collision detection, visibility tracking
 
 ### 2.2 Map Rendering
 - [ ] Create `Renderer` class with FTXUI integration

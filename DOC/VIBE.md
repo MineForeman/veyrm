@@ -26,3 +26,22 @@
 
 - Detail what is needed to complete 0.4 in its own document.
 - Tag and checkin 1.1. 
+
+- Document what is necessary for 1.2 Turn System
+- Implement 1.2 Turn System (with testing support)
+- Add automated testing with --keys parameter
+- Add frame dump mode for analysis
+- Update implementation plan
+
+- Document what is necessary for 1.3 Main Game Loop  
+- Implement 1.3 Main Game Loop
+- Update implementation plan
+
+- Document what is necessary for 2.1 Tile System
+- Implement 2.1 Tile System
+- Update implementation plan and push
+
+Legend:
+. Empty Space
+
+................................................................................................................

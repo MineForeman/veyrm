@@ -18,6 +18,7 @@ class InputHandler;
 class TurnManager;
 class MessageLog;
 class FrameStats;
+class Map;
 
 class GameManager {
 public:
@@ -35,6 +36,7 @@ public:
     TurnManager* getTurnManager() { return turn_manager.get(); }
     MessageLog* getMessageLog() { return message_log.get(); }
     FrameStats* getFrameStats() { return frame_stats.get(); }
+    Map* getMap() { return map.get(); }
     
     // Game loop integration
     void update(double deltaTime);
@@ -61,5 +63,6 @@ private:
     std::unique_ptr<TurnManager> turn_manager;
     std::unique_ptr<MessageLog> message_log;
     std::unique_ptr<FrameStats> frame_stats;
+    std::unique_ptr<Map> map;
     bool debug_mode = false;
 };
