@@ -8,4 +8,6 @@
 
 ## Step
 
-- 
+- Detail what is needed to complete 0.1 Initialize Repository in its own document.
+- Implement the items in 0.1 Initialize Repository document.
+
