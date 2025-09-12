@@ -1,5 +1,7 @@
 #include "game_screen.h"
 #include "input_handler.h"
+#include "turn_manager.h"
+#include "message_log.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -35,24 +37,23 @@ Component GameScreen::CreateMapPanel() {
 }
 
 Component GameScreen::CreateLogPanel() {
-    return Renderer([] {
-        return vbox({
-            text("Welcome to Veyrm!"),
-            text("You descend into the Spiral Vaults..."),
-            text(""),
-            text(""),
-            text("Press ? for help, q to quit")
-        }) | border | size(HEIGHT, EQUAL, 7);
+    return Renderer([this] {
+        return game_manager->getMessageLog()->render(5) | 
+               border | 
+               size(HEIGHT, EQUAL, 7);
     });
 }
 
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
+        auto tm = game_manager->getTurnManager();
         return hbox({
             text("HP: " + std::to_string(game_manager->player_hp) + "/" + 
                  std::to_string(game_manager->player_max_hp)) | bold,
             separator(),
-            text("Turn: " + std::to_string(game_manager->turn_count)),
+            text("Turn: " + std::to_string(tm->getCurrentTurn())),
+            separator(),
+            text("Time: " + std::to_string(tm->getWorldTime())),
             separator(),
             text("Depth: 1"),
         }) | border | size(HEIGHT, EQUAL, 3);
@@ -88,33 +89,38 @@ Component GameScreen::Create() {
             case InputAction::MOVE_UP:
                 if (game_manager->player_y > 1) {
                     game_manager->player_y--;
-                    game_manager->incrementTurn();
+                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                    game_manager->getMessageLog()->addMessage("You move north.");
                 }
                 return true;
                 
             case InputAction::MOVE_DOWN:
                 if (game_manager->player_y < 18) {
                     game_manager->player_y++;
-                    game_manager->incrementTurn();
+                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                    game_manager->getMessageLog()->addMessage("You move south.");
                 }
                 return true;
                 
             case InputAction::MOVE_LEFT:
                 if (game_manager->player_x > 1) {
                     game_manager->player_x--;
-                    game_manager->incrementTurn();
+                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                    game_manager->getMessageLog()->addMessage("You move west.");
                 }
                 return true;
                 
             case InputAction::MOVE_RIGHT:
                 if (game_manager->player_x < 58) {
                     game_manager->player_x++;
-                    game_manager->incrementTurn();
+                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                    game_manager->getMessageLog()->addMessage("You move east.");
                 }
                 return true;
                 
             case InputAction::WAIT:
-                game_manager->incrementTurn();
+                game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                game_manager->getMessageLog()->addMessage("You wait.");
                 return true;
                 
             case InputAction::OPEN_INVENTORY:

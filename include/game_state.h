@@ -11,8 +11,12 @@ enum class GameState {
     QUIT
 };
 
-// Forward declaration
+enum class ActionSpeed;
+
+// Forward declarations
 class InputHandler;
+class TurnManager;
+class MessageLog;
 
 class GameManager {
 public:
@@ -25,22 +29,25 @@ public:
     GameState getPreviousState() const { return previous_state; }
     void returnToPreviousState();
     
-    // Input handling
+    // Component access
     InputHandler* getInputHandler() { return input_handler.get(); }
+    TurnManager* getTurnManager() { return turn_manager.get(); }
+    MessageLog* getMessageLog() { return message_log.get(); }
     
     // Game data
     int player_hp = 10;
     int player_max_hp = 10;
     int player_x = 30;  // Player position
     int player_y = 10;
-    int turn_count = 0;
     
     // Game flow
-    void incrementTurn() { turn_count++; }
+    void processPlayerAction(ActionSpeed speed);
     bool isGameRunning() const { return current_state != GameState::QUIT; }
     
 private:
     GameState current_state = GameState::MENU;
     GameState previous_state = GameState::MENU;
     std::unique_ptr<InputHandler> input_handler;
+    std::unique_ptr<TurnManager> turn_manager;
+    std::unique_ptr<MessageLog> message_log;
 };
