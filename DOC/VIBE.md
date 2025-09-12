@@ -17,3 +17,5 @@
 - WHen I run the binary with ./build/bin/veyrm it charshes
 - Update the documentation for 0.2 Dependencies Setup
 - Tag and push 0.2 Dependencies Setup
+- Update the IMPLEMENTATION_PLAN.md
+

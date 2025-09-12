@@ -14,23 +14,24 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 0: Project Setup (Day 1)
 
-### 0.1 Initialize Repository
-- [ ] Create CMakeLists.txt with C++23 configuration
-- [ ] Add .gitignore for C++ projects
-- [ ] Create directory structure: `src/`, `include/`, `data/`, `tests/`
-- [ ] **Test:** CMake configures successfully
-- [ ] **Git tag:** `v0.0.1-project-init`
+### 0.1 Initialize Repository ✅
+- [x] Create CMakeLists.txt with C++23 configuration
+- [x] Add .gitignore for C++ projects
+- [x] Create directory structure: `src/`, `include/`, `data/`, `tests/`
+- [x] **Test:** CMake configures successfully
+- [x] **Git tag:** `v0.0.1-project-init`
 
-### 0.2 Dependencies Setup
-- [ ] Configure FetchContent for FTXUI
-- [ ] Configure FetchContent for nlohmann/json
-- [ ] Configure FetchContent for Catch2
-- [ ] Create simple main.cpp with "Hello Veyrm"
-- [ ] **Test:** Build and run hello world
-- [ ] **Git tag:** `v0.0.2-dependencies`
+### 0.2 Dependencies Setup ✅
+- [x] Configure FetchContent for FTXUI
+- [x] Configure FetchContent for nlohmann/json
+- [x] Configure FetchContent for Catch2
+- [x] Create simple main.cpp with "Hello Veyrm"
+- [x] **Test:** Build and run hello world
+- [x] **Git tag:** `v0.0.2-dependencies`
+- **Notes:** Fixed AddressSanitizer conflicts, added terminal cleanup, enhanced build.sh
 
-### 0.3 Basic FTXUI Window
-- [ ] Create minimal FTXUI app with quit on 'q'
+### 0.3 Basic FTXUI Window 🚧 **NEXT**
+- [ ] Create minimal FTXUI app with quit on 'q' *(Partially complete - menu exists)*
 - [ ] Set up screen with proper Unicode support
 - [ ] Add window title and basic layout
 - [ ] **Test:** App launches, displays, and quits properly
