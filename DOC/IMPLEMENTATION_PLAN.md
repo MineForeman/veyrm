@@ -114,7 +114,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] Add command-line map selection (`--map <type>`)
 - [x] Fix corridor wall generation and room connections
 - [x] **Test:** All test maps load and are playable
-- [ ] **Git tag:** `v0.2.3-test-map`
+- [x] **Git tag:** `v0.2.3-test-map`
 - **Notes:** Complete map system with 5 types (room, dungeon, corridor, arena, stress), validation, proper walls
 
 ---
