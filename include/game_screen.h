@@ -5,6 +5,7 @@
 #include <memory>
 
 class MapRenderer;
+class StatusBar;
 
 class GameScreen {
 public:
@@ -15,6 +16,7 @@ public:
 private:
     GameManager* game_manager;
     std::unique_ptr<MapRenderer> renderer;
+    std::unique_ptr<StatusBar> status_bar;
     
     // UI components
     ftxui::Component CreateMapPanel();

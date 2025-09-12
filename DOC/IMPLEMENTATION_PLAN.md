@@ -255,12 +255,13 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Test:** Messages display and scroll
 - [x] **Git tag:** `v0.7.1-message-log`
 
-### 7.2 Status Bar
-- [ ] Create status bar component
-- [ ] Display HP, position, turn count
-- [ ] Add color coding for HP levels
-- [ ] **Test:** Status updates in real-time
-- [ ] **Git tag:** `v0.7.2-status-bar`
+### 7.2 Status Bar ✅
+- [x] Create status bar component (StatusBar class)
+- [x] Display HP, position, turn count
+- [x] Add color coding for HP levels
+- [x] **Test:** Status updates in real-time
+- [x] **Git tag:** `v0.7.2-status-bar`
+- **Notes:** Implemented StatusBar class with HP color coding, position display, time formatting
 
 ### 7.3 Layout System
 - [ ] Implement three-panel layout (map, log, status)

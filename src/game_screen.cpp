@@ -7,6 +7,7 @@
 #include "renderer.h"
 #include "entity_manager.h"
 #include "player.h"
+#include "status_bar.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -16,7 +17,8 @@ using namespace ftxui;
 
 GameScreen::GameScreen(GameManager* manager, ScreenInteractive*) 
     : game_manager(manager),
-      renderer(std::make_unique<MapRenderer>(80, 24)) {
+      renderer(std::make_unique<MapRenderer>(80, 24)),
+      status_bar(std::make_unique<StatusBar>()) {
     // Center renderer on player's starting position
     if (auto* player = game_manager->getPlayer()) {
         renderer->centerOn(player->x, player->y);
@@ -53,25 +55,7 @@ Component GameScreen::CreateLogPanel() {
 
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
-        auto tm = game_manager->getTurnManager();
-        std::vector<Element> status_elements = {
-            text("HP: " + std::to_string(game_manager->player_hp) + "/" + 
-                 std::to_string(game_manager->player_max_hp)) | bold,
-            separator(),
-            text("Turn: " + std::to_string(tm->getCurrentTurn())),
-            separator(),
-            text("Time: " + std::to_string(tm->getWorldTime())),
-            separator(),
-            text("Depth: 1")
-        };
-        
-        // Add FPS counter in debug mode
-        if (game_manager->isDebugMode() && game_manager->getFrameStats()) {
-            status_elements.push_back(separator());
-            status_elements.push_back(text(game_manager->getFrameStats()->format()) | color(Color::Green));
-        }
-        
-        return hbox(status_elements) | border | size(HEIGHT, EQUAL, 3);
+        return status_bar->render(*game_manager);
     });
 }
 
