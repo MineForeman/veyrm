@@ -122,6 +122,7 @@ add_executable(veyrm
     src/input_handler.cpp
     src/turn_manager.cpp
     src/message_log.cpp
+    src/test_input.cpp
 )
 
 # Link libraries

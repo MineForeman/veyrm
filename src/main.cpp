@@ -4,6 +4,8 @@
 #include <vector>
 #include <csignal>
 #include <cstdlib>
+#include <thread>
+#include <chrono>
 
 // FTXUI includes
 #include <ftxui/component/captured_mouse.hpp>
@@ -18,6 +20,7 @@
 // Game includes
 #include "game_state.h"
 #include "game_screen.h"
+#include "test_input.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -237,7 +240,7 @@ void signalHandler(int signum) {
 /**
  * Run FTXUI interface
  */
-void runInterface() {
+void runInterface(TestInput* test_input = nullptr) {
     using namespace ftxui;
     
     // Set up cleanup handlers for unexpected exits
@@ -298,6 +301,7 @@ void runInterface() {
     
     // State-based input handler
     auto main_component = CatchEvent(main_renderer, [&](Event event) {
+        
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->OnEvent(event);
@@ -317,7 +321,35 @@ void runInterface() {
         }
     });
     
+    // If we have test input, create a thread to inject events
+    std::thread* input_thread = nullptr;
+    if (test_input && test_input->hasNextKeystroke()) {
+        input_thread = new std::thread([&screen, test_input]() {
+            // Wait a bit for the screen to initialize
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            
+            // Send all test keystrokes with small delays
+            while (test_input->hasNextKeystroke()) {
+                auto event = test_input->getNextKeystroke();
+                screen.PostEvent(event);
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+            
+            // Send quit after all keystrokes are processed
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::cout << "\nTest input completed\n";
+            screen.PostEvent(Event::Character('q'));
+            screen.PostEvent(Event::Character('q')); // Double q to quit from game then menu
+        });
+    }
+    
     screen.Loop(main_component);
+    
+    // Clean up the input thread if it exists
+    if (input_thread) {
+        input_thread->join();
+        delete input_thread;
+    }
     
     // Terminal cleanup is handled by resetTerminal() via atexit
     std::cout << "Thanks for playing Veyrm!\n";
@@ -343,10 +375,24 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
-            std::cout << "  -h, --help     Show this help message\n";
-            std::cout << "  -v, --version  Show version information\n";
-            std::cout << "  --test         Run system checks\n";
-            std::cout << "  --no-ui        Run without UI (test mode)\n";
+            std::cout << "  -h, --help          Show this help message\n";
+            std::cout << "  -v, --version       Show version information\n";
+            std::cout << "  --test              Run system checks\n";
+            std::cout << "  --no-ui             Run without UI (test mode)\n";
+            std::cout << "  --keys <keystrokes> Run with automated keystrokes\n";
+            std::cout << "\nKeystroke format:\n";
+            std::cout << "  Regular characters are sent as-is\n";
+            std::cout << "  Escape sequences:\n";
+            std::cout << "    \\n - Enter/Return\n";
+            std::cout << "    \\e - Escape\n";
+            std::cout << "    \\u - Up arrow\n";
+            std::cout << "    \\d - Down arrow\n";
+            std::cout << "    \\l - Left arrow\n";
+            std::cout << "    \\r - Right arrow\n";
+            std::cout << "    \\t - Tab\n";
+            std::cout << "    \\b - Backspace\n";
+            std::cout << "    \\\\ - Literal backslash\n";
+            std::cout << "\nExample: --keys \"\\n\\u\\u\\n\" (Enter, Up, Up, Enter)\n";
             return 0;
         } else if (arg == "--test") {
             bool passed = runSystemChecks();
@@ -363,10 +409,21 @@ int main(int argc, char* argv[]) {
             bool passed = runSystemChecks();
             std::cout << "Dependencies test " << (passed ? "PASSED" : "FAILED") << "\n";
             return passed ? 0 : 1;
+        } else if (arg == "--keys" && argc > 2) {
+            // Run with automated keystrokes
+            TestInput test_input;
+            test_input.loadKeystrokes(argv[2]);
+            std::cout << "Running with automated input: " << argv[2] << "\n";
+            runInterface(&test_input);
+            return 0;
+        } else {
+            std::cerr << "Unknown option: " << arg << "\n";
+            std::cerr << "Use --help for usage information\n";
+            return 1;
         }
     }
     
-    // Run the interface
+    // Run the interface normally
     runInterface();
     
     return 0;
