@@ -8,4 +8,8 @@
 
 ## Step
 
-- 
+- Detail what is needed to complete 0.1 Initialize Repository in its own document.
+- Implement the items in 0.1 Initialize Repository document.
+
+- Detail what is needed to complete 0.2 Dependencies Setup in its own document.
+
