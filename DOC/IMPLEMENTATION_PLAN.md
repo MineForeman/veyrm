@@ -192,11 +192,12 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 5: Map Generation (Day 6-7)
 
-### 5.1 Room Generation
-- [ ] Create `Room` class with bounds
-- [ ] Implement random room placement
-- [ ] Add overlap detection
-- [ ] **Test:** Generates non-overlapping rooms
+### 5.1 Room Generation ✅ Complete
+
+- [x] Create `Room` class with bounds
+- [x] Implement random room placement
+- [x] Add overlap detection
+- [x] **Test:** Generates non-overlapping rooms
 - [ ] **Git tag:** `v0.5.1-room-generation`
 
 ### 5.2 Corridor Generation

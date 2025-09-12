@@ -14,6 +14,7 @@ add_executable(veyrm_tests
     test_turn_manager.cpp
     test_input_handler.cpp
     test_message_log.cpp
+    test_room_generation.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -47,6 +48,7 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/wall_connector.cpp
     ${CMAKE_SOURCE_DIR}/src/frame_stats.cpp
+    ${CMAKE_SOURCE_DIR}/src/room.cpp
 )
 
 # Add compile definitions for tests

@@ -555,9 +555,11 @@ int main(int argc, char* argv[]) {
                 map_type = MapType::COMBAT_ARENA;
             } else if (map_arg == "stress") {
                 map_type = MapType::STRESS_TEST;
+            } else if (map_arg == "procedural") {
+                map_type = MapType::PROCEDURAL;
             } else {
                 std::cerr << "Unknown map type: " << map_arg << "\n";
-                std::cerr << "Valid types: room, dungeon, corridor, arena, stress\n";
+                std::cerr << "Valid types: room, dungeon, corridor, arena, stress, procedural\n";
                 return 1;
             }
             continue;
@@ -584,8 +586,8 @@ int main(int argc, char* argv[]) {
             std::cout << "  --keys <keystrokes> Run with automated keystrokes\n";
             std::cout << "  --dump <keystrokes> Run in frame dump mode (slideshow)\n";
             std::cout << "  --map <type>        Start with specific map type\n";
-            std::cout << "                      Types: room, dungeon (default), corridor,\n";
-            std::cout << "                             arena, stress\n";
+            std::cout << "                      Types: procedural (random), room, dungeon,\n";
+            std::cout << "                             corridor, arena, stress\n";
             std::cout << "\nKeystroke format:\n";
             std::cout << "  Regular characters are sent as-is\n";
             std::cout << "  Escape sequences:\n";
