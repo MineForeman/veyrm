@@ -7,6 +7,8 @@
 #include "color_scheme.h"
 #include "map_generator.h"
 #include "map_validator.h"
+#include "entity_manager.h"
+#include "player.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -16,6 +18,7 @@ GameManager::GameManager(MapType initial_map)
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>()),
+      entity_manager(std::make_unique<EntityManager>()),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
@@ -53,19 +56,28 @@ void GameManager::initializeMap(MapType type) {
         message_log->addSystemMessage("Map Warning: " + warning);
     }
     
+    // Clear existing entities
+    entity_manager->clear();
+    
     // Set player spawn point
     Point spawn = MapGenerator::getDefaultSpawnPoint(type);
     
     // Verify spawn point is walkable
-    if (Map::getTileProperties(map->getTile(spawn.x, spawn.y)).walkable) {
-        player_x = spawn.x;
-        player_y = spawn.y;
-    } else {
+    if (!Map::getTileProperties(map->getTile(spawn.x, spawn.y)).walkable) {
         // Fallback to finding any safe spawn point
         spawn = MapGenerator::findSafeSpawnPoint(*map);
-        player_x = spawn.x;
-        player_y = spawn.y;
         message_log->addSystemMessage("Using fallback spawn point");
+    }
+    
+    // Create player entity at spawn point
+    auto player = entity_manager->createPlayer(spawn.x, spawn.y);
+    
+    // Update deprecated variables for compatibility
+    if (player) {
+        player_x = player->x;
+        player_y = player->y;
+        player_hp = player->hp;
+        player_max_hp = player->max_hp;
     }
     
     // Log map statistics
@@ -92,14 +104,35 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
     turn_manager->executePlayerAction(speed);
 }
 
+Player* GameManager::getPlayer() {
+    if (entity_manager) {
+        auto player_ptr = entity_manager->getPlayer();
+        return player_ptr ? player_ptr.get() : nullptr;
+    }
+    return nullptr;
+}
+
 void GameManager::update([[maybe_unused]] double deltaTime) {
     // Skip updates if not playing
     if (current_state != GameState::PLAYING) {
         return;
     }
     
+    // Update all entities
+    if (entity_manager) {
+        entity_manager->updateAll(deltaTime);
+    }
+    
+    // Update deprecated player position variables
+    if (auto player = getPlayer()) {
+        player_x = player->x;
+        player_y = player->y;
+        player_hp = player->hp;
+        player_max_hp = player->max_hp;
+    }
+    
     // Update game systems
-    // Future: Update animations, entities, particles, etc.
+    // Future: Update animations, particles, etc.
     // For now, the turn system handles its own timing
 }
 

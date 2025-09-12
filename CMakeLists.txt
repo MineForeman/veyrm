@@ -132,6 +132,9 @@ add_executable(veyrm
     src/wall_connector.cpp
     src/map_generator.cpp
     src/map_validator.cpp
+    src/entity.cpp
+    src/player.cpp
+    src/entity_manager.cpp
 )
 
 # Link libraries

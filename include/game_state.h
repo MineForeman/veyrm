@@ -20,6 +20,8 @@ class TurnManager;
 class MessageLog;
 class FrameStats;
 class Map;
+class EntityManager;
+class Player;
 
 class GameManager {
 public:
@@ -38,6 +40,8 @@ public:
     MessageLog* getMessageLog() { return message_log.get(); }
     FrameStats* getFrameStats() { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
+    EntityManager* getEntityManager() { return entity_manager.get(); }
+    Player* getPlayer();
     
     // Game loop integration
     void update(double deltaTime);
@@ -47,11 +51,11 @@ public:
     bool isDebugMode() const { return debug_mode; }
     void setDebugMode(bool enabled) { debug_mode = enabled; }
     
-    // Game data
-    int player_hp = 10;
-    int player_max_hp = 10;
-    int player_x = 30;  // Player position
-    int player_y = 10;
+    // Game data (deprecated - use entity_manager->getPlayer() instead)
+    int player_hp = 10;      // DEPRECATED
+    int player_max_hp = 10;  // DEPRECATED
+    int player_x = 30;       // DEPRECATED - Player position
+    int player_y = 10;       // DEPRECATED
     
     // Game flow
     void processPlayerAction(ActionSpeed speed);
@@ -68,5 +72,6 @@ private:
     std::unique_ptr<MessageLog> message_log;
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
+    std::unique_ptr<EntityManager> entity_manager;
     bool debug_mode = false;
 };

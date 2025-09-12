@@ -5,6 +5,8 @@
 #include "frame_stats.h"
 #include "map.h"
 #include "renderer.h"
+#include "entity_manager.h"
+#include "player.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -16,7 +18,12 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive*)
     : game_manager(manager),
       renderer(std::make_unique<MapRenderer>(80, 24)) {
     // Center renderer on player's starting position
-    renderer->centerOn(game_manager->player_x, game_manager->player_y);
+    if (auto* player = game_manager->getPlayer()) {
+        renderer->centerOn(player->x, player->y);
+    } else {
+        // Fallback to deprecated variables if entity system not initialized
+        renderer->centerOn(game_manager->player_x, game_manager->player_y);
+    }
 }
 
 GameScreen::~GameScreen() = default;
@@ -95,49 +102,61 @@ Component GameScreen::Create() {
                 return true;
                 
             case InputAction::MOVE_UP: {
+                auto* player = game_manager->getPlayer();
                 auto* map = game_manager->getMap();
-                int new_x = game_manager->player_x;
-                int new_y = game_manager->player_y - 1;
-                if (map && map->isWalkable(new_x, new_y)) {
-                    game_manager->player_y = new_y;
-                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                    game_manager->getMessageLog()->addMessage("You move north.");
+                auto* entity_manager = game_manager->getEntityManager();
+                
+                if (player && map && entity_manager) {
+                    if (player->tryMove(*map, entity_manager, 0, -1)) {
+                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                        game_manager->getMessageLog()->addMessage("You move north.");
+                        renderer->centerOn(player->x, player->y);
+                    }
                 }
                 return true;
             }
                 
             case InputAction::MOVE_DOWN: {
+                auto* player = game_manager->getPlayer();
                 auto* map = game_manager->getMap();
-                int new_x = game_manager->player_x;
-                int new_y = game_manager->player_y + 1;
-                if (map && map->isWalkable(new_x, new_y)) {
-                    game_manager->player_y = new_y;
-                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                    game_manager->getMessageLog()->addMessage("You move south.");
+                auto* entity_manager = game_manager->getEntityManager();
+                
+                if (player && map && entity_manager) {
+                    if (player->tryMove(*map, entity_manager, 0, 1)) {
+                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                        game_manager->getMessageLog()->addMessage("You move south.");
+                        renderer->centerOn(player->x, player->y);
+                    }
                 }
                 return true;
             }
                 
             case InputAction::MOVE_LEFT: {
+                auto* player = game_manager->getPlayer();
                 auto* map = game_manager->getMap();
-                int new_x = game_manager->player_x - 1;
-                int new_y = game_manager->player_y;
-                if (map && map->isWalkable(new_x, new_y)) {
-                    game_manager->player_x = new_x;
-                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                    game_manager->getMessageLog()->addMessage("You move west.");
+                auto* entity_manager = game_manager->getEntityManager();
+                
+                if (player && map && entity_manager) {
+                    if (player->tryMove(*map, entity_manager, -1, 0)) {
+                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                        game_manager->getMessageLog()->addMessage("You move west.");
+                        renderer->centerOn(player->x, player->y);
+                    }
                 }
                 return true;
             }
                 
             case InputAction::MOVE_RIGHT: {
+                auto* player = game_manager->getPlayer();
                 auto* map = game_manager->getMap();
-                int new_x = game_manager->player_x + 1;
-                int new_y = game_manager->player_y;
-                if (map && map->isWalkable(new_x, new_y)) {
-                    game_manager->player_x = new_x;
-                    game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                    game_manager->getMessageLog()->addMessage("You move east.");
+                auto* entity_manager = game_manager->getEntityManager();
+                
+                if (player && map && entity_manager) {
+                    if (player->tryMove(*map, entity_manager, 1, 0)) {
+                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                        game_manager->getMessageLog()->addMessage("You move east.");
+                        renderer->centerOn(player->x, player->y);
+                    }
                 }
                 return true;
             }

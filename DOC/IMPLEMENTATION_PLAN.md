@@ -122,11 +122,15 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 3: Entity System (Day 4)
 
 ### 3.1 Entity Base
-- [ ] Create `Entity` base class with position
-- [ ] Create `Player` class extending Entity
-- [ ] Add glyph and color properties
-- [ ] **Test:** Entities can be created and positioned
+- [x] Create `Entity` base class with position
+- [x] Create `Player` class extending Entity
+- [x] Add glyph and color properties
+- [x] Create `EntityManager` class for entity lifecycle
+- [x] Integrate entities with GameManager
+- [x] Update movement to use entity system
+- [x] **Test:** Entities can be created and positioned
 - [ ] **Git tag:** `v0.3.1-entity-base`
+- **Notes:** Complete entity system with Player class, EntityManager, and movement integration
 
 ### 3.2 Player on Map
 - [ ] Add player to game state
