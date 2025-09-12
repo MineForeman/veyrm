@@ -42,8 +42,8 @@ void MapGenerator::generateTestDungeon(Map& map) {
     carveCorridorL(map, Point(45, 14), Point(37, 21));  // Top-right to central
     carveCorridorL(map, Point(30, 15), Point(30, 18));  // Central vertical connection
     
-    // Place stairs in bottom-right room
-    map.setTile(55, 25, TileType::STAIRS_DOWN);
+    // Place stairs in bottom-right room (inside the room, not on the wall)
+    map.setTile(55, 22, TileType::STAIRS_DOWN);
 }
 
 void MapGenerator::generateCorridorTest(Map& map) {
@@ -54,8 +54,8 @@ void MapGenerator::generateCorridorTest(Map& map) {
     carveRoom(map, 5, 5, 10, 10);
     carveRoom(map, 65, 15, 10, 8);
     
-    // Long horizontal corridor with walls
-    for (int x = 14; x < 65; x++) {
+    // Long horizontal corridor with walls (extend to connect to first room)
+    for (int x = 13; x <= 65; x++) {
         map.setTile(x, 10, TileType::FLOOR);
         // Add walls
         if (map.getTile(x, 9) == TileType::VOID) {
@@ -66,8 +66,8 @@ void MapGenerator::generateCorridorTest(Map& map) {
         }
     }
     
-    // Vertical corridor with walls
-    for (int y = 10; y < 15; y++) {
+    // Vertical corridor with walls (extend to connect to second room)
+    for (int y = 10; y <= 16; y++) {
         map.setTile(65, y, TileType::FLOOR);
         // Add walls
         if (map.getTile(64, y) == TileType::VOID) {
@@ -78,7 +78,7 @@ void MapGenerator::generateCorridorTest(Map& map) {
         }
     }
     
-    // Narrow 1-tile corridor with walls
+    // Narrow 1-tile corridor with walls (connect to first room)
     for (int x = 10; x < 20; x++) {
         map.setTile(x, 20, TileType::FLOOR);
         // Add walls
@@ -87,6 +87,18 @@ void MapGenerator::generateCorridorTest(Map& map) {
         }
         if (map.getTile(x, 21) == TileType::VOID) {
             map.setTile(x, 21, TileType::WALL);
+        }
+    }
+    
+    // Connect narrow corridor to first room
+    for (int y = 14; y <= 20; y++) {
+        map.setTile(10, y, TileType::FLOOR);
+        // Add walls
+        if (map.getTile(9, y) == TileType::VOID) {
+            map.setTile(9, y, TileType::WALL);
+        }
+        if (map.getTile(11, y) == TileType::VOID) {
+            map.setTile(11, y, TileType::WALL);
         }
     }
     
@@ -215,20 +227,45 @@ void MapGenerator::placeStairs(Map& map, const Point& position) {
 }
 
 Point MapGenerator::getDefaultSpawnPoint(MapType type) {
+    // Calculate spawn points based on actual room layouts
     switch (type) {
         case MapType::TEST_ROOM:
-            return Point(40, 12);  // Center of centered room
+            // TEST_ROOM: centered 20x20 room, floor is at (31-48, 3-20)
+            return Point(40, 12);  // Center of floor area
         case MapType::TEST_DUNGEON:
-            return Point(30, 15);  // Central room
+            // Central room is at (22, 10, 16, 12), floor is at (23-37, 11-21)
+            return Point(30, 16);  // Center of central room floor
         case MapType::CORRIDOR_TEST:
-            return Point(10, 10);  // First room
+            // First room is at (5, 5, 10, 10), floor is at (6-14, 6-14)
+            return Point(10, 10);  // Center of first room floor
         case MapType::COMBAT_ARENA:
-            return Point(40, 14);  // Center of arena
+            // Arena is at (20, 5, 40, 18), floor is at (21-59, 6-22)
+            return Point(40, 14);  // Center of arena floor
         case MapType::STRESS_TEST:
-            return Point(40, 12);  // Approximate center
+            // Stress test has random rooms, use fallback center
+            return Point(40, 12);
         default:
             return Point(40, 12);
     }
+}
+
+Point MapGenerator::getDefaultSpawnPoint(const Map& map, MapType type) {
+    // For stress test and other random maps, find a safe spawn point
+    if (type == MapType::STRESS_TEST) {
+        return findSafeSpawnPoint(map);
+    }
+    
+    // For fixed maps, verify the default point is walkable, otherwise find safe one
+    Point defaultPoint = getDefaultSpawnPoint(type);
+    if (map.inBounds(defaultPoint)) {
+        auto props = Map::getTileProperties(map.getTile(defaultPoint.x, defaultPoint.y));
+        if (props.walkable) {
+            return defaultPoint;
+        }
+    }
+    
+    // Fallback to safe spawn point
+    return findSafeSpawnPoint(map);
 }
 
 bool MapGenerator::canPlaceRoom(const Map& map, int x, int y, int w, int h) {

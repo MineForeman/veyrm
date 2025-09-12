@@ -121,56 +121,72 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 3: Entity System (Day 4)
 
-### 3.1 Entity Base
+### 3.1 Entity Base ✅
 - [x] Create `Entity` base class with position
 - [x] Create `Player` class extending Entity
 - [x] Add glyph and color properties
 - [x] Create `EntityManager` class for entity lifecycle
 - [x] Integrate entities with GameManager
 - [x] Update movement to use entity system
-- [x] **Test:** Entities can be created and positioned
-- [x] **Git tag:** `v0.3.1-entity-base`
-- **Notes:** Complete entity system with Player class, EntityManager, and movement integration
+- [x] Comprehensive test suite (57 test cases, 404 assertions)
+- [x] Fix all test failures and ensure 100% pass rate
+- [x] **Test:** Entities can be created and positioned ✅
+- [x] **Git tag:** `v0.3.1-entity-base` ✅
+- **Notes:** Complete entity system with Player class, EntityManager, movement integration, and full test coverage
 
-### 3.2 Player on Map
-- [ ] Add player to game state
-- [ ] Render player on map
-- [ ] Ensure player renders above floor
-- [ ] **Test:** Player appears at spawn position
-- [ ] **Git tag:** `v0.3.2-player-render`
+### 3.2 Player on Map (Completed as part of 3.1) ✅
+- [x] Add player to game state
+- [x] Render player on map  
+- [x] Ensure player renders above floor
+- [x] **Test:** Player appears at spawn position ✅
+- **Notes:** Completed as part of Phase 3.1 integration
 
-### 3.3 Entity Manager
-- [ ] Create `EntityManager` class
-- [ ] Track all entities in single container
-- [ ] Add entity lookup by position
-- [ ] **Test:** Can add, remove, find entities
-- [ ] **Documentation:** Document entity architecture
-- [ ] **Git tag:** `v0.3.3-entity-manager`
+### 3.3 Entity Manager (Completed as part of 3.1) ✅
+- [x] Create `EntityManager` class
+- [x] Track all entities in single container
+- [x] Add entity lookup by position
+- [x] **Test:** Can add, remove, find entities ✅
+- [x] **Documentation:** Entity architecture documented in TESTS.md
+- **Notes:** Completed as part of Phase 3.1 comprehensive implementation
+
+---
+
+## Phase 3.5: Test Suite Completion ✅
+
+### 3.5.1 Comprehensive Test Coverage
+- [x] Document all 57 test cases in TESTS.md
+- [x] Fix MapGenerator stairs placement (out of bounds issue)
+- [x] Fix MapGenerator spawn point validation for all map types
+- [x] Fix MapValidator CORRIDOR_TEST connectivity issues
+- [x] Fix MessageLog constructor behavior and message ordering
+- [x] Achieve 100% test pass rate (404 assertions)
+- [x] **Test:** All unit tests pass consistently ✅
+- **Notes:** Complete test suite with comprehensive coverage of entity system, map generation, input handling, and message logging
 
 ---
 
 ## Phase 4: Movement System (Day 5)
 
-### 4.1 Basic Movement
-- [ ] Implement 4-directional movement (arrow keys)
-- [ ] Add collision detection with walls
-- [ ] Update player position on valid moves
-- [ ] **Test:** Player moves in empty spaces, stops at walls
-- [ ] **Git tag:** `v0.4.1-basic-movement`
+### 4.1 Basic Movement ✅
+- [x] Implement 4-directional movement (arrow keys)
+- [x] Add collision detection with walls
+- [x] Update player position on valid moves
+- [x] **Test:** Player moves in empty spaces, stops at walls ✅
+- **Notes:** Completed as part of entity system integration
 
-### 4.2 8-Directional Movement
-- [ ] Add diagonal movement (yubn keys)
-- [ ] Implement hjkl vim-style movement
-- [ ] Add wait command (.)
-- [ ] **Test:** All 8 directions + wait work
-- [ ] **Git tag:** `v0.4.2-eight-direction`
+### 4.2 8-Directional Movement (Partially Complete)
+- [x] Add wait command (. and numpad 5)
+- [ ] Add diagonal movement (yubn keys) - *Deferred per design decision*
+- [ ] Implement hjkl vim-style movement - *Deferred per design decision*
+- [x] **Test:** Wait command works ✅
+- **Notes:** Arrow keys only for movement, vi-keys explicitly excluded from current design
 
-### 4.3 Movement Validation
-- [ ] Create `MovementSystem` class
-- [ ] Add bounds checking
-- [ ] Add entity collision checking
-- [ ] **Test:** Movement validation prevents invalid moves
-- [ ] **Git tag:** `v0.4.3-movement-validation`
+### 4.3 Movement Validation ✅
+- [x] Movement validation integrated into Player class
+- [x] Add bounds checking
+- [x] Add entity collision checking (blocking vs non-blocking entities)
+- [x] **Test:** Movement validation prevents invalid moves ✅
+- **Notes:** Validation handled by Player::tryMove() method with comprehensive test coverage
 
 ---
 

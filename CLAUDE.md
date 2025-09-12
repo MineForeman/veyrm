@@ -2,6 +2,34 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Testing Requirements
+
+**IMPORTANT:** Tests must ALWAYS be created and run when implementing new features or fixing bugs. Follow these guidelines:
+
+1. **Test-First Development**: Write tests before or alongside implementation
+2. **Run Tests**: Always run `./build.sh test` after changes to ensure nothing breaks
+3. **Coverage**: Each new class or function should have corresponding unit tests
+4. **Validation**: Never mark a task as complete without passing tests
+5. **Test Location**: Tests go in `tests/` directory with naming pattern `test_<component>.cpp`
+6. **All Tests Must Pass**: No new feature or bug fix is considered complete until ALL tests pass - both new tests and existing tests. A failing test suite means the work is incomplete.
+
+### Gameplay Testing
+
+**IMPORTANT:** Always test gameplay features using the build.sh dump and keys commands for automated verification:
+
+- `./build.sh dump` - Runs the game with frame dump output for visual debugging. Use this to verify rendering, map layout, and UI elements are displaying correctly.
+- `./build.sh run --keys "hjklq"` - Runs the game with automated key inputs. Use this to test movement, input handling, and game flow without manual interaction.
+- Combine both: Test complex scenarios by providing key sequences and examining the frame dumps to ensure the game responds correctly.
+
+Example testing workflow:
+```bash
+# Test movement and rendering
+./build.sh run --keys "hjklhjkl" --dump  # Move around and check frame output
+
+# Test specific scenarios
+./build.sh run --keys "jjjlllkkkhhhq"    # Move to specific location and quit
+```
+
 ## Project Overview
 
 Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for terminal UI. The game features a dark fantasy world where players descend through the Spiral Vaults beneath Veyrmspire to break the last shard of a dead god's crown.
@@ -18,12 +46,21 @@ Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for termin
 
 ## Build Commands
 
+**IMPORTANT:** Always use `./build.sh` as the preferred way to build and run the game. It handles all build configurations, dependency management, and provides helpful utilities.
+
 ```bash
-# Quick build
+# Preferred method - using build.sh
+./build.sh build    # Build the game
+./build.sh run      # Run the game (with map selection menu)
+./build.sh test     # Run all tests
+./build.sh clean    # Clean build directory
+./build.sh dump     # Run with frame dump for debugging
+
+# Manual CMake commands (if needed)
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . -j
-./ang
+./bin/veyrm
 
 # Debug build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -74,3 +111,8 @@ Monsters and items are defined in JSON:
 ## World Context
 
 The game starts in Ring 1: Woundworks of the Spiral Vaults. The world documentation in DOC/WORLD/ provides narrative context and thematic guidance. The MVP documentation in DOC/MVP/ contains implementation specifications.
+
+## Special Files
+
+### VIBE.md - User Notes
+**IMPORTANT:** `DOC/VIBE.md` contains the user's personal notes and should NOT be edited by Claude. This file should be checked into git when changes are made, but Claude should never modify its contents. It serves as the user's scratchpad and working notes for the project.

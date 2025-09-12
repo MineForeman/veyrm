@@ -5,6 +5,15 @@ add_executable(veyrm_tests
     test_main.cpp
     test_json.cpp
     test_basic.cpp
+    test_map.cpp
+    test_entity.cpp
+    test_player.cpp
+    test_entity_manager.cpp
+    test_map_generator.cpp
+    test_map_validator.cpp
+    test_turn_manager.cpp
+    test_input_handler.cpp
+    test_message_log.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -12,6 +21,32 @@ target_link_libraries(veyrm_tests
     PRIVATE
         Catch2::Catch2WithMain
         nlohmann_json::nlohmann_json
+        ftxui::screen
+        ftxui::dom
+        ftxui::component
+)
+
+# Include directories for tests
+target_include_directories(veyrm_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+# Add source files needed for testing
+target_sources(veyrm_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/map.cpp
+    ${CMAKE_SOURCE_DIR}/src/entity.cpp
+    ${CMAKE_SOURCE_DIR}/src/player.cpp
+    ${CMAKE_SOURCE_DIR}/src/entity_manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/point.cpp
+    ${CMAKE_SOURCE_DIR}/src/color_scheme.cpp
+    ${CMAKE_SOURCE_DIR}/src/map_generator.cpp
+    ${CMAKE_SOURCE_DIR}/src/map_validator.cpp
+    ${CMAKE_SOURCE_DIR}/src/turn_manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/input_handler.cpp
+    ${CMAKE_SOURCE_DIR}/src/message_log.cpp
+    ${CMAKE_SOURCE_DIR}/src/game_manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/wall_connector.cpp
+    ${CMAKE_SOURCE_DIR}/src/frame_stats.cpp
 )
 
 # Add compile definitions for tests

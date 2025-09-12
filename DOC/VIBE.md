@@ -1,4 +1,6 @@
-# Claude Code VIBE prompts
+# Claude Code VIBE prompts.
+
+These are the user note
 
 ## Setup
 
@@ -41,7 +43,7 @@
 - Implement 2.1 Tile System
 - Update implementation plan and push
 
-[[maybe_unused]]
+can you tell me why you use [[maybe_unused]], I have not seen that before and would like to know more 
 Test
 
 

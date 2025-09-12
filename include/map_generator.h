@@ -57,6 +57,7 @@ public:
     
     // Get spawn point for last generated map
     static Point getDefaultSpawnPoint(MapType type);
+    static Point getDefaultSpawnPoint(const Map& map, MapType type);
     
 private:
     // Room generation helpers

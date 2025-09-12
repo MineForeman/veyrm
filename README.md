@@ -74,14 +74,15 @@ Run with different test maps:
 | Key | Action |
 |-----|--------|
 | **Arrow Keys** | Move in 4 directions |
-| **Numpad** | Move in 8 directions (with diagonals) |
-| **hjkl** | Vi-style movement |
-| **yubn** | Diagonal movement |
+| **5 (numpad)** | Wait one turn |
 | **.** | Wait one turn |
 | **i** | Open inventory (coming soon) |
 | **?** | Show help |
-| **q** | Quit to menu |
-| **ESC** | Return to previous screen |
+| **q** / **Q** | Quit to menu |
+| **ESC** | Cancel/return to previous screen |
+| **Enter** | Confirm action |
+
+*Note: Vi-style movement (hjkl) and diagonal movement (yubn) are not currently implemented.*
 
 ## 🏗️ Architecture
 
@@ -108,7 +109,8 @@ veyrm/
 
 ## 📚 Documentation
 
-- **[Implementation Plan](DOC/IMPLEMENTATION_PLAN.md)** - Development roadmap
+- **[Implementation Plan](DOC/IMPLEMENTATION_PLAN.md)** - Development roadmap and phase tracking
+- **[Test Documentation](DOC/TESTS.md)** - Comprehensive test suite overview
 - **[Build Script Guide](DOC/BUILD_SCRIPT.md)** - Using the build.sh script
 - **[Phase Documentation](DOC/PHASES/)** - Detailed phase specifications
 - **[World Lore](DOC/WORLD/)** - Game world and setting
@@ -116,8 +118,8 @@ veyrm/
 
 ## 🛠️ Development
 
-### Current Phase: 3.2 Player on Map
-Entity system complete! Now improving player rendering and entity-based display.
+### Current Phase: 3.1 Complete - Entity Base ✅
+Entity system implemented with Player class, EntityManager, and movement integration. All tests passing (57 test cases, 404 assertions).
 
 ### Build Modes
 
@@ -138,14 +140,17 @@ Entity system complete! Now improving player rendering and entity-based display.
 ### Testing
 
 ```bash
-# Run unit tests
+# Run all unit tests (57 test cases)
 ./build.sh test
 
-# Run with automated input
-./build/bin/veyrm --keys '\n\u\u\r\d'
+# Run specific test
+./build/bin/veyrm_tests "[entity]"
 
-# Dump mode for debugging
-./build/bin/veyrm --dump '\n' --map room
+# Run with automated input for gameplay testing
+./build.sh keys "qqqq\n"
+
+# Dump mode for debugging frame-by-frame
+./build.sh dump
 ```
 
 ### Terminal Issues

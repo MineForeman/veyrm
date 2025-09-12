@@ -214,6 +214,8 @@ A comprehensive index and summary of all documentation for the Veyrm roguelike p
 2. **MVP/03_architecture.md** - System design
 3. **MVP/08_build_run.md** - Build instructions
 4. **MVP/09_json_seeds.md** - Data templates
+5. **[TESTS.md](TESTS.md)** - Comprehensive test suite documentation
+6. **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Development progress tracking
 
 ### Essential Files for World Understanding
 1. **WORLD/01_high_concept.md** - Core premise
@@ -230,6 +232,49 @@ A comprehensive index and summary of all documentation for the Veyrm roguelike p
 ```
 
 ### Key Commands Summary
-- Movement: arrows/hjkl + yubn (diagonals)
-- Actions: g(get), i(inventory), u(use), D(drop)
-- System: q(quit), N(new), .(wait)
+- **Currently Implemented:** arrows (movement), .(wait), q(quit), Esc(cancel), Enter(confirm)
+- **Planned:** hjkl + yubn (diagonals), g(get), i(inventory), u(use), D(drop), N(new)
+
+---
+
+## Current Implementation Status
+
+### ✅ Completed Phases (v0.3.1)
+- **Phase 0:** Project Setup (CMake, dependencies, FTXUI window)
+- **Phase 1:** Core Game Loop (state management, turn system, input handling)
+- **Phase 2:** Map Foundation (tile system, rendering, 5 test map types)
+- **Phase 3.1:** Entity System (Entity base class, Player, EntityManager)
+- **Phase 3.5:** Comprehensive Test Suite (57 test cases, 404 assertions)
+
+### 🏗️ Current Architecture
+- **Entity System:** Base Entity class with Player implementation
+- **Map System:** 5 map types (room, dungeon, corridor, arena, stress test)
+- **Rendering:** FTXUI-based terminal UI with viewport system
+- **Input:** Arrow key movement with collision detection
+- **Testing:** Full Catch2 test suite with 100% pass rate
+
+### 📊 Test Coverage
+- **Entity System:** 18 test cases covering creation, movement, collision
+- **Map System:** 19 test cases covering generation, validation, connectivity
+- **UI Systems:** 12 test cases covering input handling and message logging
+- **Core Systems:** 8 test cases covering turn management and basic functionality
+
+### 🚀 Next Steps (Phase 4+)
+- Monster entities and basic AI
+- Combat system implementation  
+- Field of view and map memory
+- Item system and inventory
+- Save/load functionality
+
+### 🔧 Build and Test Commands
+```bash
+# Build and run
+./build.sh run
+
+# Run all tests  
+./build.sh test
+
+# Automated testing
+./build.sh keys "qqqq\n"
+./build.sh dump
+```
