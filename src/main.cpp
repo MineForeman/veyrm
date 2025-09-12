@@ -2,6 +2,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <csignal>
+#include <cstdlib>
 
 // FTXUI includes
 #include <ftxui/component/captured_mouse.hpp>
@@ -12,6 +14,10 @@
 
 // JSON include
 #include <nlohmann/json.hpp>
+
+// Game includes
+#include "game_state.h"
+#include "game_screen.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -103,19 +109,16 @@ bool runSystemChecks() {
 }
 
 /**
- * Run FTXUI interface
+ * Create main menu component
  */
-void runInterface() {
+ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive*) {
     using namespace ftxui;
     
-    auto screen = ScreenInteractive::TerminalOutput();
-    
     // Menu state
-    int selected = 0;
-    bool show_about = false;
+    static int selected = 0;
     
     // Menu options
-    std::vector<std::string> menu_entries = {
+    static std::vector<std::string> menu_entries = {
         "New Game",
         "Continue",
         "Settings",
@@ -126,7 +129,7 @@ void runInterface() {
     auto menu = Menu(&menu_entries, &selected);
     
     // Create the main component with renderer
-    auto component = Renderer(menu, [&] {
+    auto component = Renderer(menu, [=] {
         // Title
         auto title = vbox({
             text("╔══════════════════════════════════════╗") | color(Color::Yellow),
@@ -145,7 +148,7 @@ void runInterface() {
         
         // About box (conditional)
         Element about_box = emptyElement();
-        if (show_about) {
+        if (selected == 3) {  // Show about when About is selected
             about_box = vbox({
                 separator(),
                 window(text("About"), vbox({
@@ -178,41 +181,110 @@ void runInterface() {
     });
     
     // Add event handling
-    component |= CatchEvent([&](Event event) {
+    component |= CatchEvent([=](Event event) {
         if (event == Event::Return) {
             switch(selected) {
                 case 0: // New Game
+                    game_manager->setState(GameState::PLAYING);
                     break;
                 case 1: // Continue
+                    // TODO: Load save game
                     break;
                 case 2: // Settings
+                    // TODO: Settings menu
                     break;
                 case 3: // About
-                    show_about = !show_about;
+                    // Toggle about is handled in renderer directly
                     break;
                 case 4: // Quit
-                    screen.ExitLoopClosure()();
+                    game_manager->setState(GameState::QUIT);
                     break;
             }
             return true;
         }
         if (event == Event::Character('q') || event == Event::Escape) {
-            screen.ExitLoopClosure()();
+            game_manager->setState(GameState::QUIT);
             return true;
         }
         return false;
     });
     
-    screen.Loop(component);
-    
-    // Reset terminal state
+    return component;
+}
+
+/**
+ * Reset terminal to normal state
+ */
+void resetTerminal() {
+    // Disable all mouse tracking modes
     std::cout << "\033[?1003l"; // Disable mouse tracking
-    std::cout << "\033[?1006l"; // Disable SGR mouse mode
+    std::cout << "\033[?1006l"; // Disable SGR mouse mode  
     std::cout << "\033[?1015l"; // Disable urxvt mouse mode
     std::cout << "\033[?1000l"; // Disable X11 mouse reporting
     std::cout << "\033[?25h";   // Show cursor
+    std::cout << "\033c";       // Reset terminal
     std::cout.flush();
+}
+
+/**
+ * Signal handler for clean shutdown
+ */
+void signalHandler(int signum) {
+    resetTerminal();
+    std::exit(signum);
+}
+
+/**
+ * Run FTXUI interface
+ */
+void runInterface() {
+    using namespace ftxui;
     
+    // Set up cleanup handlers for unexpected exits
+    std::atexit(resetTerminal);
+    std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
+    
+    auto screen = ScreenInteractive::TerminalOutput();
+    
+    // Disable mouse tracking to prevent terminal artifacts
+    screen.TrackMouse(false);
+    GameManager game_manager;
+    
+    // Create components
+    Component main_menu = createMainMenu(&game_manager, &screen);
+    GameScreen game_screen(&game_manager, &screen);
+    Component game_component = game_screen.Create();
+    
+    // State-based renderer
+    auto main_renderer = Renderer([&] {
+        switch(game_manager.getState()) {
+            case GameState::MENU:
+                return main_menu->Render();
+            case GameState::PLAYING:
+                return game_component->Render();
+            case GameState::QUIT:
+                screen.ExitLoopClosure()();
+                return text("Exiting...");
+        }
+        return text("Unknown state");
+    });
+    
+    // State-based input handler
+    auto main_component = CatchEvent(main_renderer, [&](Event event) {
+        switch(game_manager.getState()) {
+            case GameState::MENU:
+                return main_menu->OnEvent(event);
+            case GameState::PLAYING:
+                return game_component->OnEvent(event);
+            default:
+                return false;
+        }
+    });
+    
+    screen.Loop(main_component);
+    
+    // Terminal cleanup is handled by resetTerminal() via atexit
     std::cout << "Thanks for playing Veyrm!\n";
 }
 

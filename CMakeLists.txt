@@ -115,7 +115,10 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # ========================================
 # Main executable
 # ========================================
-add_executable(veyrm src/main.cpp)
+add_executable(veyrm 
+    src/main.cpp
+    src/game_screen.cpp
+)
 
 # Link libraries
 target_link_libraries(veyrm 

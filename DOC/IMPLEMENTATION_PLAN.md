@@ -30,12 +30,15 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.0.2-dependencies`
 - **Notes:** Fixed AddressSanitizer conflicts, added terminal cleanup, enhanced build.sh
 
-### 0.3 Basic FTXUI Window 🚧 **NEXT**
-- [ ] Create minimal FTXUI app with quit on 'q' *(Partially complete - menu exists)*
-- [ ] Set up screen with proper Unicode support
-- [ ] Add window title and basic layout
-- [ ] **Test:** App launches, displays, and quits properly
-- [ ] **Git tag:** `v0.0.3-ftxui-window`
+### 0.3 Basic FTXUI Window ✅
+- [x] Create minimal FTXUI app with quit on 'q'
+- [x] Set up screen with proper Unicode support
+- [x] Add window title and basic layout
+- [x] Implement three-panel game screen (map, status, log)
+- [x] Add state management (MENU, PLAYING, QUIT)
+- [x] **Test:** App launches, displays, and quits properly
+- [x] **Git tag:** `v0.0.3-ftxui-window`
+- **Notes:** Fixed segfault in menu renderer, resolved terminal mouse tracking issues
 
 ---
 

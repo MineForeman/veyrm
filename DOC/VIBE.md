@@ -19,3 +19,7 @@
 - Tag and push 0.2 Dependencies Setup
 - Update the IMPLEMENTATION_PLAN.md
 
+- Detail what is needed to complete 0.3 in its own document.
+- Implement the items in 0.3 document.
+- Update the documentation and IMPLEMENTATION_PLAN.md and any other md files that need updating for 0.
+- Tag and push 0.3, ensure that all files are checked in.
