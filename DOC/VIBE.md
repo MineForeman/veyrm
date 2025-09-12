@@ -23,3 +23,6 @@
 - Implement the items in 0.3 document.
 - Update the documentation and IMPLEMENTATION_PLAN.md and any other md files that need updating for 0.
 - Tag and push 0.3, ensure that all files are checked in.
+
+- Detail what is needed to complete 0.4 in its own document.
+- Tag and checkin 1.1. 

@@ -40,16 +40,26 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.0.3-ftxui-window`
 - **Notes:** Fixed segfault in menu renderer, resolved terminal mouse tracking issues
 
+### 0.4 Input and Turn Foundation 🚧 **NEXT**
+- [ ] Create `InputHandler` class for keyboard processing
+- [ ] Add vi-keys (hjkl) and arrow key movement handling
+- [ ] Implement basic turn counter in GameManager
+- [ ] Add player position tracking (x, y coordinates)
+- [ ] Update game screen to show player position
+- [ ] **Test:** Input handling works, player moves, turns increment
+- [ ] **Git tag:** `v0.0.4-input-turns`
+
 ---
 
 ## Phase 1: Core Game Loop (Day 2)
 
-### 1.1 Game State Structure
-- [ ] Create `Game` class with state enum (MENU, PLAYING, QUIT)
-- [ ] Create `InputHandler` class for keyboard processing
-- [ ] Implement state transitions
-- [ ] **Test:** State transitions work correctly
-- [ ] **Git tag:** `v0.1.1-game-state`
+### 1.1 Game State Structure ✅
+- [x] Create `GameManager` class with state enum (extended with PAUSED, INVENTORY, HELP)
+- [x] Create `InputHandler` class for keyboard processing
+- [x] Implement state transitions with previous state tracking
+- [x] **Test:** State transitions work correctly
+- [x] **Git tag:** `v0.1.1-game-state`
+- **Notes:** Complete state management with InputHandler, player movement, and turn counting
 
 ### 1.2 Turn System
 - [ ] Implement `TurnManager` class

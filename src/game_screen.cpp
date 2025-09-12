@@ -1,4 +1,5 @@
 #include "game_screen.h"
+#include "input_handler.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -10,7 +11,7 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive*)
     : game_manager(manager) {}
 
 Component GameScreen::CreateMapPanel() {
-    return Renderer([] {
+    return Renderer([this] {
         // Temporary test map display
         std::vector<Element> map_lines;
         
@@ -20,8 +21,8 @@ Component GameScreen::CreateMapPanel() {
             for (int x = 0; x < 60; x++) {
                 if (y == 0 || y == 19 || x == 0 || x == 59) {
                     line += "#";  // Walls
-                } else if (x == 30 && y == 10) {
-                    line += "@";  // Player
+                } else if (x == game_manager->player_x && y == game_manager->player_y) {
+                    line += "@";  // Player at dynamic position
                 } else {
                     line += ".";  // Floor
                 }
@@ -76,31 +77,56 @@ Component GameScreen::Create() {
     
     // Add input handling
     layout |= CatchEvent([this](Event event) {
-        if (event == Event::Character('q') || event == Event::Escape) {
-            game_manager->setState(GameState::MENU);
-            return true;
-        }
+        InputHandler* input = game_manager->getInputHandler();
+        InputAction action = input->processEvent(event);
         
-        // Movement keys (placeholder for now)
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            // Move up
-            game_manager->turn_count++;
-            return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            // Move down
-            game_manager->turn_count++;
-            return true;
-        }
-        if (event == Event::ArrowLeft || event == Event::Character('h')) {
-            // Move left
-            game_manager->turn_count++;
-            return true;
-        }
-        if (event == Event::ArrowRight || event == Event::Character('l')) {
-            // Move right
-            game_manager->turn_count++;
-            return true;
+        switch(action) {
+            case InputAction::QUIT:
+                game_manager->setState(GameState::MENU);
+                return true;
+                
+            case InputAction::MOVE_UP:
+                if (game_manager->player_y > 1) {
+                    game_manager->player_y--;
+                    game_manager->incrementTurn();
+                }
+                return true;
+                
+            case InputAction::MOVE_DOWN:
+                if (game_manager->player_y < 18) {
+                    game_manager->player_y++;
+                    game_manager->incrementTurn();
+                }
+                return true;
+                
+            case InputAction::MOVE_LEFT:
+                if (game_manager->player_x > 1) {
+                    game_manager->player_x--;
+                    game_manager->incrementTurn();
+                }
+                return true;
+                
+            case InputAction::MOVE_RIGHT:
+                if (game_manager->player_x < 58) {
+                    game_manager->player_x++;
+                    game_manager->incrementTurn();
+                }
+                return true;
+                
+            case InputAction::WAIT:
+                game_manager->incrementTurn();
+                return true;
+                
+            case InputAction::OPEN_INVENTORY:
+                game_manager->setState(GameState::INVENTORY);
+                return true;
+                
+            case InputAction::OPEN_HELP:
+                game_manager->setState(GameState::HELP);
+                return true;
+                
+            default:
+                break;
         }
         
         return false;

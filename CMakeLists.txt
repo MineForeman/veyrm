@@ -118,6 +118,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_executable(veyrm 
     src/main.cpp
     src/game_screen.cpp
+    src/game_manager.cpp
+    src/input_handler.cpp
 )
 
 # Link libraries

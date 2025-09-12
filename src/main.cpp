@@ -263,6 +263,32 @@ void runInterface() {
                 return main_menu->Render();
             case GameState::PLAYING:
                 return game_component->Render();
+            case GameState::PAUSED:
+                return vbox({
+                    text("PAUSED") | bold | center,
+                    separator(),
+                    text("Press ESC to resume") | center
+                }) | border;
+            case GameState::INVENTORY:
+                return vbox({
+                    text("INVENTORY") | bold,
+                    separator(),
+                    text("(Not yet implemented)"),
+                    text("Press ESC to return")
+                }) | border;
+            case GameState::HELP:
+                return vbox({
+                    text("HELP") | bold,
+                    separator(),
+                    text("Arrow keys: Move"),
+                    text("Numpad: Move (with diagonals)"),
+                    text(".: Wait"),
+                    text("i: Inventory"),
+                    text("?: Help"),
+                    text("q: Quit to menu"),
+                    separator(),
+                    text("Press ESC to return")
+                }) | border;
             case GameState::QUIT:
                 screen.ExitLoopClosure()();
                 return text("Exiting...");
@@ -277,6 +303,15 @@ void runInterface() {
                 return main_menu->OnEvent(event);
             case GameState::PLAYING:
                 return game_component->OnEvent(event);
+            case GameState::PAUSED:
+            case GameState::INVENTORY:
+            case GameState::HELP:
+                if (event == Event::Escape) {
+                    game_manager.returnToPreviousState();
+                    return true;
+                }
+                return false;
+            case GameState::QUIT:
             default:
                 return false;
         }
