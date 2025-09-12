@@ -61,12 +61,13 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.1.1-game-state`
 - **Notes:** Complete state management with InputHandler, player movement, and turn counting
 
-### 1.2 Turn System
-- [ ] Implement `TurnManager` class
-- [ ] Add player turn vs world turn distinction
-- [ ] Create turn counter
-- [ ] **Test:** Turns increment properly
-- [ ] **Git tag:** `v0.1.2-turn-system`
+### 1.2 Turn System ✅
+- [x] Implement `TurnManager` class
+- [x] Add player turn vs world turn distinction
+- [x] Create turn counter
+- [x] **Test:** Turns increment properly
+- [x] **Git tag:** `v0.1.2-turn-system`
+- **Notes:** Implemented action speed system, message log, world time tracking
 
 ### 1.3 Main Game Loop
 - [ ] Connect input → update → render cycle
