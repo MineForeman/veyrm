@@ -12,4 +12,8 @@
 - Implement the items in 0.1 Initialize Repository document.
 
 - Detail what is needed to complete 0.2 Dependencies Setup in its own document.
-
+- Implement the items in 0.2 Dependencies Setup document.
+- Check that was 0.2 Dependencies fully implementated.
+- WHen I run the binary with ./build/bin/veyrm it charshes
+- Update the documentation for 0.2 Dependencies Setup
+- Tag and push 0.2 Dependencies Setup
