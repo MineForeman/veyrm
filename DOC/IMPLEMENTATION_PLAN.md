@@ -129,7 +129,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] Integrate entities with GameManager
 - [x] Update movement to use entity system
 - [x] **Test:** Entities can be created and positioned
-- [ ] **Git tag:** `v0.3.1-entity-base`
+- [x] **Git tag:** `v0.3.1-entity-base`
 - **Notes:** Complete entity system with Player class, EntityManager, and movement integration
 
 ### 3.2 Player on Map
