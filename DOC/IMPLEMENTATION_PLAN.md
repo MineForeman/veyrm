@@ -40,14 +40,15 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.0.3-ftxui-window`
 - **Notes:** Fixed segfault in menu renderer, resolved terminal mouse tracking issues
 
-### 0.4 Input and Turn Foundation 🚧 **NEXT**
-- [ ] Create `InputHandler` class for keyboard processing
-- [ ] Add vi-keys (hjkl) and arrow key movement handling
-- [ ] Implement basic turn counter in GameManager
-- [ ] Add player position tracking (x, y coordinates)
-- [ ] Update game screen to show player position
-- [ ] **Test:** Input handling works, player moves, turns increment
-- [ ] **Git tag:** `v0.0.4-input-turns`
+### 0.4 Input and Turn Foundation ✅
+- [x] Create `InputHandler` class for keyboard processing
+- [x] Add ~~vi-keys (hjkl)~~ and arrow key movement handling (vi-keys excluded per request)
+- [x] Implement basic turn counter in GameManager
+- [x] Add player position tracking (x, y coordinates)
+- [x] Update game screen to show player position
+- [x] **Test:** Input handling works, player moves, turns increment
+- [x] **Git tag:** `v0.0.4-input-turns`
+- **Notes:** Completed as part of Phase 1.1 and 1.2
 
 ---
 
@@ -69,13 +70,14 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.1.2-turn-system`
 - **Notes:** Implemented action speed system, message log, world time tracking
 
-### 1.3 Main Game Loop
-- [ ] Connect input → update → render cycle
-- [ ] Add frame rate limiting
-- [ ] Implement clean shutdown
-- [ ] **Test:** Game loop runs at stable FPS
-- [ ] **Documentation:** Add game loop diagram to docs
-- [ ] **Git tag:** `v0.1.3-game-loop`
+### 1.3 Main Game Loop ✅
+- [x] Connect input → update → render cycle
+- [x] Add frame rate limiting
+- [x] Implement clean shutdown
+- [x] **Test:** Game loop runs at stable FPS
+- [x] **Documentation:** Add game loop diagram to docs
+- [x] **Git tag:** `v0.1.3-game-loop`
+- **Notes:** GameLoop class with 60 FPS target, FrameStats monitoring, FTXUI integration via refresh thread
 
 ---
 
