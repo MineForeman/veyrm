@@ -91,12 +91,16 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.2.1-tile-system`
 - **Notes:** Full tile system with properties, collision detection, visibility tracking
 
-### 2.2 Map Rendering
-- [ ] Create `Renderer` class with FTXUI integration
-- [ ] Render map with ASCII characters (#, ., >)
-- [ ] Add color support for tiles
-- [ ] **Test:** Map displays correctly at 80x24
-- [ ] **Git tag:** `v0.2.2-map-render`
+### 2.2 Map Rendering ✅
+- [x] Create `MapRenderer` class with FTXUI integration
+- [x] Render map with ASCII characters (#, ., >)
+- [x] Add terminal-adaptive color support for tiles
+- [x] Implement viewport system for scrolling
+- [x] Fix layer compositing bug (single-pass rendering)
+- [x] Add ColorScheme for terminal compatibility
+- [x] **Test:** Map displays correctly at 80x24
+- [x] **Git tag:** `v0.2.2-map-render`
+- **Notes:** Complete rendering system with viewport, adaptive colors, and wall visibility fix
 
 ### 2.3 Simple Test Map
 - [ ] Create hardcoded 20x20 room for testing

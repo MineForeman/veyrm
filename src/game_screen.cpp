@@ -4,6 +4,7 @@
 #include "message_log.h"
 #include "frame_stats.h"
 #include "map.h"
+#include "renderer.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
@@ -12,7 +13,13 @@
 using namespace ftxui;
 
 GameScreen::GameScreen(GameManager* manager, ScreenInteractive*) 
-    : game_manager(manager) {}
+    : game_manager(manager),
+      renderer(std::make_unique<MapRenderer>(80, 24)) {
+    // Center renderer on player's starting position
+    renderer->centerOn(game_manager->player_x, game_manager->player_y);
+}
+
+GameScreen::~GameScreen() = default;
 
 Component GameScreen::CreateMapPanel() {
     return Renderer([this] {
@@ -21,30 +28,11 @@ Component GameScreen::CreateMapPanel() {
             return text("No map loaded") | border;
         }
         
-        std::vector<Element> map_lines;
+        // Use the new Renderer class to render the map
+        Element rendered = renderer->render(*map, *game_manager);
         
-        for (int y = 0; y < map->getHeight(); y++) {
-            std::vector<Element> row_elements;
-            
-            for (int x = 0; x < map->getWidth(); x++) {
-                // Check for player position
-                if (x == game_manager->player_x && y == game_manager->player_y) {
-                    row_elements.push_back(text("@") | color(Color::White));
-                } else if (map->isVisible(x, y)) {
-                    char glyph = map->getGlyph(x, y);
-                    Color fg = map->getForeground(x, y);
-                    row_elements.push_back(text(std::string(1, glyph)) | color(fg));
-                } else if (map->isExplored(x, y)) {
-                    char glyph = map->getGlyph(x, y);
-                    row_elements.push_back(text(std::string(1, glyph)) | color(Color::GrayDark));
-                } else {
-                    row_elements.push_back(text(" "));
-                }
-            }
-            map_lines.push_back(hbox(row_elements));
-        }
-        
-        return vbox(map_lines) | border;
+        // Add border and sizing
+        return rendered | border | size(WIDTH, EQUAL, 82) | size(HEIGHT, EQUAL, 26);
     });
 }
 

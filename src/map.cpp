@@ -1,15 +1,16 @@
 #include "map.h"
+#include "color_scheme.h"
 #include <algorithm>
 
 // Define tile properties for each tile type
 const std::map<TileType, TileProperties> Map::tileProperties = {
-    {TileType::FLOOR,       {'.', Color::GrayLight, Color::Black, true,  true,  false, "Stone Floor"}},
-    {TileType::WALL,        {'#', Color::White,     Color::Black, false, false, true,  "Stone Wall"}},
+    {TileType::FLOOR,       {'.', Color::White,     Color::Black, true,  true,  false, "Stone Floor"}},
+    {TileType::WALL,        {'#', Color::Yellow,    Color::Black, false, false, true,  "Stone Wall"}},
     {TileType::STAIRS_DOWN, {'>', Color::Yellow,    Color::Black, true,  true,  false, "Stairs Down"}},
     {TileType::STAIRS_UP,   {'<', Color::Yellow,    Color::Black, true,  true,  false, "Stairs Up"}},
     {TileType::DOOR_CLOSED, {'+', Color::Yellow,    Color::Black, false, false, true,  "Closed Door"}},
     {TileType::DOOR_OPEN,   {'/', Color::Yellow,    Color::Black, true,  true,  false, "Open Door"}},
-    {TileType::WATER,       {'~', Color::Blue,      Color::Black, false, true,  false, "Water"}},
+    {TileType::WATER,       {'~', Color::Cyan,      Color::Black, false, true,  false, "Water"}},
     {TileType::LAVA,        {'~', Color::Red,       Color::Black, false, true,  false, "Lava"}},
     {TileType::VOID,        {' ', Color::Black,     Color::Black, false, false, false, "Void"}},
     {TileType::UNKNOWN,     {'?', Color::GrayDark,  Color::Black, false, false, false, "Unknown"}},
@@ -130,11 +131,25 @@ char Map::getGlyph(int x, int y) const {
 
 Color Map::getForeground(int x, int y) const {
     TileType tile = getTile(x, y);
-    auto it = tileProperties.find(tile);
-    if (it != tileProperties.end()) {
-        return it->second.foreground;
+    const auto& colors = ColorScheme::getCurrentColors();
+    
+    // Use color scheme instead of static properties
+    switch (tile) {
+        case TileType::WALL:
+            return isVisible(x, y) ? colors.wall : colors.wall_memory;
+        case TileType::FLOOR:
+            return isVisible(x, y) ? colors.floor : colors.floor_memory;
+        case TileType::VOID:
+            return colors.void_tile;
+        case TileType::STAIRS_DOWN:
+        case TileType::STAIRS_UP:
+            return Color::Yellow;  // Keep stairs always yellow
+        case TileType::DOOR_CLOSED:
+        case TileType::DOOR_OPEN:
+            return Color::Yellow;  // Keep doors yellow
+        default:
+            return Color::White;
     }
-    return Color::White;
 }
 
 Color Map::getBackground(int x, int y) const {

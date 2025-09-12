@@ -4,6 +4,7 @@
 #include "message_log.h"
 #include "frame_stats.h"
 #include "map.h"
+#include "color_scheme.h"
 
 GameManager::GameManager() 
     : current_state(GameState::MENU),
@@ -15,19 +16,38 @@ GameManager::GameManager()
       map(std::make_unique<Map>()),
       debug_mode(false) {
     
-    // Create a simple test map
-    map->fill(TileType::VOID);
-    map->createRoom(20, 5, 40, 14);  // Main room
-    map->createRoom(5, 8, 12, 8);     // Left room
-    map->createCorridor(Point(16, 12), Point(20, 12));  // Connect rooms
+    // Initialize color scheme with auto-detection
+    ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
     
-    // Place stairs
-    map->setTile(55, 15, TileType::STAIRS_DOWN);
+    // Create a larger test map to demonstrate viewport
+    map->fill(TileType::VOID);
+    
+    // Create multiple rooms
+    map->createRoom(10, 5, 20, 10);   // Top-left room
+    map->createRoom(35, 5, 20, 10);   // Top-right room
+    map->createRoom(10, 18, 20, 10);  // Bottom-left room
+    map->createRoom(35, 18, 25, 10);  // Bottom-right room (larger)
+    map->createRoom(22, 10, 16, 12);  // Central room
+    
+    // Connect rooms with corridors
+    map->createCorridor(Point(20, 10), Point(30, 10));  // Top-left to central
+    map->createCorridor(Point(37, 10), Point(45, 10));  // Central to top-right
+    map->createCorridor(Point(20, 22), Point(30, 22));  // Bottom-left to central
+    map->createCorridor(Point(37, 22), Point(45, 22));  // Central to bottom-right
+    map->createCorridor(Point(30, 15), Point(30, 18));  // Central vertical
+    
+    // Place stairs in bottom-right room
+    map->setTile(55, 25, TileType::STAIRS_DOWN);
+    
+    // Place player in central room initially
+    player_x = 30;
+    player_y = 15;
     
     // Set everything visible for now (no FOV yet)
     for (int y = 0; y < map->getHeight(); y++) {
         for (int x = 0; x < map->getWidth(); x++) {
             map->setVisible(x, y, true);
+            map->setExplored(x, y, true);  // Also mark as explored
         }
     }
 }

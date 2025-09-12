@@ -127,6 +127,9 @@ add_executable(veyrm
     src/frame_stats.cpp
     src/map.cpp
     src/point.cpp
+    src/renderer.cpp
+    src/color_scheme.cpp
+    src/wall_connector.cpp
 )
 
 # Link libraries
