@@ -13,6 +13,7 @@
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 
 // JSON include
 #include <nlohmann/json.hpp>
@@ -238,6 +239,124 @@ void signalHandler(int signum) {
 }
 
 /**
+ * Run in frame dump mode for testing
+ */
+void runFrameDumpMode(TestInput* test_input) {
+    using namespace ftxui;
+    
+    GameManager game_manager;
+    
+    // Create components
+    auto screen = ScreenInteractive::TerminalOutput();
+    Component main_menu = createMainMenu(&game_manager, &screen);
+    GameScreen game_screen(&game_manager, &screen);
+    Component game_component = game_screen.Create();
+    
+    int frame_count = 0;
+    
+    std::cout << "\n=== FRAME DUMP MODE START ===\n\n";
+    
+    while (test_input->hasNextKeystroke()) {
+        // Get next keystroke
+        auto event = test_input->getNextKeystroke();
+        
+        // Create a screen buffer to render to
+        auto document = [&]() -> Element {
+            switch(game_manager.getState()) {
+                case GameState::MENU:
+                    return main_menu->Render();
+                case GameState::PLAYING:
+                    return game_component->Render();
+                case GameState::PAUSED:
+                    return vbox({
+                        text("PAUSED") | bold | center,
+                        separator(),
+                        text("Press ESC to resume") | center
+                    }) | border;
+                case GameState::INVENTORY:
+                    return vbox({
+                        text("INVENTORY") | bold,
+                        separator(),
+                        text("(Not yet implemented)"),
+                        text("Press ESC to return")
+                    }) | border;
+                case GameState::HELP:
+                    return vbox({
+                        text("HELP") | bold,
+                        separator(),
+                        text("Arrow keys: Move"),
+                        text("Numpad: Move (with diagonals)"),
+                        text(".: Wait"),
+                        text("i: Inventory"),
+                        text("?: Help"),
+                        text("q: Quit to menu"),
+                        separator(),
+                        text("Press ESC to return")
+                    }) | border;
+                case GameState::QUIT:
+                    return text("Exiting...");
+            }
+            return text("Unknown state");
+        }();
+        
+        // Create a screen and render
+        Screen render_screen(80, 24);
+        Render(render_screen, document);
+        
+        // Print frame header
+        std::cout << "--- Frame " << ++frame_count << " ---\n";
+        std::cout << "State: ";
+        switch(game_manager.getState()) {
+            case GameState::MENU: std::cout << "MENU"; break;
+            case GameState::PLAYING: std::cout << "PLAYING"; break;
+            case GameState::PAUSED: std::cout << "PAUSED"; break;
+            case GameState::INVENTORY: std::cout << "INVENTORY"; break;
+            case GameState::HELP: std::cout << "HELP"; break;
+            case GameState::QUIT: std::cout << "QUIT"; break;
+        }
+        std::cout << "\nInput: ";
+        
+        // Describe the input
+        if (event == Event::Return) std::cout << "Enter";
+        else if (event == Event::Escape) std::cout << "Escape";
+        else if (event == Event::ArrowUp) std::cout << "Up Arrow";
+        else if (event == Event::ArrowDown) std::cout << "Down Arrow";
+        else if (event == Event::ArrowLeft) std::cout << "Left Arrow";
+        else if (event == Event::ArrowRight) std::cout << "Right Arrow";
+        else if (event.is_character()) std::cout << "'" << event.character() << "'";
+        else std::cout << "Special";
+        std::cout << "\n\n";
+        
+        // Print the screen content
+        std::cout << render_screen.ToString() << "\n";
+        
+        // Process the event
+        switch(game_manager.getState()) {
+            case GameState::MENU:
+                main_menu->OnEvent(event);
+                break;
+            case GameState::PLAYING:
+                game_component->OnEvent(event);
+                break;
+            case GameState::PAUSED:
+            case GameState::INVENTORY:
+            case GameState::HELP:
+                if (event == Event::Escape) {
+                    game_manager.returnToPreviousState();
+                }
+                break;
+            case GameState::QUIT:
+                std::cout << "\n=== FRAME DUMP MODE END ===\n";
+                return;
+        }
+        
+        std::cout << "\n";
+    }
+    
+    std::cout << "\n=== FRAME DUMP MODE END (Input Exhausted) ===\n";
+}
+
+/**
  * Run FTXUI interface
  */
 void runInterface(TestInput* test_input = nullptr) {
@@ -380,6 +499,7 @@ int main(int argc, char* argv[]) {
             std::cout << "  --test              Run system checks\n";
             std::cout << "  --no-ui             Run without UI (test mode)\n";
             std::cout << "  --keys <keystrokes> Run with automated keystrokes\n";
+            std::cout << "  --dump <keystrokes> Run in frame dump mode (slideshow)\n";
             std::cout << "\nKeystroke format:\n";
             std::cout << "  Regular characters are sent as-is\n";
             std::cout << "  Escape sequences:\n";
@@ -415,6 +535,13 @@ int main(int argc, char* argv[]) {
             test_input.loadKeystrokes(argv[2]);
             std::cout << "Running with automated input: " << argv[2] << "\n";
             runInterface(&test_input);
+            return 0;
+        } else if (arg == "--dump" && argc > 2) {
+            // Run in frame dump mode
+            TestInput test_input;
+            test_input.loadKeystrokes(argv[2]);
+            test_input.setFrameDumpMode(true);
+            runFrameDumpMode(&test_input);
             return 0;
         } else {
             std::cerr << "Unknown option: " << arg << "\n";
