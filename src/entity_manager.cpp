@@ -128,6 +128,56 @@ std::vector<std::shared_ptr<Entity>> EntityManager::getAllEntities() const {
     return entities;
 }
 
+std::vector<std::shared_ptr<Entity>> EntityManager::getVisibleEntities() const {
+    std::vector<std::shared_ptr<Entity>> result;
+    
+    for (const auto& entity : entities) {
+        if (entity && entity->isVisible()) {
+            result.push_back(entity);
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::shared_ptr<Entity>> EntityManager::getVisibleMonsters() const {
+    std::vector<std::shared_ptr<Entity>> result;
+    
+    for (const auto& entity : entities) {
+        if (entity && entity->is_monster && entity->isVisible()) {
+            result.push_back(entity);
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::shared_ptr<Entity>> EntityManager::getVisibleItems() const {
+    std::vector<std::shared_ptr<Entity>> result;
+    
+    for (const auto& entity : entities) {
+        if (entity && entity->is_item && entity->isVisible()) {
+            result.push_back(entity);
+        }
+    }
+    
+    return result;
+}
+
+void EntityManager::updateEntityVisibility(const std::vector<std::vector<bool>>& fov) {
+    for (auto& entity : entities) {
+        if (entity && !entity->is_player) {  // Player is always visible to themselves
+            // Check if entity position is within FOV bounds
+            if (entity->y >= 0 && entity->y < static_cast<int>(fov.size()) &&
+                entity->x >= 0 && entity->x < static_cast<int>(fov[entity->y].size())) {
+                entity->setVisible(fov[entity->y][entity->x]);
+            } else {
+                entity->setVisible(false);
+            }
+        }
+    }
+}
+
 void EntityManager::updateAll(double delta_time) {
     // Update all entities
     for (auto& entity : entities) {

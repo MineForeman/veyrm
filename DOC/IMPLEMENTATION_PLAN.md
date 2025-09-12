@@ -230,19 +230,19 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Test:** FOV calculates correctly
 - [x] **Git tag:** `v0.6.1-fov-algorithm`
 
-### 6.2 Visibility System
-- [ ] Add visible/revealed states to tiles
-- [ ] Update visibility on player move
-- [ ] Implement fog of war rendering
-- [ ] **Test:** Only visible area shown
-- [ ] **Git tag:** `v0.6.2-visibility`
+### 6.2 Visibility System ✅ Complete
+- [x] Add visible/revealed states to tiles
+- [x] Update visibility on player move
+- [x] Implement fog of war rendering
+- [x] **Test:** Only visible area shown
+- [x] **Git tag:** `v0.6.2-visibility`
 
-### 6.3 Map Memory
-- [ ] Track explored tiles
-- [ ] Render explored but not visible tiles dimmed
-- [ ] Persist exploration between turns
-- [ ] **Test:** Map memory persists correctly
-- [ ] **Git tag:** `v0.6.3-map-memory`
+### 6.3 Map Memory ✅ Complete
+- [x] Track explored tiles
+- [x] Render explored but not visible tiles dimmed
+- [x] Persist exploration between turns
+- [x] **Test:** Map memory persists correctly
+- [x] **Git tag:** `v0.6.3-map-memory`
 
 ---
 

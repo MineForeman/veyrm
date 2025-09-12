@@ -36,12 +36,20 @@ public:
     std::string name;
     bool blocks_movement = false;
     bool blocks_sight = false;
-    bool is_visible = true;
     
     // Component flags
     bool is_player = false;
     bool is_monster = false;
     bool is_item = false;
+    
+    // Visibility
+    void setVisible(bool visible) { is_visible = visible; }
+    bool isVisible() const { return is_visible; }
+    
+private:
+    bool is_visible = true;
+    
+public:
     
     // Movement
     virtual void move(int dx, int dy);

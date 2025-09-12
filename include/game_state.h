@@ -43,6 +43,7 @@ public:
     FrameStats* getFrameStats() { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
     EntityManager* getEntityManager() { return entity_manager.get(); }
+    const EntityManager* getEntityManager() const { return entity_manager.get(); }
     Player* getPlayer();
     
     // Game loop integration

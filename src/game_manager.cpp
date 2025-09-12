@@ -170,4 +170,9 @@ void GameManager::updateFOV() {
             }
         }
     }
+    
+    // Update entity visibility based on FOV
+    if (entity_manager) {
+        entity_manager->updateEntityVisibility(current_fov);
+    }
 }

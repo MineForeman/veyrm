@@ -18,6 +18,7 @@ add_executable(veyrm_tests
     test_corridor_generation.cpp
     test_map_validation.cpp
     test_fov.cpp
+    test_visibility.cpp
 )
 
 # Link with Catch2 and other dependencies

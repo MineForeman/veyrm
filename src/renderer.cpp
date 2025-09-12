@@ -2,6 +2,7 @@
 #include "map.h"
 #include "game_state.h"
 #include "color_scheme.h"
+#include "entity_manager.h"
 #include <ftxui/dom/elements.hpp>
 #include <algorithm>
 
@@ -146,10 +147,52 @@ Element MapRenderer::renderTerrain([[maybe_unused]] const Map& map) {
     return text("");
 }
 
-Element MapRenderer::renderEntities([[maybe_unused]] const GameManager& game) {
-    // For now, this is a placeholder
-    // In future phases, this will render monsters, items, etc.
-    return text("");
+Element MapRenderer::renderEntities(const GameManager& game) {
+    // Get only visible entities from entity manager
+    auto entity_manager = game.getEntityManager();
+    if (!entity_manager) {
+        return text("");
+    }
+    
+    auto visible_entities = entity_manager->getVisibleEntities();
+    if (visible_entities.empty()) {
+        return text("");
+    }
+    
+    // Create grid for entities
+    std::vector<std::vector<char>> entity_grid(viewport_height, 
+                                               std::vector<char>(viewport_width, ' '));
+    std::vector<std::vector<Color>> entity_colors(viewport_height,
+                                                  std::vector<Color>(viewport_width, Color::White));
+    
+    // Place visible entities on grid
+    for (const auto& entity : visible_entities) {
+        if (entity && !entity->is_player && isInViewport(entity->x, entity->y)) {
+            Point screen_pos = mapToScreen(entity->x, entity->y);
+            if (screen_pos.x >= 0 && screen_pos.x < viewport_width &&
+                screen_pos.y >= 0 && screen_pos.y < viewport_height) {
+                entity_grid[screen_pos.y][screen_pos.x] = entity->glyph;
+                entity_colors[screen_pos.y][screen_pos.x] = entity->color;
+            }
+        }
+    }
+    
+    // Build render elements
+    std::vector<Element> rows;
+    for (int y = 0; y < viewport_height; y++) {
+        std::vector<Element> row_elements;
+        for (int x = 0; x < viewport_width; x++) {
+            if (entity_grid[y][x] != ' ') {
+                row_elements.push_back(text(std::string(1, entity_grid[y][x])) | 
+                                      color(entity_colors[y][x]));
+            } else {
+                row_elements.push_back(text(" "));
+            }
+        }
+        rows.push_back(hbox(row_elements));
+    }
+    
+    return vbox(rows);
 }
 
 Element MapRenderer::renderPlayer(const GameManager& game) {

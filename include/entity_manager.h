@@ -35,6 +35,12 @@ public:
     std::vector<std::shared_ptr<Entity>> getItems() const;
     std::vector<std::shared_ptr<Entity>> getAllEntities() const;
     
+    // Visibility
+    std::vector<std::shared_ptr<Entity>> getVisibleEntities() const;
+    std::vector<std::shared_ptr<Entity>> getVisibleMonsters() const;
+    std::vector<std::shared_ptr<Entity>> getVisibleItems() const;
+    void updateEntityVisibility(const std::vector<std::vector<bool>>& fov);
+    
     // Updates
     void updateAll(double delta_time);
     
