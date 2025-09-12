@@ -17,6 +17,27 @@ enum class MapType {
     PROCEDURAL      // Procedurally generated dungeon
 };
 
+enum class CorridorStyle {
+    STRAIGHT,       // Direct path (shortest)
+    L_SHAPED,       // One bend (current implementation)
+    S_SHAPED,       // Two bends
+    ORGANIC         // Natural winding path
+};
+
+enum class ConnectionStrategy {
+    SEQUENTIAL,     // Connect rooms in order (current)
+    NEAREST,        // Connect to nearest unconnected room
+    MST,            // Minimum spanning tree
+    RANDOM          // Random connections ensuring connectivity
+};
+
+struct CorridorOptions {
+    int width = 1;
+    CorridorStyle style = CorridorStyle::L_SHAPED;
+    bool placeDoors = true;
+    ConnectionStrategy strategy = ConnectionStrategy::MST;
+};
+
 struct RoomDef {
     int x, y;
     int width, height;
@@ -43,12 +64,12 @@ struct RoomDef {
 
 class MapGenerator {
 public:
-    // Room generation parameters
+    // Room generation parameters (scaled for Angband-sized maps)
     static constexpr int MIN_ROOM_SIZE = 4;
-    static constexpr int MAX_ROOM_SIZE = 12;
-    static constexpr int MIN_ROOMS = 5;
-    static constexpr int MAX_ROOMS = 15;
-    static constexpr int MAX_PLACEMENT_ATTEMPTS = 1000;
+    static constexpr int MAX_ROOM_SIZE = 20;   // Larger rooms for bigger map
+    static constexpr int MIN_ROOMS = 15;       // More rooms for larger map
+    static constexpr int MAX_ROOMS = 40;       // Many more rooms possible
+    static constexpr int MAX_PLACEMENT_ATTEMPTS = 2000;  // More attempts needed
     
     // Test map generators
     static void generateTestRoom(Map& map, int width = 20, int height = 20);
@@ -64,6 +85,7 @@ public:
     static std::vector<Room> generateRandomRooms(Map& map, unsigned int seed = 0);
     static std::vector<Room> generateRandomRooms(Map& map, std::mt19937& rng);
     static void generateProceduralDungeon(Map& map, unsigned int seed = 0);
+    static void generateProceduralDungeon(Map& map, unsigned int seed, const CorridorOptions& options);
     
     // Utilities
     static Point findSafeSpawnPoint(const Map& map);
@@ -74,14 +96,32 @@ public:
     static Point getDefaultSpawnPoint(MapType type);
     static Point getDefaultSpawnPoint(const Map& map, MapType type);
     
-private:
     // Room generation helpers
     static bool canPlaceRoom(const Map& map, int x, int y, int w, int h);
     static bool canPlaceRoom(const Map& map, const Room& room);
     static void carveRoom(Map& map, int x, int y, int w, int h);
     static void carveRoom(Map& map, const Room& room);
-    static void carveCorridor(Map& map, const Point& start, const Point& end);
     
     // Create L-shaped corridor between two points
     static void carveCorridorL(Map& map, const Point& start, const Point& end);
+    
+    // Corridor generation methods
+    static void connectRooms(Map& map, std::vector<Room>& rooms, const CorridorOptions& options);
+    static void carveCorridorStraight(Map& map, const Point& start, const Point& end, int width = 1);
+    static void carveCorridorS(Map& map, const Point& start, const Point& end, int width = 1);
+    static void carveCorridor(Map& map, const Point& start, const Point& end, 
+                             CorridorStyle style, int width = 1);
+    
+    // Connection strategies
+    static std::vector<std::pair<int, int>> getMSTConnections(const std::vector<Room>& rooms);
+    static std::vector<std::pair<int, int>> getNearestConnections(const std::vector<Room>& rooms);
+    static std::vector<std::pair<int, int>> getSequentialConnections(const std::vector<Room>& rooms);
+    
+    // Door placement
+    static void placeDoorAtIntersection(Map& map, const Point& pos);
+    static std::vector<Point> findCorridorRoomIntersections(const Map& map, const std::vector<Room>& rooms);
+    
+private:
+    // Legacy corridor method
+    static void carveCorridor(Map& map, const Point& start, const Point& end);
 };

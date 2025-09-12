@@ -7,8 +7,8 @@
 
 class Map {
 public:
-    static constexpr int DEFAULT_WIDTH = 80;
-    static constexpr int DEFAULT_HEIGHT = 24;
+    static constexpr int DEFAULT_WIDTH = 198;  // Classic Angband width
+    static constexpr int DEFAULT_HEIGHT = 66;   // Classic Angband height
     
     Map(int width = DEFAULT_WIDTH, int height = DEFAULT_HEIGHT);
     ~Map() = default;

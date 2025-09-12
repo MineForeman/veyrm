@@ -152,7 +152,7 @@ TEST_CASE("Room: Validation", "[room]") {
 }
 
 TEST_CASE("MapGenerator: Random room generation", "[map_generator]") {
-    Map map(80, 24);
+    Map map(198, 66);  // Use full Angband-sized map for room generation tests
     
     SECTION("Generate with random seed") {
         auto rooms = MapGenerator::generateRandomRooms(map);
@@ -171,7 +171,7 @@ TEST_CASE("MapGenerator: Random room generation", "[map_generator]") {
         unsigned int seed = 12345;
         auto rooms1 = MapGenerator::generateRandomRooms(map, seed);
         
-        Map map2(80, 24);
+        Map map2(198, 66);  // Same size for reproducibility
         auto rooms2 = MapGenerator::generateRandomRooms(map2, seed);
         
         // Same seed should produce same rooms
@@ -223,7 +223,7 @@ TEST_CASE("MapGenerator: Random room generation", "[map_generator]") {
 }
 
 TEST_CASE("MapGenerator: Procedural dungeon generation", "[map_generator]") {
-    Map map(80, 24);
+    Map map(198, 66);  // Use full Angband-sized map
     
     SECTION("Generate complete dungeon") {
         MapGenerator::generateProceduralDungeon(map, 42);

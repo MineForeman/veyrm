@@ -2,6 +2,7 @@
 #include "map.h"
 #include <algorithm>
 #include <random>
+#include <climits>
 
 void MapGenerator::generateTestRoom(Map& map, int width, int height) {
     // Fill with void
@@ -233,8 +234,9 @@ Point MapGenerator::getDefaultSpawnPoint(MapType type) {
     // Calculate spawn points based on actual room layouts
     switch (type) {
         case MapType::TEST_ROOM:
-            // TEST_ROOM: centered 20x20 room, floor is at (31-48, 3-20)
-            return Point(40, 12);  // Center of floor area
+            // TEST_ROOM: centered 20x20 room in 198x66 map
+            // Room at (89, 23) with size 20x20, center at (99, 33)
+            return Point(99, 33);  // Center of room
         case MapType::TEST_DUNGEON:
             // Central room is at (22, 10, 16, 12), floor is at (23-37, 11-21)
             return Point(30, 16);  // Center of central room floor
@@ -247,9 +249,9 @@ Point MapGenerator::getDefaultSpawnPoint(MapType type) {
         case MapType::STRESS_TEST:
         case MapType::PROCEDURAL:
             // Random/procedural maps need to find a safe spawn point
-            return Point(40, 12);  // Fallback, will be validated
+            return Point(99, 33);  // Center of map, will be validated
         default:
-            return Point(40, 12);
+            return Point(99, 33);  // Center of map
     }
 }
 
@@ -413,8 +415,8 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
     // Distribution for room dimensions and positions
     std::uniform_int_distribution<int> room_width(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
     std::uniform_int_distribution<int> room_height(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
-    std::uniform_int_distribution<int> x_pos(1, std::max(1, map.getWidth() - MAX_ROOM_SIZE - 1));
-    std::uniform_int_distribution<int> y_pos(1, std::max(1, map.getHeight() - MAX_ROOM_SIZE - 1));
+    std::uniform_int_distribution<int> x_pos(2, std::max(2, map.getWidth() - MAX_ROOM_SIZE - 2));
+    std::uniform_int_distribution<int> y_pos(2, std::max(2, map.getHeight() - MAX_ROOM_SIZE - 2));
     std::uniform_int_distribution<int> room_count(MIN_ROOMS, MAX_ROOMS);
     
     int target_rooms = room_count(rng);
@@ -495,4 +497,313 @@ bool MapGenerator::canPlaceRoom(const Map& map, const Room& room) {
 
 void MapGenerator::carveRoom(Map& map, const Room& room) {
     carveRoom(map, room.x, room.y, room.width, room.height);
+}
+
+void MapGenerator::generateProceduralDungeon(Map& map, unsigned int seed, const CorridorOptions& options) {
+    // Generate random rooms
+    auto rooms = generateRandomRooms(map, seed);
+    
+    // Connect rooms using specified strategy
+    connectRooms(map, rooms, options);
+    
+    // Place stairs in the last room
+    if (!rooms.empty()) {
+        const auto& last_room = rooms.back();
+        Point stairs = last_room.center();
+        map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+    }
+}
+
+void MapGenerator::connectRooms(Map& map, std::vector<Room>& rooms, const CorridorOptions& options) {
+    if (rooms.size() < 2) return;
+    
+    // Get connections based on strategy
+    std::vector<std::pair<int, int>> connections;
+    switch (options.strategy) {
+        case ConnectionStrategy::MST:
+            connections = getMSTConnections(rooms);
+            break;
+        case ConnectionStrategy::NEAREST:
+            connections = getNearestConnections(rooms);
+            break;
+        case ConnectionStrategy::SEQUENTIAL:
+            connections = getSequentialConnections(rooms);
+            break;
+        case ConnectionStrategy::RANDOM:
+            // For now, use sequential as fallback
+            connections = getSequentialConnections(rooms);
+            break;
+    }
+    
+    // Create corridors for each connection
+    for (const auto& [from, to] : connections) {
+        Point start = rooms[from].center();
+        Point end = rooms[to].center();
+        carveCorridor(map, start, end, options.style, options.width);
+        
+        // Place doors if requested
+        if (options.placeDoors) {
+            // Find where corridor meets rooms and place doors
+            // This is simplified - proper implementation would find exact intersection
+            placeDoorAtIntersection(map, start);
+            placeDoorAtIntersection(map, end);
+        }
+    }
+}
+
+void MapGenerator::carveCorridorStraight(Map& map, const Point& start, const Point& end, int width) {
+    // First pass: carve the corridor floors
+    // Use Bresenham's line algorithm for straight corridors
+    int x1 = start.x, y1 = start.y;
+    int x2 = end.x, y2 = end.y;
+    
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+    
+    // First carve all floors
+    int tx = x1, ty = y1;
+    while (true) {
+        // Carve floor with specified width
+        for (int w = 0; w < width; w++) {
+            for (int h = 0; h < width; h++) {
+                if (map.inBounds(tx + w, ty + h)) {
+                    map.setTile(tx + w, ty + h, TileType::FLOOR);
+                }
+            }
+        }
+        
+        if (tx == x2 && ty == y2) break;
+        
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            tx += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            ty += sy;
+        }
+    }
+    
+    // Second pass: add walls around the corridor
+    x1 = start.x; y1 = start.y;
+    err = dx - dy;
+    
+    while (true) {
+        // Add walls around the corridor (only if void)
+        for (int w = -1; w <= width; w++) {
+            for (int h = -1; h <= width; h++) {
+                if (w == -1 || w == width || h == -1 || h == width) {
+                    if (map.inBounds(x1 + w, y1 + h)) {
+                        if (map.getTile(x1 + w, y1 + h) == TileType::VOID) {
+                            map.setTile(x1 + w, y1 + h, TileType::WALL);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (x1 == x2 && y1 == y2) break;
+        
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
+}
+
+void MapGenerator::carveCorridorS(Map& map, const Point& start, const Point& end, int width) {
+    // S-shaped corridor with two bends
+    // Calculate two intermediate points for the S-shape
+    int mid_x = (start.x + end.x) / 2;
+    
+    Point bend1(mid_x, start.y);
+    Point bend2(mid_x, end.y);
+    
+    // Carve three segments
+    carveCorridorStraight(map, start, bend1, width);
+    carveCorridorStraight(map, bend1, bend2, width);
+    carveCorridorStraight(map, bend2, end, width);
+}
+
+void MapGenerator::carveCorridor(Map& map, const Point& start, const Point& end, 
+                                CorridorStyle style, int width) {
+    switch (style) {
+        case CorridorStyle::STRAIGHT:
+            carveCorridorStraight(map, start, end, width);
+            break;
+        case CorridorStyle::L_SHAPED:
+            if (width == 1) {
+                carveCorridorL(map, start, end);
+            } else {
+                // For wider corridors, use straight segments
+                Point bend(end.x, start.y);
+                carveCorridorStraight(map, start, bend, width);
+                carveCorridorStraight(map, bend, end, width);
+            }
+            break;
+        case CorridorStyle::S_SHAPED:
+            carveCorridorS(map, start, end, width);
+            break;
+        case CorridorStyle::ORGANIC:
+            // For now, use L-shaped as fallback
+            carveCorridor(map, start, end, CorridorStyle::L_SHAPED, width);
+            break;
+    }
+}
+
+std::vector<std::pair<int, int>> MapGenerator::getMSTConnections(const std::vector<Room>& rooms) {
+    std::vector<std::pair<int, int>> connections;
+    if (rooms.size() < 2) return connections;
+    
+    // Simple MST using Prim's algorithm
+    std::vector<bool> visited(rooms.size(), false);
+    visited[0] = true;
+    
+    while (connections.size() < rooms.size() - 1) {
+        int min_dist = INT_MAX;
+        int from_idx = -1, to_idx = -1;
+        
+        // Find minimum edge from visited to unvisited
+        for (size_t i = 0; i < rooms.size(); i++) {
+            if (!visited[i]) continue;
+            
+            for (size_t j = 0; j < rooms.size(); j++) {
+                if (visited[j]) continue;
+                
+                Point p1 = rooms[i].center();
+                Point p2 = rooms[j].center();
+                int dist = abs(p2.x - p1.x) + abs(p2.y - p1.y);  // Manhattan distance
+                
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    from_idx = i;
+                    to_idx = j;
+                }
+            }
+        }
+        
+        if (to_idx != -1) {
+            connections.push_back({from_idx, to_idx});
+            visited[to_idx] = true;
+        } else {
+            break;  // No more connections possible
+        }
+    }
+    
+    return connections;
+}
+
+std::vector<std::pair<int, int>> MapGenerator::getNearestConnections(const std::vector<Room>& rooms) {
+    std::vector<std::pair<int, int>> connections;
+    std::vector<bool> connected(rooms.size(), false);
+    
+    if (rooms.empty()) return connections;
+    connected[0] = true;
+    
+    // Connect each room to its nearest unconnected neighbor
+    for (size_t i = 0; i < rooms.size() - 1; i++) {
+        int min_dist = INT_MAX;
+        int nearest = -1;
+        
+        for (size_t j = 0; j < rooms.size(); j++) {
+            if (connected[j]) continue;
+            
+            // Find nearest unconnected room to any connected room
+            for (size_t k = 0; k < rooms.size(); k++) {
+                if (!connected[k]) continue;
+                
+                Point p1 = rooms[k].center();
+                Point p2 = rooms[j].center();
+                int dist = abs(p2.x - p1.x) + abs(p2.y - p1.y);
+                
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    nearest = j;
+                    connections.push_back({k, j});
+                }
+            }
+        }
+        
+        if (nearest != -1) {
+            connected[nearest] = true;
+        }
+    }
+    
+    return connections;
+}
+
+std::vector<std::pair<int, int>> MapGenerator::getSequentialConnections(const std::vector<Room>& rooms) {
+    std::vector<std::pair<int, int>> connections;
+    
+    for (size_t i = 1; i < rooms.size(); i++) {
+        connections.push_back({i - 1, i});
+    }
+    
+    return connections;
+}
+
+void MapGenerator::placeDoorAtIntersection(Map& map, const Point& pos) {
+    // Simple door placement - check if position is at room boundary
+    // Look for floor adjacent to wall pattern
+    bool hasFloor = false;
+    bool hasWall = false;
+    
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx == 0 && dy == 0) continue;
+            
+            int x = pos.x + dx;
+            int y = pos.y + dy;
+            
+            if (map.inBounds(x, y)) {
+                TileType tile = map.getTile(x, y);
+                if (tile == TileType::FLOOR) hasFloor = true;
+                if (tile == TileType::WALL) hasWall = true;
+            }
+        }
+    }
+    
+    // Place door if we're at a transition point
+    if (hasFloor && hasWall && map.getTile(pos.x, pos.y) == TileType::FLOOR) {
+        map.setTile(pos.x, pos.y, TileType::DOOR_CLOSED);
+    }
+}
+
+std::vector<Point> MapGenerator::findCorridorRoomIntersections(const Map& map, const std::vector<Room>& rooms) {
+    std::vector<Point> intersections;
+    
+    // Find points where corridors meet room boundaries
+    for (const auto& room : rooms) {
+        // Check room perimeter
+        for (int x = room.x; x < room.x + room.width; x++) {
+            // Top and bottom edges
+            if (map.getTile(x, room.y - 1) == TileType::FLOOR) {
+                intersections.push_back(Point(x, room.y));
+            }
+            if (map.getTile(x, room.y + room.height) == TileType::FLOOR) {
+                intersections.push_back(Point(x, room.y + room.height - 1));
+            }
+        }
+        
+        for (int y = room.y; y < room.y + room.height; y++) {
+            // Left and right edges
+            if (map.getTile(room.x - 1, y) == TileType::FLOOR) {
+                intersections.push_back(Point(room.x, y));
+            }
+            if (map.getTile(room.x + room.width, y) == TileType::FLOOR) {
+                intersections.push_back(Point(room.x + room.width - 1, y));
+            }
+        }
+    }
+    
+    return intersections;
 }

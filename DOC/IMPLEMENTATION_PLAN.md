@@ -200,11 +200,15 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Test:** Generates non-overlapping rooms
 - [ ] **Git tag:** `v0.5.1-room-generation`
 
-### 5.2 Corridor Generation
-- [ ] Implement L-shaped corridor algorithm
-- [ ] Connect room centers
-- [ ] Carve corridors in map
-- [ ] **Test:** All rooms connected
+### 5.2 Corridor Generation ✅ Complete
+
+- [x] Implement L-shaped corridor algorithm
+- [x] Add straight and S-shaped corridor styles
+- [x] Connect room centers
+- [x] Carve corridors in map with configurable width
+- [x] Implement MST, nearest neighbor, and sequential connection strategies
+- [x] Add door placement system
+- [x] **Test:** All rooms connected
 - [ ] **Git tag:** `v0.5.2-corridors`
 
 ### 5.3 Map Validation

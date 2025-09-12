@@ -6,8 +6,8 @@ TEST_CASE("Map: Basic tile operations", "[map]") {
     Map map;
     
     SECTION("Default map size") {
-        REQUIRE(map.getWidth() == 80);
-        REQUIRE(map.getHeight() == 24);
+        REQUIRE(map.getWidth() == 198);  // Angband size
+        REQUIRE(map.getHeight() == 66);   // Angband size
     }
     
     SECTION("Tile get and set operations") {
@@ -26,15 +26,15 @@ TEST_CASE("Map: Basic tile operations", "[map]") {
     SECTION("Bounds checking") {
         // Valid positions
         REQUIRE(map.inBounds(0, 0) == true);
-        REQUIRE(map.inBounds(79, 23) == true);
+        REQUIRE(map.inBounds(197, 65) == true);  // Max valid coordinates
         REQUIRE(map.inBounds(40, 12) == true);
         
         // Invalid positions
         REQUIRE(map.inBounds(-1, 0) == false);
         REQUIRE(map.inBounds(0, -1) == false);
-        REQUIRE(map.inBounds(80, 0) == false);
-        REQUIRE(map.inBounds(0, 24) == false);
-        REQUIRE(map.inBounds(100, 100) == false);
+        REQUIRE(map.inBounds(198, 0) == false);  // Width boundary
+        REQUIRE(map.inBounds(0, 66) == false);    // Height boundary
+        REQUIRE(map.inBounds(300, 100) == false);
     }
     
     SECTION("Out of bounds tile access returns VOID") {
