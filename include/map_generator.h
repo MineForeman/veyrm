@@ -80,6 +80,7 @@ public:
     
     // General generation based on type
     static void generate(Map& map, MapType type);
+    static void generate(Map& map, MapType type, unsigned int seed);
     
     // Random room generation
     static std::vector<Room> generateRandomRooms(Map& map, unsigned int seed = 0);

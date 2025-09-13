@@ -84,3 +84,68 @@ std::string Item::typeToString(ItemType type) {
         default: return "misc";
     }
 }
+
+json Item::serialize() const {
+    json data;
+
+    // Position
+    data["x"] = x;
+    data["y"] = y;
+
+    // Core properties
+    data["id"] = id;
+    data["name"] = name;
+    data["description"] = description;
+    data["symbol"] = std::string(1, symbol);
+    data["color"] = color;
+    data["type"] = typeToString(type);
+
+    // Item properties
+    data["value"] = value;
+    data["weight"] = weight;
+    data["stackable"] = stackable;
+    data["stack_size"] = stack_size;
+    data["max_stack"] = max_stack;
+
+    // Generic properties
+    data["properties"] = properties;
+
+    return data;
+}
+
+bool Item::deserialize(const json& data) {
+    try {
+        // Position
+        if (data.contains("x") && data.contains("y")) {
+            x = data["x"];
+            y = data["y"];
+        }
+
+        // Core properties
+        if (data.contains("id")) id = data["id"];
+        if (data.contains("name")) name = data["name"];
+        if (data.contains("description")) description = data["description"];
+        if (data.contains("symbol")) {
+            std::string sym = data["symbol"];
+            if (!sym.empty()) symbol = sym[0];
+        }
+        if (data.contains("color")) color = data["color"];
+        if (data.contains("type")) type = stringToType(data["type"]);
+
+        // Item properties
+        if (data.contains("value")) value = data["value"];
+        if (data.contains("weight")) weight = data["weight"];
+        if (data.contains("stackable")) stackable = data["stackable"];
+        if (data.contains("stack_size")) stack_size = data["stack_size"];
+        if (data.contains("max_stack")) max_stack = data["max_stack"];
+
+        // Generic properties
+        if (data.contains("properties")) {
+            properties = data["properties"].get<std::map<std::string, int>>();
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
+}

@@ -191,3 +191,49 @@ bool Inventory::tryStack(Item* item) {
 
     return false;
 }
+
+json Inventory::serialize() const {
+    json data;
+    data["capacity"] = capacity;
+    data["max_weight"] = max_weight;
+
+    json items_array = json::array();
+    for (const auto& item : items) {
+        if (item) {
+            items_array.push_back(item->serialize());
+        }
+    }
+    data["items"] = items_array;
+
+    return data;
+}
+
+bool Inventory::deserialize(const json& data) {
+    try {
+        // Clear existing items
+        clear();
+
+        // Restore capacity
+        if (data.contains("capacity")) {
+            capacity = data["capacity"];
+        }
+
+        if (data.contains("max_weight")) {
+            max_weight = data["max_weight"];
+        }
+
+        // Restore items
+        if (data.contains("items") && data["items"].is_array()) {
+            for (const auto& item_data : data["items"]) {
+                auto item = std::make_unique<Item>();
+                if (item->deserialize(item_data)) {
+                    items.push_back(std::move(item));
+                }
+            }
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
+}

@@ -24,6 +24,7 @@
 // Game includes
 #include "game_state.h"
 #include "game_screen.h"
+#include "save_load_screen.h"
 #include "test_input.h"
 #include "game_loop.h"
 #include "frame_stats.h"
@@ -265,6 +266,8 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
     Component main_menu = createMainMenu(&game_manager, &screen);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
+    SaveLoadScreen save_load_screen(&game_manager);
+    Component save_load_component = save_load_screen.create();
     
     int frame_count = 0;
     
@@ -289,6 +292,8 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                     }) | border;
                 case GameState::INVENTORY:
                     return game_component->Render();  // Use game screen's inventory panel
+                case GameState::SAVE_LOAD:
+                    return save_load_component->Render();
                 case GameState::HELP:
                     return vbox({
                         text("HELP") | bold,
@@ -346,6 +351,7 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::PAUSED: std::cout << "PAUSED"; break;
             case GameState::INVENTORY: std::cout << "INVENTORY"; break;
             case GameState::HELP: std::cout << "HELP"; break;
+            case GameState::SAVE_LOAD: std::cout << "SAVE_LOAD"; break;
             case GameState::DEATH: std::cout << "DEATH"; break;
             case GameState::QUIT: std::cout << "QUIT"; break;
         }
@@ -373,6 +379,11 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory also needs game_component events
                 game_component->OnEvent(event);
+                break;
+            case GameState::SAVE_LOAD:
+                if (save_load_screen.handleInput(event)) {
+                    // Input was handled
+                }
                 break;
             case GameState::PAUSED:
             case GameState::HELP:
@@ -425,6 +436,8 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
     Component main_menu = createMainMenu(&game_manager, &screen);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
+    SaveLoadScreen save_load_screen(&game_manager);
+    Component save_load_component = save_load_screen.create();
     
     // State-based renderer
     auto main_renderer = Renderer([&] {
@@ -441,6 +454,8 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                 }) | border;
             case GameState::INVENTORY:
                 return game_component->Render();  // Use game screen's inventory panel
+            case GameState::SAVE_LOAD:
+                return save_load_component->Render();
             case GameState::HELP:
                 return vbox({
                     text("HELP") | bold,
@@ -535,6 +550,8 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory needs game_component events too
                 return game_component->OnEvent(event);
+            case GameState::SAVE_LOAD:
+                return save_load_screen.handleInput(event);
             case GameState::PAUSED:
             case GameState::HELP:
                 if (event == Event::Escape) {

@@ -144,6 +144,8 @@ vgcore.*
 # Game specific
 save.json
 *.save
+*.sav
+saves/
 *.log
 logs/
 

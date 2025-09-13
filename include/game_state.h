@@ -10,6 +10,7 @@ enum class GameState {
     PAUSED,
     INVENTORY,
     HELP,
+    SAVE_LOAD,  // Save/Load menu
     DEATH,
     QUIT
 };
@@ -29,6 +30,7 @@ class MapMemory;
 class MonsterAI;
 class CombatSystem;
 class ItemManager;
+class GameSerializer;
 
 class GameManager {
 public:
@@ -53,6 +55,8 @@ public:
     EntityManager* getEntityManager() { return entity_manager.get(); }
     const EntityManager* getEntityManager() const { return entity_manager.get(); }
     Player* getPlayer();
+    int getCurrentDepth() const { return current_depth; }
+    void setCurrentDepth(int depth) { current_depth = depth; }
     
     // Game loop integration
     void update(double deltaTime);
@@ -94,7 +98,12 @@ public:
     // Item system
     ItemManager* getItemManager() { return item_manager.get(); }
     const ItemManager* getItemManager() const { return item_manager.get(); }
-    
+
+    // Save/Load system
+    bool saveGame(int slot);
+    bool loadGame(int slot);
+    GameSerializer* getSerializer() { return serializer.get(); }
+
 private:
     GameState current_state = GameState::MENU;
     GameState previous_state = GameState::MENU;
@@ -109,8 +118,27 @@ private:
     std::unique_ptr<MonsterAI> monster_ai;
     std::unique_ptr<CombatSystem> combat_system;
     std::unique_ptr<ItemManager> item_manager;
+    std::unique_ptr<GameSerializer> serializer;
     std::vector<std::vector<bool>> current_fov;
     Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;
     int current_depth = 1;  // Track dungeon depth for spawning
+
+    // Map generation tracking
+    MapType current_map_type = MapType::TEST_DUNGEON;
+    unsigned int current_map_seed = 0;  // 0 means random
+
+    // Save/Load state
+    bool save_menu_mode = true;  // true = save, false = load
+
+public:
+    // Map generation
+    MapType getCurrentMapType() const { return current_map_type; }
+    void setCurrentMapType(MapType type) { current_map_type = type; }
+    unsigned int getCurrentMapSeed() const { return current_map_seed; }
+    void setCurrentMapSeed(unsigned int seed) { current_map_seed = seed; }
+
+    // Save/Load UI
+    bool getSaveMenuMode() const { return save_menu_mode; }
+    void setSaveMenuMode(bool save_mode) { save_menu_mode = save_mode; }
 };

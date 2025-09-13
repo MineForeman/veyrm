@@ -162,6 +162,8 @@ add_executable(veyrm
     src/item_manager.cpp
     src/inventory.cpp
     src/inventory_renderer.cpp
+    src/game_serializer.cpp
+    src/save_load_screen.cpp
 )
 
 # Link libraries

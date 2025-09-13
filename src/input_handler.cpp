@@ -41,6 +41,10 @@ void InputHandler::initializeDefaultBindings() {
     keyBindings["D"] = InputAction::DROP_ITEM;  // Uppercase D
     keyBindings["E"] = InputAction::EXAMINE_ITEM;  // Uppercase E
 
+    // Save/Load
+    keyBindings["S"] = InputAction::OPEN_SAVE_MENU;  // Uppercase S for save
+    keyBindings["L"] = InputAction::OPEN_LOAD_MENU;  // Uppercase L for load
+
     // Debug
     keyBindings["F1"] = InputAction::DEBUG_TOGGLE;
 }

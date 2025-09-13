@@ -20,6 +20,8 @@
 #include "log.h"
 #include "item_manager.h"
 #include "item_factory.h"
+#include "game_serializer.h"
+#include <random>
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -34,6 +36,7 @@ GameManager::GameManager(MapType initial_map)
       monster_ai(std::make_unique<MonsterAI>()),
       combat_system(std::make_unique<CombatSystem>(message_log.get())),
       item_manager(std::make_unique<ItemManager>(map.get())),
+      serializer(std::make_unique<GameSerializer>(this)),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
@@ -58,8 +61,21 @@ GameManager::GameManager(MapType initial_map)
 GameManager::~GameManager() = default;
 
 void GameManager::initializeMap(MapType type) {
-    // Generate the map
-    MapGenerator::generate(*map, type);
+    // Track the map type
+    current_map_type = type;
+
+    // Generate seed if not set (0 means random)
+    if (current_map_seed == 0 && type == MapType::PROCEDURAL) {
+        current_map_seed = std::random_device{}();
+        LOG_INFO("Generated map seed: " + std::to_string(current_map_seed));
+    }
+
+    // Generate the map with seed
+    if (type == MapType::PROCEDURAL) {
+        MapGenerator::generate(*map, type, current_map_seed);
+    } else {
+        MapGenerator::generate(*map, type);
+    }
     
     // Validate the map
     auto validation = MapValidator::validate(*map);
@@ -374,3 +390,36 @@ void GameManager::updateMonsters() {
         }
     }
 }
+
+bool GameManager::saveGame(int slot) {
+    if (!serializer) {
+        LOG_ERROR("GameManager: Serializer not initialized");
+        return false;
+    }
+
+    bool success = serializer->saveGame(slot);
+    if (success) {
+        message_log->addMessage("Game saved to slot " + std::to_string(slot));
+    } else {
+        message_log->addMessage("Failed to save game!");
+    }
+    return success;
+}
+
+bool GameManager::loadGame(int slot) {
+    if (!serializer) {
+        LOG_ERROR("GameManager: Serializer not initialized");
+        return false;
+    }
+
+    bool success = serializer->loadGame(slot);
+    if (success) {
+        message_log->addMessage("Game loaded from slot " + std::to_string(slot));
+        setState(GameState::PLAYING);
+        updateFOV();  // Recalculate FOV after loading
+    } else {
+        message_log->addMessage("Failed to load game!");
+    }
+    return success;
+}
+

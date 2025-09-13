@@ -74,19 +74,86 @@ Implement and log 8.3 Basic AI
 
 I declear that this is the MVP!  Document it as such.  Create a branch for it so we can preserve it for posterity and the switch back to the main branch.
 
+TODO
+
+Seach through the code base and find TODO code and document it.
+
 Redundent
 
-Seach through the code base and find any redundent code and dicument it.
+Seach through the code base and find any redundent code and document it.
 
 Refactor
 
-I want to refactor the documentation, search through the md files and suggest what could be improved.
+I want to refactor the documentation, search through the md files and document what could be improved.
+I want to refactor the classes, search through the md files and document what could be improved.
+
+Tests
+
+gcovr
 
 Comments
 
 Doxygen
 
 MySQL
+
+I want to transition to MySQL for all data I have fired up a docker container for the perpose:-
+
+➜  verym git:(main) ✗ docker container list
+CONTAINER ID   IMAGE                COMMAND                  CREATED      STATUS                PORTS                               NAMES
+84d58a83f0bd   docker_mysql-mysql   "docker-entrypoint.s…"   4 days ago   Up 4 days (healthy)   0.0.0.0:3306->3306/tcp, 33060/tcp   mysql-local
+➜  verym git:(main) ✗ ls ../docker_mysql
+data               docker-compose.yml Dockerfile
+➜  verym git:(main) ✗ cat ../docker_mysql/Dockerfile
+# ./Dockerfile
+FROM mysql:8.4
+
+# (Optional) You can add custom configs later by COPY-ing a my.cnf into /etc/mysql/conf.d/
+# Example:
+# COPY my.cnf /etc/mysql/conf.d/my.cnf
+# RUN chmod 0444 /etc/mysql/conf.d/my.cnf
+
+➜  verym git:(main) ✗ cat ../docker_mysql/docker-compose.yml
+# ./docker-compose.yml
+version: "3.9"
+
+services:
+  mysql:
+    build: .
+    container_name: mysql-local
+    restart: unless-stopped
+    environment:
+      # Change these to something secure before first run
+      MYSQL_ROOT_PASSWORD: change-me
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: change-me-too
+      TZ: Pacific/Auckland
+    ports:
+      - "3306:3306"
+    # On macOS, bind mounts are fine; this keeps MySQL data in ./data on your host
+    volumes:
+      - ./data:/var/lib/mysql:delegated
+      # If you later want to auto-run SQL on first startup:
+      # - ./initdb:/docker-entrypoint-initdb.d:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # Uncomment if you need classic auth for older clients:
+      # - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pchange-me"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+I want everythiong in data/, logs/ and saves/ to be moved there.
+
+I want build.sh to be able to load, clear, view, backup and reload the data.
+
+Document was must be done.  
+
+
 Multiplayer
 
 Server authritive
@@ -96,8 +163,11 @@ Spell system
 Classes
 Races
 Character Generation
+Character Progression
 Town
 Quests
 Help
+Auction House
 World Map
-Player Hoseing
+Player Houseing
+Crafting

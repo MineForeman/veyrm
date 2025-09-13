@@ -22,6 +22,7 @@ public:
     std::shared_ptr<Monster> createMonster(const std::string& species, int x, int y);
     void destroyEntity(std::shared_ptr<Entity> entity);
     void clear();
+    void clearNonPlayerEntities();  // Clear all entities except the player
     
     // Access
     std::shared_ptr<Player> getPlayer() { return player; }

@@ -3,9 +3,13 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <nlohmann/json.hpp>
 #include "item.h"
+#include "serializable.h"
 
-class Inventory {
+using json = nlohmann::json;
+
+class Inventory : public ISerializable {
 public:
     // Configuration
     static constexpr int DEFAULT_CAPACITY = 26;  // a-z slots
@@ -44,9 +48,9 @@ public:
     void sort();  // Sort items by type/name
     std::vector<Item*> getAllItems() const;
 
-    // Serialization helpers (for future save/load)
-    // nlohmann::json toJson() const;
-    // void fromJson(const nlohmann::json& j);
+    // Serialization
+    json serialize() const override;
+    bool deserialize(const json& data) override;
 
 private:
     int capacity;

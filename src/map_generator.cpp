@@ -234,6 +234,10 @@ void MapGenerator::generateStressTest(Map& map) {
 }
 
 void MapGenerator::generate(Map& map, MapType type) {
+    generate(map, type, 0);  // 0 means use random seed
+}
+
+void MapGenerator::generate(Map& map, MapType type, unsigned int seed) {
     switch (type) {
         case MapType::TEST_ROOM:
             generateTestRoom(map);
@@ -251,7 +255,7 @@ void MapGenerator::generate(Map& map, MapType type) {
             generateStressTest(map);
             break;
         case MapType::PROCEDURAL:
-            generateProceduralDungeon(map);
+            generateProceduralDungeon(map, seed);
             break;
     }
 }

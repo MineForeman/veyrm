@@ -90,6 +90,17 @@ void EntityManager::clear() {
     player.reset();
 }
 
+void EntityManager::clearNonPlayerEntities() {
+    // Remove all entities except the player
+    entities.erase(
+        std::remove_if(entities.begin(), entities.end(),
+            [this](const std::shared_ptr<Entity>& entity) {
+                return entity != player;
+            }),
+        entities.end()
+    );
+}
+
 std::vector<std::shared_ptr<Entity>> EntityManager::getEntitiesAt(int x, int y) const {
     std::vector<std::shared_ptr<Entity>> result;
     

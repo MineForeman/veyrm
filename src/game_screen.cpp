@@ -324,6 +324,7 @@ Component GameScreen::Create() {
         LOG_DEBUG("Action: " + std::to_string(static_cast<int>(action)) +
                   ", State: " + std::to_string(static_cast<int>(game_manager->getState())));
 
+
         // Handle inventory-specific input when in inventory state
         if (game_manager->getState() == GameState::INVENTORY) {
             return handleInventoryInput(action, event);
@@ -413,6 +414,18 @@ Component GameScreen::Create() {
 
             case InputAction::OPEN_HELP:
                 game_manager->setState(GameState::HELP);
+                return true;
+
+            case InputAction::OPEN_SAVE_MENU:
+                LOG_INFO("Save menu triggered");
+                game_manager->setSaveMenuMode(true);
+                game_manager->setState(GameState::SAVE_LOAD);
+                return true;
+
+            case InputAction::OPEN_LOAD_MENU:
+                LOG_INFO("Load menu triggered");
+                game_manager->setSaveMenuMode(false);
+                game_manager->setState(GameState::SAVE_LOAD);
                 return true;
 
             default:

@@ -81,6 +81,7 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/item_factory.cpp
     ${CMAKE_SOURCE_DIR}/src/item_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/inventory.cpp
+    ${CMAKE_SOURCE_DIR}/src/game_serializer.cpp
 )
 
 # Add compile definitions for tests

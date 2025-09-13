@@ -4,8 +4,12 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
+#include "serializable.h"
 
-class Item {
+using json = nlohmann::json;
+
+class Item : public ISerializable {
 public:
     enum ItemType {
         POTION,
@@ -55,6 +59,10 @@ public:
     // Type conversion
     static ItemType stringToType(const std::string& type_str);
     static std::string typeToString(ItemType type);
+
+    // Serialization
+    json serialize() const override;
+    bool deserialize(const json& data) override;
 };
 
 #endif // ITEM_H

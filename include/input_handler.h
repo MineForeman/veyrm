@@ -36,6 +36,10 @@ enum class InputAction {
     DROP_ITEM,
     EXAMINE_ITEM,
 
+    // Save/Load actions
+    OPEN_SAVE_MENU,
+    OPEN_LOAD_MENU,
+
     // Debug
     DEBUG_TOGGLE,
 
