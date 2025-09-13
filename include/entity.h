@@ -41,6 +41,11 @@ public:
     bool is_player = false;
     bool is_monster = false;
     bool is_item = false;
+    bool is_blocking = false;
+    
+    // Stats (used by Player and Monster)
+    int hp = 1;
+    int max_hp = 1;
     
     // Visibility
     void setVisible(bool visible) { is_visible = visible; }
@@ -68,6 +73,11 @@ public:
     virtual void onInteract([[maybe_unused]] Entity& other) {}
     virtual void onDeath() {}
     virtual bool canMoveTo(const Map& map, int new_x, int new_y) const;
+    
+    // Type identification
+    virtual EntityType getType() const { return EntityType::ITEM; }
+    virtual bool isBlocking() const { return blocks_movement; }
+    virtual bool canAct() const { return false; }
     
 protected:
     // Save previous position before moving

@@ -62,6 +62,17 @@ This is useful for exploring the available APIs and understanding how the librar
 
 **IMPORTANT:** Always use `./build.sh` as the preferred way to build and run the game. It handles all build configurations, dependency management, and provides helpful utilities.
 
+### Execution Directory
+
+**CRITICAL:** All binaries (game and tests) must ALWAYS be executed from the project root directory, not from the build directory. This ensures that relative paths to data files (like data/monsters.json) work correctly. The build.sh script automatically handles this requirement.
+
+### Data Directory
+
+The game supports a configurable data directory via the `--data-dir` CLI flag:
+- Default: `./data` (relative to project root)
+- Usage: `./build/bin/veyrm --data-dir /path/to/data`
+- The data directory must contain game data files like monsters.json, items.json, etc.
+
 ### One-Liner Operations
 
 **IMPORTANT:** Prefer combining multiple operations into single command lines when possible for efficiency:

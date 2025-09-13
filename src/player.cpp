@@ -2,13 +2,14 @@
 #include "map.h"
 #include "entity_manager.h"
 #include "color_scheme.h"
+#include "config.h"
 
 Player::Player(int x, int y) 
     : Entity(x, y, "@", ftxui::Color::White, "Player"),
-      hp(BASE_HP),
-      max_hp(BASE_HP),
-      attack(BASE_ATTACK),
-      defense(BASE_DEFENSE),
+      hp(Config::getInstance().getPlayerStartingHP()),
+      max_hp(Config::getInstance().getPlayerStartingHP()),
+      attack(Config::getInstance().getPlayerStartingAttack()),
+      defense(Config::getInstance().getPlayerStartingDefense()),
       level(1),
       experience(0),
       gold(0) {

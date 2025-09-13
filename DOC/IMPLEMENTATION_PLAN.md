@@ -273,13 +273,34 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ---
 
+## Phase 7.5: Configuration System ✅ Complete
+
+### 7.5.1 YAML Configuration
+- [x] Implement Config singleton class
+- [x] Integrate rapidyaml library for YAML parsing
+- [x] Create comprehensive config.yml file
+- [x] Add command-line argument override support
+- [x] Configure map dimensions (Angband standard 198x66)
+- [x] Configure room generation parameters
+- [x] Configure player starting stats
+- [x] Configure FOV radius
+- [x] Configure lit room probability (95%)
+- [x] **Test:** Configuration loading and override tests pass ✅
+- [ ] **Git tag:** `v0.7.5-config`
+
+---
+
 ## Phase 8: Monster System (Day 10-11)
 
-### 8.1 Monster Entity
-- [ ] Create `Monster` class extending Entity
-- [ ] Add HP, attack, defense stats
-- [ ] Load monster definitions from JSON
-- [ ] **Test:** Monsters load from data files
+### 8.1 Monster Entity ✅ Complete
+- [x] Create `Monster` class extending Entity
+- [x] Add HP, attack, defense, speed, XP stats
+- [x] Load monster definitions from JSON
+- [x] Implement MonsterFactory with singleton pattern
+- [x] Add 5 initial monsters (Gutter Rat, Cave Spider, Kobold, Orc Rookling, Zombie)
+- [x] Integrate with EntityManager
+- [x] **Test:** Monster creation and JSON loading tests pass ✅
+- [x] **Documentation:** Created DOC/PHASES/8.1_MONSTER_ENTITY.md
 - [ ] **Git tag:** `v0.8.1-monster-entity`
 
 ### 8.2 Monster Spawning

@@ -1,4 +1,95 @@
 {
   "version": "0.0.1",
-  "monsters": []
+  "monsters": [
+    {
+      "id": "gutter_rat",
+      "name": "Gutter Rat",
+      "description": "A diseased rat from the sewers, its eyes gleam with hunger",
+      "glyph": "r",
+      "color": "brown",
+      "hp": 3,
+      "attack": 2,
+      "defense": 0,
+      "speed": 120,
+      "xp_value": 2,
+      "threat_level": "a",
+      "flags": {
+        "aggressive": true,
+        "can_open_doors": false,
+        "can_see_invisible": false
+      }
+    },
+    {
+      "id": "orc_rookling",
+      "name": "Orc Rookling",
+      "description": "A young orc warrior in training, eager to prove itself",
+      "glyph": "o",
+      "color": "green",
+      "hp": 8,
+      "attack": 4,
+      "defense": 1,
+      "speed": 100,
+      "xp_value": 10,
+      "threat_level": "c",
+      "flags": {
+        "aggressive": true,
+        "can_open_doors": true,
+        "can_see_invisible": false
+      }
+    },
+    {
+      "id": "cave_spider",
+      "name": "Cave Spider",
+      "description": "A small but venomous spider that lurks in dark corners",
+      "glyph": "s",
+      "color": "gray",
+      "hp": 4,
+      "attack": 3,
+      "defense": 0,
+      "speed": 110,
+      "xp_value": 5,
+      "threat_level": "b",
+      "flags": {
+        "aggressive": true,
+        "can_open_doors": false,
+        "can_see_invisible": true
+      }
+    },
+    {
+      "id": "kobold",
+      "name": "Kobold",
+      "description": "A small reptilian humanoid with a cowardly disposition",
+      "glyph": "k",
+      "color": "yellow",
+      "hp": 6,
+      "attack": 3,
+      "defense": 1,
+      "speed": 110,
+      "xp_value": 8,
+      "threat_level": "b",
+      "flags": {
+        "aggressive": false,
+        "can_open_doors": true,
+        "can_see_invisible": false
+      }
+    },
+    {
+      "id": "zombie",
+      "name": "Zombie",
+      "description": "A shambling corpse animated by dark magic",
+      "glyph": "z",
+      "color": "dark_gray",
+      "hp": 12,
+      "attack": 3,
+      "defense": 0,
+      "speed": 80,
+      "xp_value": 15,
+      "threat_level": "d",
+      "flags": {
+        "aggressive": true,
+        "can_open_doors": false,
+        "can_see_invisible": false
+      }
+    }
+  ]
 }

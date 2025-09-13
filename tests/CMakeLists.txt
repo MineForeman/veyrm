@@ -22,6 +22,9 @@ add_executable(veyrm_tests
     test_status_bar.cpp
     test_layout_system.cpp
     test_lit_rooms.cpp
+    test_monster.cpp
+    test_monster_integration.cpp
+    test_config.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -32,6 +35,7 @@ target_link_libraries(veyrm_tests
         ftxui::screen
         ftxui::dom
         ftxui::component
+        ryml::ryml
 )
 
 # Include directories for tests
@@ -60,6 +64,9 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/map_memory.cpp
     ${CMAKE_SOURCE_DIR}/src/status_bar.cpp
     ${CMAKE_SOURCE_DIR}/src/layout_system.cpp
+    ${CMAKE_SOURCE_DIR}/src/monster.cpp
+    ${CMAKE_SOURCE_DIR}/src/monster_factory.cpp
+    ${CMAKE_SOURCE_DIR}/src/config.cpp
 )
 
 # Add compile definitions for tests

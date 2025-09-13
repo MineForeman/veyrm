@@ -1,6 +1,7 @@
 #include "map_generator.h"
 #include "map.h"
 #include "map_validator.h"
+#include "config.h"
 #include <algorithm>
 #include <random>
 #include <climits>
@@ -416,6 +417,14 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
     // Clear any existing rooms in the map
     map.clearRooms();
     
+    // Get config values
+    Config& config = Config::getInstance();
+    const int MIN_ROOM_SIZE = config.getMinRoomSize();
+    const int MAX_ROOM_SIZE = config.getMaxRoomSize();
+    const int MIN_ROOMS = config.getMinRooms();
+    const int MAX_ROOMS = config.getMaxRooms();
+    const float LIT_ROOM_CHANCE = config.getLitRoomChance();
+    
     // Distribution for room dimensions and positions
     std::uniform_int_distribution<int> room_width(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
     std::uniform_int_distribution<int> room_height(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
@@ -424,7 +433,6 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
     std::uniform_int_distribution<int> room_count(MIN_ROOMS, MAX_ROOMS);
     std::uniform_real_distribution<float> lit_dist(0.0f, 1.0f);
     
-    const float LIT_ROOM_CHANCE = 0.3f;  // 30% chance for a room to be lit
     int target_rooms = room_count(rng);
     int attempts = 0;
     
@@ -470,8 +478,8 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
     // Ensure at least one room was created
     if (rooms.empty()) {
         // Force create a room in the center
-        int w = MIN_ROOM_SIZE + 2;
-        int h = MIN_ROOM_SIZE + 2;
+        int w = Config::getInstance().getMinRoomSize() + 2;
+        int h = Config::getInstance().getMinRoomSize() + 2;
         int x = map.getWidth() / 2 - w / 2;
         int y = map.getHeight() / 2 - h / 2;
         bool isLit = lit_dist(rng) < LIT_ROOM_CHANCE;

@@ -62,8 +62,17 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# Make dependencies available
-FetchContent_MakeAvailable(ftxui json Catch2)
+# rapidyaml - Fast, modern C++ YAML library
+message(STATUS "Configuring rapidyaml...")
+FetchContent_Declare(
+    ryml
+    GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
+    GIT_TAG v0.5.0
+    GIT_SHALLOW TRUE
+)
+
+# Make dependencies available  
+FetchContent_MakeAvailable(ftxui json Catch2 ryml)
 
 message(STATUS "All dependencies configured successfully")
 
@@ -140,6 +149,9 @@ add_executable(veyrm
     src/map_memory.cpp
     src/status_bar.cpp
     src/layout_system.cpp
+    src/monster.cpp
+    src/monster_factory.cpp
+    src/config.cpp
 )
 
 # Link libraries
@@ -149,6 +161,7 @@ target_link_libraries(veyrm
         ftxui::dom
         ftxui::component
         nlohmann_json::nlohmann_json
+        ryml::ryml
 )
 
 # Set executable output directory
@@ -180,4 +193,5 @@ message(STATUS "  Dependencies:")
 message(STATUS "    - FTXUI: v5.0.0")
 message(STATUS "    - nlohmann/json: v3.11.3")
 message(STATUS "    - Catch2: v3.5.1")
+message(STATUS "    - rapidyaml: v0.5.0")
 message(STATUS "========================================")

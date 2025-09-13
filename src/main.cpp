@@ -26,6 +26,7 @@
 #include "game_loop.h"
 #include "frame_stats.h"
 #include "map_generator.h"
+#include "config.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -535,14 +536,39 @@ int main(int argc, char* argv[]) {
     // Initialize platform-specific settings
     initializePlatform();
     
-    // Default map type
-    MapType map_type = MapType::TEST_DUNGEON;
+    // Load configuration file
+    Config& config = Config::getInstance();
+    config.loadFromFile("config.yml");
     
-    // Parse command-line arguments
+    // Get default map type from config
+    MapType map_type = config.getDefaultMapType();
+    
+    // Parse command-line arguments for config options (CLI overrides config file)
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         
-        // Check for map type argument
+        // Check for config file argument
+        if (arg == "--config" && i + 1 < argc) {
+            std::string config_path = argv[++i];
+            if (!config.loadFromFile(config_path)) {
+                std::cerr << "Error: Failed to load config file: " << config_path << "\n";
+                return 1;
+            }
+            continue;
+        }
+        
+        // Check for data directory argument (overrides config)
+        if (arg == "--data-dir" && i + 1 < argc) {
+            std::string data_path = argv[++i];
+            config.setDataDir(data_path);
+            if (!config.isDataDirValid()) {
+                std::cerr << "Error: Data directory does not exist: " << data_path << "\n";
+                return 1;
+            }
+            continue;
+        }
+        
+        // Check for map type argument (overrides config)
         if (arg == "--map" && i + 1 < argc) {
             std::string map_arg = argv[++i];
             if (map_arg == "room") {
@@ -585,6 +611,8 @@ int main(int argc, char* argv[]) {
             std::cout << "  --no-ui             Run without UI (test mode)\n";
             std::cout << "  --keys <keystrokes> Run with automated keystrokes\n";
             std::cout << "  --dump <keystrokes> Run in frame dump mode (slideshow)\n";
+            std::cout << "  --config <file>     Load configuration from file (default: config.yml)\n";
+            std::cout << "  --data-dir <path>   Set path to data directory (default: ./data)\n";
             std::cout << "  --map <type>        Start with specific map type\n";
             std::cout << "                      Types: procedural (random), room, dungeon,\n";
             std::cout << "                             corridor, arena, stress\n";

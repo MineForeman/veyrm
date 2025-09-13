@@ -8,15 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Angband-style lit rooms - 30% of rooms are permanently illuminated
+- Phase 8.1: Monster Entity System - complete monster implementation
+  - Data-driven monster design with JSON configuration
+  - Monster class with combat stats (HP, attack, defense, speed, XP)
+  - MonsterFactory singleton for template-based creation
+  - Behavior flags (aggressive, can_open_doors, can_see_invisible)
+  - Threat level system (a-f ranking)
+  - 5 initial monsters: Gutter Rat, Cave Spider, Kobold, Orc Rookling, Zombie
+- Configuration System - YAML-based game settings
+  - `config.yml` with comprehensive game configuration
+  - Command-line arguments override config values
+  - Integrated rapidyaml library for YAML parsing
+  - Configurable map dimensions, room generation, player stats, FOV radius
+- Build System Improvements
+  - Binary size and build stats display in menu
+  - Removed "Press Enter to continue" prompts
+  - All binaries now run from project root directory
+  - Added `--data-dir` command-line option
+- Angband-style lit rooms - 95% of rooms are permanently illuminated (changed from 30%)
   - Entire room becomes visible when player enters
   - Lit rooms remain bright in memory (not dimmed like normal tiles)
   - "The room is lit!" message when entering lit rooms
   - Strategic gameplay element with risk/reward tradeoffs
 
+### Changed
+- Lit room probability increased from 30% to 95% (configurable)
+- Map generation now uses config values for all parameters
+- Player stats now use config values (HP: 20, Attack: 5, Defense: 2)
+- FOV radius now uses config value (default: 10)
+- Tests updated to use config values instead of hardcoded constants
+
 ### Fixed
 - FOV initialization bug - removed debug code that was setting entire map as visible at startup
 - FOV movement update bug - added updateFOV() calls after player movement to properly recalculate visibility
+- Lit room probability now correctly uses config value instead of hardcoded 30%
+- Test execution directory issues - all tests run from project root
 
 ## [0.7.3] - 2025-01-13
 

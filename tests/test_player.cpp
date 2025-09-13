@@ -2,6 +2,7 @@
 #include "player.h"
 #include "entity_manager.h"
 #include "map.h"
+#include "config.h"
 #include <ftxui/screen/color.hpp>
 
 using namespace ftxui;
@@ -15,10 +16,11 @@ TEST_CASE("Player: Initialization", "[player]") {
     }
     
     SECTION("Default stats") {
-        REQUIRE(player.hp == 10);
-        REQUIRE(player.max_hp == 10);
-        REQUIRE(player.attack == 1);
-        REQUIRE(player.defense == 0);
+        Config& config = Config::getInstance();
+        REQUIRE(player.hp == config.getPlayerStartingHP());
+        REQUIRE(player.max_hp == config.getPlayerStartingHP());
+        REQUIRE(player.attack == config.getPlayerStartingAttack());
+        REQUIRE(player.defense == config.getPlayerStartingDefense());
         REQUIRE(player.level == 1);
         REQUIRE(player.experience == 0);
     }
@@ -135,10 +137,11 @@ TEST_CASE("Player: Stat modifications", "[player]") {
     Player player(5, 5);
     
     SECTION("HP modifications") {
+        Config& config = Config::getInstance();
         // Damage
         player.hp = 8;
         REQUIRE(player.hp == 8);
-        REQUIRE(player.max_hp == 10);  // Max unchanged
+        REQUIRE(player.max_hp == config.getPlayerStartingHP());  // Max unchanged
         
         // Healing (shouldn't exceed max)
         player.hp = 25;

@@ -9,6 +9,7 @@
 // Forward declarations
 class Map;
 class MapRenderer;
+class Monster;
 
 class EntityManager {
 public:
@@ -18,6 +19,7 @@ public:
     // Entity lifecycle
     std::shared_ptr<Entity> createEntity(EntityType type, int x, int y);
     std::shared_ptr<Player> createPlayer(int x, int y);
+    std::shared_ptr<Monster> createMonster(const std::string& species, int x, int y);
     void destroyEntity(std::shared_ptr<Entity> entity);
     void clear();
     
@@ -29,6 +31,7 @@ public:
     std::vector<std::shared_ptr<Entity>> getEntitiesAt(int x, int y) const;
     std::shared_ptr<Entity> getBlockingEntityAt(int x, int y) const;
     std::shared_ptr<Entity> getItemAt(int x, int y) const;
+    std::shared_ptr<Monster> getMonsterAt(int x, int y) const;
     
     // Get all entities of type
     std::vector<std::shared_ptr<Entity>> getMonsters() const;

@@ -11,6 +11,7 @@
 #include "player.h"
 #include "fov.h"
 #include "map_memory.h"
+#include "config.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -19,7 +20,7 @@ GameManager::GameManager(MapType initial_map)
       turn_manager(std::make_unique<TurnManager>(this)),
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
-      map(std::make_unique<Map>()),
+      map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
       entity_manager(std::make_unique<EntityManager>()),
       debug_mode(false) {
     
@@ -148,7 +149,7 @@ void GameManager::updateFOV() {
     
     // Calculate FOV from player position
     Point playerPos(player->x, player->y);
-    FOV::calculate(*map, playerPos, FOV::DEFAULT_RADIUS, current_fov);
+    FOV::calculate(*map, playerPos, Config::getInstance().getFOVRadius(), current_fov);
     
     // Check if player entered a new room
     Room* new_room = map->getRoomAt(playerPos);

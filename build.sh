@@ -60,8 +60,9 @@ build_project() {
 run_tests() {
     echo -e "${YELLOW}Running tests...${NC}"
     if [ -f "${TEST_EXECUTABLE}" ]; then
-        cd "${BUILD_DIR}"
-        ctest --output-on-failure || echo -e "${RED}Some tests failed${NC}"
+        # Run tests from project root
+        cd "${PROJECT_ROOT}"
+        "${TEST_EXECUTABLE}" || echo -e "${RED}Some tests failed${NC}"
         cd - > /dev/null
     else
         echo -e "${RED}Test executable not found. Build first.${NC}"
@@ -75,7 +76,10 @@ run_dump_test() {
     echo -e "${YELLOW}Running dump mode test...${NC}"
     echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
     if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
         "${EXECUTABLE}" --dump "${keystrokes}"
+        cd - > /dev/null
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
     fi
@@ -87,7 +91,10 @@ run_with_keys() {
     echo -e "${YELLOW}Running game with automated keys...${NC}"
     echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
     if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
         "${EXECUTABLE}" --keys "${keystrokes}"
+        cd - > /dev/null
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
     fi
@@ -109,6 +116,8 @@ run_game() {
         echo
         read -p "Press Enter for Procedural, or select (1-6): " map_choice
         
+        # Run from project root
+        cd "${PROJECT_ROOT}"
         case "${map_choice}" in
             1|"")
                 echo -e "${GREEN}Loading Procedural Dungeon...${NC}"
@@ -139,6 +148,7 @@ run_game() {
                 "${EXECUTABLE}" --map procedural
                 ;;
         esac
+        cd - > /dev/null
         reset_terminal  # Auto-reset terminal after game exits
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
@@ -148,14 +158,55 @@ run_game() {
 # Function to run with arguments
 run_with_args() {
     if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
         "${EXECUTABLE}" "$@"
+        cd - > /dev/null
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
     fi
 }
 
+# Function to get binary stats
+get_binary_stats() {
+    local stats=""
+    
+    # Check if binary exists
+    if [ -f "${EXECUTABLE}" ]; then
+        # Get file size in human readable format
+        local size=$(ls -lh "${EXECUTABLE}" | awk '{print $5}')
+        # Get last modified time
+        local modified=$(date -r "${EXECUTABLE}" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "${EXECUTABLE}" 2>/dev/null || echo "unknown")
+        stats="${GREEN}✓${NC} Binary: ${size} | Built: ${modified}"
+    else
+        stats="${RED}✗${NC} Binary not built"
+    fi
+    
+    # Check test status
+    if [ -f "${TEST_EXECUTABLE}" ]; then
+        local test_size=$(ls -lh "${TEST_EXECUTABLE}" | awk '{print $5}')
+        stats="${stats}\n${GREEN}✓${NC} Tests: ${test_size}"
+    else
+        stats="${stats}\n${RED}✗${NC} Tests not built"
+    fi
+    
+    # Check build type from CMakeCache if it exists
+    if [ -f "${BUILD_DIR}/CMakeCache.txt" ]; then
+        local build_type=$(grep CMAKE_BUILD_TYPE "${BUILD_DIR}/CMakeCache.txt" | cut -d= -f2)
+        stats="${stats} | Mode: ${YELLOW}${build_type}${NC}"
+    fi
+    
+    echo -e "${stats}"
+}
+
 # Function to show menu
 show_menu() {
+    echo
+    echo -e "${CYAN}═══════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}                    Build Status${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════${NC}"
+    get_binary_stats
+    echo -e "${CYAN}═══════════════════════════════════════════════════════${NC}"
     echo
     echo -e "${BOLD}Main Menu:${NC}"
     echo -e "${BLUE}1)${NC} Build (Debug)"
@@ -328,8 +379,6 @@ main() {
                         echo -e "${RED}Invalid option${NC}"
                         ;;
                 esac
-                echo
-                read -p "Press Enter to continue..."
             done
             ;;
         *)
