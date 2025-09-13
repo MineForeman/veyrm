@@ -8,6 +8,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Enhanced Logging System - separate log files by category
+  - Created separate log files for each category (player, AI, combat, environment, etc.)
+  - All logs now stored in logs/ directory for better organization
+  - Main debug log (veyrm_debug.log) contains all events chronologically
+  - Category-specific logs for focused debugging:
+    - veyrm_player.log - Player actions and movements
+    - veyrm_ai.log - Monster AI decisions and movements
+    - veyrm_combat.log - Combat events and damage
+    - veyrm_env.log - Environment interactions (doors, terrain)
+    - veyrm_map.log - Map generation events
+    - veyrm_system.log - System messages
+    - veyrm_inventory.log - Item interactions
+    - veyrm_turn.log - Turn system events
+    - veyrm_fov.log - Field of view updates
+    - veyrm_spawn.log - Monster spawning
+  - Automatic logs/ directory creation on startup
+  - Fixed monster movements incorrectly appearing in player log
+
+- Door System Implementation
+  - Added door tiles (DOOR_OPEN and DOOR_CLOSED)
+  - 'o' key binding for opening/closing adjacent doors
+  - Doors block movement and visibility when closed
+  - Automatic door placement at room entrances during map generation
+  - Door interactions logged to environment log
+  - Support for multiple door interactions in single turn
+
+### Fixed
+
+- Test Suite Failures
+  - Fixed room generation tests to use Config values instead of deprecated static constants
+  - Fixed procedural dungeon generation to always place stairs
+  - Fixed TEST_ROOM validation by using open doors for connectivity
+  - Added emergency fallback to ensure stairs placement
+  - Fixed sign comparison warnings in tests
+  - All 126 test cases now passing
+
+### Changed
+
+- Logging System Organization
+  - Moved all log files into logs/ directory
+  - Separated monster movement logs from player logs (now in AI log)
+  - Updated build.sh clearlog command to handle new log structure
+
+## Previous Releases
+
+### Added
 - Phase 9: Complete Combat System Implementation
   - Phase 9.1: Combat Stats - full d20 combat mechanics
     - CombatSystem class with d20 attack rolls and defense values

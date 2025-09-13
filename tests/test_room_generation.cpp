@@ -2,6 +2,7 @@
 #include "room.h"
 #include "map_generator.h"
 #include "map.h"
+#include "config.h"
 #include <random>
 
 TEST_CASE("Room: Basic properties", "[room]") {
@@ -153,13 +154,14 @@ TEST_CASE("Room: Validation", "[room]") {
 
 TEST_CASE("MapGenerator: Random room generation", "[map_generator]") {
     Map map(198, 66);  // Use full Angband-sized map for room generation tests
-    
+
     SECTION("Generate with random seed") {
         auto rooms = MapGenerator::generateRandomRooms(map);
-        
-        // Should generate between MIN_ROOMS and MAX_ROOMS
-        REQUIRE(rooms.size() >= MapGenerator::MIN_ROOMS);
-        REQUIRE(rooms.size() <= MapGenerator::MAX_ROOMS);
+
+        // Should generate between config min and max rooms (not the old static constants)
+        Config& config = Config::getInstance();
+        REQUIRE(rooms.size() >= static_cast<size_t>(config.getMinRooms()));
+        REQUIRE(rooms.size() <= static_cast<size_t>(config.getMaxRooms()));
         
         // All rooms should be valid
         for (const auto& room : rooms) {
@@ -199,11 +201,12 @@ TEST_CASE("MapGenerator: Random room generation", "[map_generator]") {
     SECTION("Room size constraints") {
         auto rooms = MapGenerator::generateRandomRooms(map, 99999);
         
+        Config& config = Config::getInstance();
         for (const auto& room : rooms) {
-            REQUIRE(room.width >= MapGenerator::MIN_ROOM_SIZE);
-            REQUIRE(room.width <= MapGenerator::MAX_ROOM_SIZE);
-            REQUIRE(room.height >= MapGenerator::MIN_ROOM_SIZE);
-            REQUIRE(room.height <= MapGenerator::MAX_ROOM_SIZE);
+            REQUIRE(room.width >= config.getMinRoomSize());
+            REQUIRE(room.width <= config.getMaxRoomSize());
+            REQUIRE(room.height >= config.getMinRoomSize());
+            REQUIRE(room.height <= config.getMaxRoomSize());
         }
     }
     
@@ -227,11 +230,13 @@ TEST_CASE("MapGenerator: Procedural dungeon generation", "[map_generator]") {
     
     SECTION("Generate complete dungeon") {
         MapGenerator::generateProceduralDungeon(map, 42);
-        
+
         // Should have floor tiles
         int floor_count = 0;
         int wall_count = 0;
         bool has_stairs = false;
+        int stairs_up_count = 0;
+        int door_count = 0;
         
         for (int y = 0; y < map.getHeight(); y++) {
             for (int x = 0; x < map.getWidth(); x++) {
@@ -242,11 +247,24 @@ TEST_CASE("MapGenerator: Procedural dungeon generation", "[map_generator]") {
                     has_stairs = true;
                     floor_count++; // Stairs are walkable
                 }
+                if (tile == TileType::STAIRS_UP) {
+                    stairs_up_count++;
+                }
+                if (tile == TileType::DOOR_CLOSED || tile == TileType::DOOR_OPEN) {
+                    door_count++;
+                }
             }
         }
-        
+
         REQUIRE(floor_count > 50);  // Should have substantial floor space
         REQUIRE(wall_count > 50);   // Should have walls
+
+        INFO("Floor count: " << floor_count);
+        INFO("Wall count: " << wall_count);
+        INFO("Has stairs down: " << has_stairs);
+        INFO("Stairs up count: " << stairs_up_count);
+        INFO("Door count: " << door_count);
+
         REQUIRE(has_stairs == true); // Should have stairs
     }
     

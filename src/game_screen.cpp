@@ -38,13 +38,80 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
 
 GameScreen::~GameScreen() = default;
 
+bool GameScreen::handleDoorInteraction() {
+    auto* player = game_manager->getPlayer();
+    auto* map = game_manager->getMap();
+    auto* msg_log = game_manager->getMessageLog();
+
+    if (!player || !map || !msg_log) {
+        return false;
+    }
+
+    LOG_PLAYER("Attempting to interact with doors");
+
+    // Check all 8 directions for doors
+    const int dirs[8][2] = {
+        {0, -1}, {0, 1}, {-1, 0}, {1, 0},   // Cardinal
+        {-1, -1}, {1, -1}, {-1, 1}, {1, 1}  // Diagonal
+    };
+
+    bool found_door = false;
+    int door_count = 0;
+
+    for (const auto& dir : dirs) {
+        int check_x = player->x + dir[0];
+        int check_y = player->y + dir[1];
+
+        if (!map->inBounds(check_x, check_y)) {
+            continue;
+        }
+
+        TileType tile = map->getTile(check_x, check_y);
+
+        if (tile == TileType::DOOR_CLOSED) {
+            // Open the door
+            map->setTile(check_x, check_y, TileType::DOOR_OPEN);
+            msg_log->addMessage("You open the door.");
+            LOG_ENVIRONMENT("Door opened at (" + std::to_string(check_x) + ", " + std::to_string(check_y) + ")");
+            LOG_PLAYER("Player opened a closed door");
+            found_door = true;
+            door_count++;
+        } else if (tile == TileType::DOOR_OPEN) {
+            // Close the door
+            map->setTile(check_x, check_y, TileType::DOOR_CLOSED);
+            msg_log->addMessage("You close the door.");
+            LOG_ENVIRONMENT("Door closed at (" + std::to_string(check_x) + ", " + std::to_string(check_y) + ")");
+            LOG_PLAYER("Player closed an open door");
+            found_door = true;
+            door_count++;
+        }
+    }
+
+    if (!found_door) {
+        msg_log->addMessage("There is no door here.");
+        LOG_PLAYER("Player tried to interact with door but none found");
+        return false;
+    }
+
+    // Opening/closing doors takes a turn
+    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+    game_manager->updateMonsters();
+
+    // If multiple doors, add a note
+    if (door_count > 1) {
+        msg_log->addMessage("(Multiple doors toggled)");
+    }
+
+    return true;
+}
+
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
     auto* player = game_manager->getPlayer();
     auto* map = game_manager->getMap();
     auto* entity_manager = game_manager->getEntityManager();
     auto* combat_system = game_manager->getCombatSystem();
 
-    LOG_MOVEMENT("Player attempting to move " + direction + " (dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ")");
+    LOG_PLAYER("Moving " + direction + " (dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ")");
 
     if (!player || !map || !entity_manager) {
         LOG_ERROR("Missing required components for player movement");
@@ -53,7 +120,7 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
 
     int new_x = player->x + dx;
     int new_y = player->y + dy;
-    LOG_MOVEMENT("Target position: (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
+    LOG_PLAYER("Target position: (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
 
     // Check for monsters to attack
     auto blocking = entity_manager->getBlockingEntityAt(new_x, new_y);
@@ -103,7 +170,7 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
         game_manager->updateMonsters();  // Let monsters respond
         return true;
     } else if (player->tryMove(*map, entity_manager, dx, dy)) {
-        LOG_MOVEMENT("Player moved successfully to (" + std::to_string(player->x) + ", " + std::to_string(player->y) + ")");
+        LOG_PLAYER("Moved successfully to (" + std::to_string(player->x) + ", " + std::to_string(player->y) + ")");
         game_manager->processPlayerAction(ActionSpeed::NORMAL);
 
         // Only add movement message if not in combat
@@ -117,7 +184,7 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
         game_manager->updateMonsters();  // Let monsters act after player moves
         return true;
     } else {
-        LOG_MOVEMENT("Player movement blocked");
+        LOG_PLAYER("Movement blocked");
     }
     return false;
 }
@@ -242,12 +309,15 @@ Component GameScreen::Create() {
                 return handlePlayerMovement(1, 1, "southeast");
 
             case InputAction::WAIT:
-                LOG_MOVEMENT("Player waiting");
+                LOG_PLAYER("Waiting for one turn");
                 game_manager->processPlayerAction(ActionSpeed::NORMAL);
                 game_manager->getMessageLog()->addMessage("You wait.");
                 game_manager->updateMonsters();  // Let monsters act
                 return true;
-                
+
+            case InputAction::OPEN_DOOR:
+                return handleDoorInteraction();
+
             case InputAction::OPEN_INVENTORY:
                 game_manager->setState(GameState::INVENTORY);
                 return true;

@@ -57,6 +57,13 @@ Document all changes sinse the last check in.  Update the existing md documents 
 Do a git add -A, tag, check in and push.
 Do a git add -A, check in and push.
 
+Add an option to build.sh that creates a gorse video in a tmp directory so it does not check in.
+
+
+
+I just played a game, the only log generated was veyrm_debug.log, why?
+
+
 The "load" screen loks odd, jazz it up!
 
 

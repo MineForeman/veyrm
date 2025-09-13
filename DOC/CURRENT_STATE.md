@@ -1,10 +1,10 @@
 # Veyrm - Current State Documentation
 
-## Last Updated: 2025-01-13
+## Last Updated: 2025-01-14
 
 ## Project Status
 
-Veyrm is a modern roguelike game in active development, currently at Phase 9 (Combat System) completion. The game features procedural dungeon generation, monster AI, and a complete d20-based combat system.
+Veyrm is a modern roguelike game in active development, currently at Phase 9 (Combat System) completion with recent enhancements to the logging system and door mechanics. The game features procedural dungeon generation, monster AI, and a complete d20-based combat system.
 
 ## Completed Phases
 
@@ -45,11 +45,12 @@ Veyrm is a modern roguelike game in active development, currently at Phase 9 (Co
 
 ### Technical Features
 - YAML configuration system
-- Comprehensive debug logging
+- Enhanced multi-category logging system with separate log files
 - Data-driven content (monsters.json)
 - Fullscreen terminal UI with FTXUI
 - Cross-platform support (macOS, Linux, Windows)
-- Extensive unit test coverage
+- Extensive unit test coverage (126 tests, all passing)
+- Interactive door system with open/close mechanics
 
 ## Active Systems
 
@@ -92,22 +93,34 @@ veyrm/
 └── CMakeLists.txt   # Build configuration
 ```
 
-## Recent Changes (Phase 9)
+## Recent Changes (Post-Phase 9)
 
-### Added
+### Enhanced Logging System
+- Separated logs into category-specific files
+- Created logs/ directory for all log files
+- Added 10 specialized log files (player, AI, combat, environment, etc.)
+- Main debug log contains all events chronologically
+- Fixed monster movements incorrectly appearing in player log
+
+### Door System Implementation
+- Added interactive door tiles (open/closed states)
+- 'o' key toggles adjacent doors
+- Doors block movement and vision when closed
+- Automatic door placement at room entrances
+- Support for multiple door interactions per turn
+
+### Test Suite Improvements
+- Fixed all failing tests (126 tests now passing)
+- Updated tests to use Config values
+- Fixed procedural dungeon stairs placement
+- Resolved map validation issues with doors
+
+### Previous Phase 9 Additions
 - CombatSystem class with full d20 mechanics
-- Global logging system with categories
 - Player bump-to-attack functionality
 - Death screen with menu options
 - Combat message integration
 - Experience rewards for kills
-
-### Fixed
-- HP display bug (duplicate member variables)
-- Player attack input handling
-- Combat messages not appearing in UI
-- Debug output interfering with display
-- Test failures after stat changes
 
 ## Next Steps (Phase 10: Item System)
 
@@ -188,5 +201,10 @@ This is an active development project. All code changes should:
 
 ## Version
 
-Current Version: 0.9.3 (Phase 9 Complete)
+Current Version: 0.9.4 (Post-Phase 9 Enhancements)
+
+- Enhanced logging system with category separation
+- Door system implementation
+- Test suite fixes (all 126 tests passing)
+
 Next Version: 0.10.1 (Phase 10.1: Item Entity)

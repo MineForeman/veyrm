@@ -31,4 +31,7 @@ private:
 
     // Handle player movement and attacks
     bool handlePlayerMovement(int dx, int dy, const std::string& direction);
+
+    // Handle door interactions
+    bool handleDoorInteraction();
 };

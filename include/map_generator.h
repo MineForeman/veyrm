@@ -119,6 +119,8 @@ public:
     
     // Door placement
     static void placeDoorAtIntersection(Map& map, const Point& pos);
+    static void placeDoorsAtRoomEntrances(Map& map, const std::vector<Room>& rooms);
+    static void checkAndPlaceDoor(Map& map, int x, int y);
     static std::vector<Point> findCorridorRoomIntersections(const Map& map, const std::vector<Room>& rooms);
     
 private:

@@ -143,8 +143,8 @@ Monsters and items are defined in JSON:
 
 ## Controls
 
-- **Movement:** Arrow keys or hjkl + diagonals (yubn)
-- **Actions:** g (get), i (inventory), u (use), D (drop), . (wait), q (quit), N (new game)
+- **Movement:** Arrow keys or numpad (1-9 including diagonals). **DO NOT implement vi-style keys (hjkl/yubn)**
+- **Actions:** g (get), i (inventory), u (use), D (drop), o (open/close doors), . (wait), q (quit), N (new game)
 
 ## World Context
 

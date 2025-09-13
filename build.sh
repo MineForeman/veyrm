@@ -45,6 +45,7 @@ clean_build() {
 clear_logs() {
     echo -e "${YELLOW}Clearing log files...${NC}"
     rm -rf "${PROJECT_ROOT}/logs"
+    rm -f "${PROJECT_ROOT}/"*.log
     echo -e "${GREEN}Logs cleared${NC}"
 }
 

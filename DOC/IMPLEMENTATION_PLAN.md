@@ -364,8 +364,8 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] Handle player death (game over)
 - [x] Handle monster death (remove from map)
 - [x] **Test:** Death states work correctly
-- [ ] **Documentation:** Document combat formulas
-- [ ] **Git tag:** `v0.9.3-death-handling`
+- [x] **Documentation:** Document combat formulas
+- [x] **Git tag:** `v0.9.3-death-handling`
 
 ---
 

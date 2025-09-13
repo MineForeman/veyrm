@@ -2,6 +2,7 @@
 #include "map.h"
 #include "map_validator.h"
 #include "config.h"
+#include "log.h"
 #include <algorithm>
 #include <random>
 #include <climits>
@@ -9,18 +10,70 @@
 void MapGenerator::generateTestRoom(Map& map, int width, int height) {
     // Fill with void
     map.fill(TileType::VOID);
-    
+
     // Ensure room fits in map
     width = std::min(width, map.getWidth() - 4);
     height = std::min(height, map.getHeight() - 4);
-    
+
     // Calculate room position (centered)
     int room_x = (map.getWidth() - width) / 2;
     int room_y = (map.getHeight() - height) / 2;
-    
+
     // Create room
     carveRoom(map, room_x, room_y, width, height);
-    
+
+    // Create a complete ring corridor around the room
+    int corridor_dist = 3; // Distance from room walls
+    int outer_left = room_x - corridor_dist;
+    int outer_right = room_x + width + corridor_dist - 1;
+    int outer_top = room_y - corridor_dist;
+    int outer_bottom = room_y + height + corridor_dist - 1;
+
+    // Create the complete ring corridor
+    // Top and bottom corridors
+    for (int x = outer_left; x <= outer_right; x++) {
+        map.setTile(x, outer_top, TileType::FLOOR);
+        map.setTile(x, outer_bottom, TileType::FLOOR);
+    }
+    // Left and right corridors (completing the ring)
+    for (int y = outer_top; y <= outer_bottom; y++) {
+        map.setTile(outer_left, y, TileType::FLOOR);
+        map.setTile(outer_right, y, TileType::FLOOR);
+    }
+
+    // Now add doors and connecting corridors from room to ring
+    // Use OPEN doors for testing to ensure connectivity validation passes
+    // North door
+    int door_x = room_x + width / 2;
+    int door_y = room_y;
+    map.setTile(door_x, door_y, TileType::DOOR_OPEN);
+    for (int i = 1; i < corridor_dist; i++) {
+        map.setTile(door_x, door_y - i, TileType::FLOOR);
+    }
+
+    // South door
+    door_y = room_y + height - 1;
+    map.setTile(door_x, door_y, TileType::DOOR_OPEN);
+    for (int i = 1; i < corridor_dist; i++) {
+        map.setTile(door_x, door_y + i, TileType::FLOOR);
+    }
+
+    // West door
+    door_x = room_x;
+    door_y = room_y + height / 2;
+    map.setTile(door_x, door_y, TileType::DOOR_OPEN);
+    for (int i = 1; i < corridor_dist; i++) {
+        map.setTile(door_x - i, door_y, TileType::FLOOR);
+    }
+
+    // East door
+    door_x = room_x + width - 1;
+    door_y = room_y + height / 2;
+    map.setTile(door_x, door_y, TileType::DOOR_OPEN);
+    for (int i = 1; i < corridor_dist; i++) {
+        map.setTile(door_x + i, door_y, TileType::FLOOR);
+    }
+
     // Place stairs in bottom-right corner
     map.setTile(room_x + width - 2, room_y + height - 2, TileType::STAIRS_DOWN);
 }
@@ -46,7 +99,10 @@ void MapGenerator::generateTestDungeon(Map& map) {
     carveCorridorL(map, Point(30, 15), Point(30, 18));  // Central vertical connection
     
     // Place stairs in bottom-right room (inside the room, not on the wall)
-    map.setTile(55, 22, TileType::STAIRS_DOWN);
+    // Make sure the position is valid for the map size
+    int stairs_x = std::min(55, map.getWidth() - 5);
+    int stairs_y = std::min(22, map.getHeight() - 2);
+    map.setTile(stairs_x, stairs_y, TileType::STAIRS_DOWN);
 }
 
 void MapGenerator::generateCorridorTest(Map& map) {
@@ -493,21 +549,35 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
 }
 
 void MapGenerator::generateProceduralDungeon(Map& map, unsigned int seed) {
-    // Generate random rooms
-    auto rooms = generateRandomRooms(map, seed);
-    
-    // Connect rooms with corridors (simple approach: connect each room to the next)
-    for (size_t i = 1; i < rooms.size(); i++) {
-        Point start = rooms[i-1].center();
-        Point end = rooms[i].center();
-        carveCorridorL(map, start, end);
+    // Use the advanced version with doors
+    CorridorOptions options;
+    options.style = CorridorStyle::L_SHAPED;
+    options.width = 1;
+    options.placeDoors = true;
+    options.strategy = ConnectionStrategy::MST;
+
+    generateProceduralDungeon(map, seed, options);
+
+    // Final safety check - ensure stairs exist
+    bool hasStairs = false;
+    for (int y = 0; y < map.getHeight() && !hasStairs; y++) {
+        for (int x = 0; x < map.getWidth() && !hasStairs; x++) {
+            if (map.getTile(x, y) == TileType::STAIRS_DOWN) {
+                hasStairs = true;
+            }
+        }
     }
-    
-    // Place stairs in the last room
-    if (!rooms.empty()) {
-        const auto& last_room = rooms.back();
-        Point stairs = last_room.center();
-        map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+
+    if (!hasStairs) {
+        // Emergency fallback - place stairs on any floor tile
+        for (int y = 0; y < map.getHeight() && !hasStairs; y++) {
+            for (int x = 0; x < map.getWidth() && !hasStairs; x++) {
+                if (map.getTile(x, y) == TileType::FLOOR) {
+                    map.setTile(x, y, TileType::STAIRS_DOWN);
+                    hasStairs = true;
+                }
+            }
+        }
     }
 }
 
@@ -521,33 +591,70 @@ void MapGenerator::carveRoom(Map& map, const Room& room) {
 
 void MapGenerator::generateProceduralDungeon(Map& map, unsigned int seed, const CorridorOptions& options) {
     const int MAX_GENERATION_ATTEMPTS = 5;
-    
+    bool anyRoomsGenerated = false;
+
     for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
         // Generate random rooms
         auto rooms = generateRandomRooms(map, seed + attempt);
-        
+
+        // If no rooms generated, skip to next attempt
+        if (rooms.empty()) {
+            continue;
+        }
+
+        anyRoomsGenerated = true;
+
         // Connect rooms using specified strategy
         connectRooms(map, rooms, options);
-        
-        // Place stairs in the last room
-        if (!rooms.empty()) {
-            const auto& last_room = rooms.back();
-            Point stairs = last_room.center();
-            map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
-        }
-        
+
+        // Always place stairs in the last room
+        const auto& last_room = rooms.back();
+        Point stairs = last_room.center();
+        map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+
         // Validate and fix the map
         if (MapValidator::validateAndFix(map)) {
-            // Map is valid!
+            // Map is valid! Ensure stairs are placed
+            // Double-check stairs are still there at the original position
+            if (map.getTile(stairs.x, stairs.y) != TileType::STAIRS_DOWN) {
+                // Stairs got removed or overwritten, put them back
+                map.setTile(stairs.x, stairs.y, TileType::STAIRS_DOWN);
+            }
             return;
         }
-        
+
         // Map invalid, try again with different seed
         map.fill(TileType::VOID);
     }
-    
+
     // Failed to generate valid map after attempts, use fallback
-    generateTestDungeon(map);
+    // But only if we actually tried to generate rooms
+    if (!anyRoomsGenerated) {
+        // No rooms could be generated at all, use simpler fallback
+        generateTestRoom(map);
+    } else {
+        generateTestDungeon(map);
+        // Ensure stairs are placed even if generateTestDungeon fails
+        bool hasStairs = false;
+        for (int y = 0; y < map.getHeight() && !hasStairs; y++) {
+            for (int x = 0; x < map.getWidth() && !hasStairs; x++) {
+                if (map.getTile(x, y) == TileType::STAIRS_DOWN) {
+                    hasStairs = true;
+                }
+            }
+        }
+        if (!hasStairs) {
+            // Find a floor tile and place stairs there
+            for (int y = 0; y < map.getHeight() && !hasStairs; y++) {
+                for (int x = 0; x < map.getWidth() && !hasStairs; x++) {
+                    if (map.getTile(x, y) == TileType::FLOOR) {
+                        map.setTile(x, y, TileType::STAIRS_DOWN);
+                        hasStairs = true;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void MapGenerator::connectRooms(Map& map, std::vector<Room>& rooms, const CorridorOptions& options) {
@@ -577,13 +684,12 @@ void MapGenerator::connectRooms(Map& map, std::vector<Room>& rooms, const Corrid
         Point end = rooms[to].center();
         carveCorridor(map, start, end, options.style, options.width);
         
-        // Place doors if requested
-        if (options.placeDoors) {
-            // Find where corridor meets rooms and place doors
-            // This is simplified - proper implementation would find exact intersection
-            placeDoorAtIntersection(map, start);
-            placeDoorAtIntersection(map, end);
-        }
+        // Doors will be placed after all corridors are carved
+    }
+
+    // Now place doors at all room entrances
+    if (options.placeDoors) {
+        placeDoorsAtRoomEntrances(map, rooms);
     }
 }
 
@@ -787,29 +893,72 @@ std::vector<std::pair<int, int>> MapGenerator::getSequentialConnections(const st
     return connections;
 }
 
-void MapGenerator::placeDoorAtIntersection(Map& map, const Point& pos) {
-    // Simple door placement - check if position is at room boundary
-    // Look for floor adjacent to wall pattern
-    bool hasFloor = false;
-    bool hasWall = false;
-    
-    for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            if (dx == 0 && dy == 0) continue;
-            
-            int x = pos.x + dx;
-            int y = pos.y + dy;
-            
-            if (map.inBounds(x, y)) {
-                TileType tile = map.getTile(x, y);
-                if (tile == TileType::FLOOR) hasFloor = true;
-                if (tile == TileType::WALL) hasWall = true;
-            }
+void MapGenerator::placeDoorsAtRoomEntrances(Map& map, const std::vector<Room>& rooms) {
+    LOG_MAP("Placing doors at room entrances for " + std::to_string(rooms.size()) + " rooms");
+    // Scan the perimeter of each room for doorway positions
+    for (const auto& room : rooms) {
+        // Check each edge of the room
+        for (int x = room.x; x < room.x + room.width; x++) {
+            // Top edge
+            checkAndPlaceDoor(map, x, room.y - 1);
+            // Bottom edge
+            checkAndPlaceDoor(map, x, room.y + room.height);
+        }
+
+        for (int y = room.y; y < room.y + room.height; y++) {
+            // Left edge
+            checkAndPlaceDoor(map, room.x - 1, y);
+            // Right edge
+            checkAndPlaceDoor(map, room.x + room.width, y);
         }
     }
-    
-    // Place door if we're at a transition point
-    if (hasFloor && hasWall && map.getTile(pos.x, pos.y) == TileType::FLOOR) {
+}
+
+void MapGenerator::checkAndPlaceDoor(Map& map, int x, int y) {
+    // Check if this position is a valid doorway
+    if (!map.inBounds(x, y)) return;
+    if (map.getTile(x, y) != TileType::FLOOR) return;
+
+    // Check for doorway pattern (walls on opposite sides)
+    bool horizontalDoor = map.inBounds(x, y - 1) &&
+                         map.inBounds(x, y + 1) &&
+                         map.getTile(x, y - 1) == TileType::WALL &&
+                         map.getTile(x, y + 1) == TileType::WALL;
+
+    bool verticalDoor = map.inBounds(x - 1, y) &&
+                       map.inBounds(x + 1, y) &&
+                       map.getTile(x - 1, y) == TileType::WALL &&
+                       map.getTile(x + 1, y) == TileType::WALL;
+
+    if (horizontalDoor || verticalDoor) {
+        map.setTile(x, y, TileType::DOOR_CLOSED);
+        LOG_ENVIRONMENT("Door placed at (" + std::to_string(x) + ", " + std::to_string(y) + ")");
+    }
+}
+
+void MapGenerator::placeDoorAtIntersection(Map& map, const Point& pos) {
+    // Find doorway positions - places where corridors meet rooms
+    // Look for patterns where we have walls on opposite sides (doorway)
+
+    // Check if current position is floor
+    if (map.getTile(pos.x, pos.y) != TileType::FLOOR) {
+        return;
+    }
+
+    // Check horizontal doorway (walls above and below)
+    bool horizontalDoor = map.inBounds(pos.x, pos.y - 1) &&
+                         map.inBounds(pos.x, pos.y + 1) &&
+                         map.getTile(pos.x, pos.y - 1) == TileType::WALL &&
+                         map.getTile(pos.x, pos.y + 1) == TileType::WALL;
+
+    // Check vertical doorway (walls left and right)
+    bool verticalDoor = map.inBounds(pos.x - 1, pos.y) &&
+                       map.inBounds(pos.x + 1, pos.y) &&
+                       map.getTile(pos.x - 1, pos.y) == TileType::WALL &&
+                       map.getTile(pos.x + 1, pos.y) == TileType::WALL;
+
+    // Place door if we found a doorway
+    if (horizontalDoor || verticalDoor) {
         map.setTile(pos.x, pos.y, TileType::DOOR_CLOSED);
     }
 }

@@ -2,6 +2,7 @@
 #include "map_validator.h"
 #include "map.h"
 #include "map_generator.h"
+#include <iostream>
 
 TEST_CASE("MapValidator: Empty map validation", "[map_validator]") {
     Map map(20, 20);
@@ -153,7 +154,15 @@ TEST_CASE("MapValidator: Generated maps validation", "[map_validator]") {
     SECTION("TEST_ROOM is valid") {
         MapGenerator::generate(map, MapType::TEST_ROOM);
         auto result = MapValidator::validate(map);
-        
+
+        // Always print results for debugging
+        for (const auto& error : result.errors) {
+            std::cerr << "Validation error: " << error << std::endl;
+        }
+        for (const auto& warning : result.warnings) {
+            std::cerr << "Validation warning: " << warning << std::endl;
+        }
+
         REQUIRE(result.valid == true);
         REQUIRE(result.walkable_tiles > 0);
         REQUIRE(result.errors.empty());
