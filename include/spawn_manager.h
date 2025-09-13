@@ -8,6 +8,7 @@
 class Map;
 class EntityManager;
 class Player;
+class GameManager;
 
 // Spawn table entry for depth-based monster selection
 struct SpawnTableEntry {
@@ -21,6 +22,7 @@ struct SpawnTableEntry {
 class SpawnManager {
 public:
     SpawnManager();
+    explicit SpawnManager(GameManager* gm);
     ~SpawnManager() = default;
     
     // Initial map population
@@ -52,8 +54,11 @@ public:
     void setMaxMonsters(int max) { max_monsters = max; }
     void setMinSpawnDistance(int dist) { min_spawn_distance = dist; }
     void setInitialMonsterCount(int count) { initial_monster_count = count; }
-    
+
+    void setGameManager(GameManager* gm) { game_manager = gm; }
+
 private:
+    GameManager* game_manager = nullptr;
     // Spawn timing
     int turns_since_spawn;
     int spawn_rate;  // Turns between spawn attempts

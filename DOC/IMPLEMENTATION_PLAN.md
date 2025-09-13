@@ -315,12 +315,25 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Documentation:** [Phase 8.2 Documentation](PHASES/8.2_MONSTER_SPAWNING.md)
 - [x] **Git tag:** `v0.8.2-spawning`
 
-### 8.3 Basic AI
-- [ ] Implement simple chase behavior
-- [ ] Add 4-direction pathfinding (BFS)
-- [ ] Add random wander when no target
-- [ ] **Test:** Monsters move toward player
-- [ ] **Git tag:** `v0.8.3-basic-ai`
+### 8.3 Basic AI ✅
+- [x] Implement 8-way movement for monsters (N, NE, E, SE, S, SW, W, NW)
+- [x] Add room-bound behavior (monsters stay in spawn room unless chasing)
+- [x] Implement AI states (IDLE, ALERT, HOSTILE, FLEEING, RETURNING)
+- [x] Add A* pathfinding with diagonal support and line-of-sight
+- [x] Implement chase behavior with room-leaving exception
+- [x] Add return-to-room behavior after losing player
+- [x] Implement FOV-based player detection
+- [x] Add random wander within boundaries when idle
+- [x] Add fleeing behavior for low-health monsters
+- [x] **Test:** Monsters use 8-way movement correctly
+- [x] **Test:** Room-bound monsters stay in rooms when not chasing
+- [x] **Test:** Monsters chase and return appropriately
+- [x] **Test:** AI state transitions work correctly
+- [x] **Test:** Pathfinding navigates obstacles properly
+- [x] **Documentation:** [Phase 8.3 Requirements](PHASES/8.3_BASIC_AI_REQUIREMENTS.md)
+- [x] **Documentation:** [Phase 8.3 Design Notes](PHASES/8.3_AI_DESIGN_NOTES.md)
+- [x] **Git tag:** `v0.8.3-basic-ai`
+- **Notes:** Complete AI system with MonsterAI class, Pathfinding system, integrated turn processing, and comprehensive unit tests
 
 ---
 

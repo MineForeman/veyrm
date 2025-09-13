@@ -49,6 +49,7 @@ Shows an interactive menu with options:
 | `run [map_type]` | Run the game | `./build.sh run arena` |
 | `test` | Run unit tests | `./build.sh test` |
 | `dump [keystrokes]` | Run dump mode test | `./build.sh dump '\n\u\r'` |
+| `keys [keystrokes]` | Run with automated key input | `./build.sh keys '\n3\njjjq'` |
 | `check` | Run system checks | `./build.sh check` |
 | `reset` | Reset terminal | `./build.sh reset` |
 | `menu` | Show interactive menu | `./build.sh menu` |
@@ -93,16 +94,22 @@ Select map type:
 # Run with specific map
 ./build.sh run corridor
 
-# Test with automated input
+# Test with automated input (dump mode)
 ./build.sh dump '\n\u\u\r\d'
+
+# Test AI behavior with automated keys
+./build.sh keys '\n3\njjjq'
 
 # Reset terminal after crash
 ./build.sh reset
 ```
 
-## Dump Mode Testing
+## Automated Testing
 
-The dump mode is useful for automated testing and debugging:
+The build script supports two modes of automated testing:
+
+### Dump Mode Testing
+The dump mode provides frame-by-frame output for debugging:
 
 ```bash
 # Default test sequence
@@ -110,6 +117,17 @@ The dump mode is useful for automated testing and debugging:
 
 # Custom keystroke sequence
 ./build.sh dump '\n\u\u\r\r\d\l'
+```
+
+### Automated Key Input Testing
+For testing AI behavior and gameplay features:
+
+```bash
+# Test AI with Arena map (option 3) and movement
+./build.sh keys '\n3\njjjq'
+
+# Test different map selection and actions
+./build.sh keys '\n2\nhlllq'
 ```
 
 ### Keystroke Format

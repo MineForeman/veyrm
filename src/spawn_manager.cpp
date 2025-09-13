@@ -6,12 +6,15 @@
 #include "monster_factory.h"
 #include "config.h"
 #include "fov.h"
+#include "game_state.h"
+#include "monster_ai.h"
 #include <algorithm>
 #include <random>
 #include <cmath>
 
-SpawnManager::SpawnManager() 
-    : turns_since_spawn(0),
+SpawnManager::SpawnManager()
+    : game_manager(nullptr),
+      turns_since_spawn(0),
       spawn_rate(100),
       max_monsters(30),
       initial_monster_count(10),
@@ -29,6 +32,29 @@ SpawnManager::SpawnManager()
     spawn_outside_fov = config.getSpawnOutsideFOV();
     room_spawn_percentage = config.getRoomSpawnPercentage();
     
+    buildSpawnTable();
+}
+
+SpawnManager::SpawnManager(GameManager* gm)
+    : game_manager(gm),
+      turns_since_spawn(0),
+      spawn_rate(100),
+      max_monsters(30),
+      initial_monster_count(10),
+      min_spawn_distance(5),
+      spawn_outside_fov(true),
+      room_spawn_percentage(0.95f),
+      rng(std::random_device{}()) {
+
+    // Load config values
+    Config& config = Config::getInstance();
+    initial_monster_count = config.getInitialMonsterCount();
+    spawn_rate = config.getMonsterSpawnRate();
+    max_monsters = config.getMaxMonstersPerLevel();
+    min_spawn_distance = config.getMinSpawnDistance();
+    spawn_outside_fov = config.getSpawnOutsideFOV();
+    room_spawn_percentage = config.getRoomSpawnPercentage();
+
     buildSpawnTable();
 }
 
@@ -67,7 +93,15 @@ void SpawnManager::spawnInitialMonsters(Map& map, EntityManager& entity_manager,
         std::string species = selectMonsterSpecies(depth, rng);
         if (!species.empty()) {
             auto monster = entity_manager.createMonster(species, point.x, point.y);
-            if (monster) {
+            if (monster && game_manager && game_manager->getMonsterAI()) {
+                // Assign room to monster
+                Room* room = map.getRoomAt(point.x, point.y);
+                if (room) {
+                    Monster* monster_ptr = dynamic_cast<Monster*>(monster.get());
+                    if (monster_ptr) {
+                        game_manager->getMonsterAI()->assignRoomToMonster(*monster_ptr, room);
+                    }
+                }
                 monsters_spawned++;
             }
         }
@@ -82,6 +116,7 @@ void SpawnManager::spawnInitialMonsters(Map& map, EntityManager& entity_manager,
         if (!species.empty()) {
             auto monster = entity_manager.createMonster(species, point.x, point.y);
             if (monster) {
+                // Corridor monsters have no room assignment
                 corridor_spawned++;
                 monsters_spawned++;
             }
@@ -95,7 +130,15 @@ void SpawnManager::spawnInitialMonsters(Map& map, EntityManager& entity_manager,
             std::string species = selectMonsterSpecies(depth, rng);
             if (!species.empty()) {
                 auto monster = entity_manager.createMonster(species, point.x, point.y);
-                if (monster) {
+                if (monster && game_manager && game_manager->getMonsterAI()) {
+                    // Assign room to monster
+                    Room* room = map.getRoomAt(point.x, point.y);
+                    if (room) {
+                        Monster* monster_ptr = dynamic_cast<Monster*>(monster.get());
+                        if (monster_ptr) {
+                            game_manager->getMonsterAI()->assignRoomToMonster(*monster_ptr, room);
+                        }
+                    }
                     monsters_spawned++;
                 }
             }

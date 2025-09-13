@@ -60,6 +60,11 @@ Do a git add -A, check in and push.
 The "load" screen loks odd, jazz it up!
 
 
+Implement doors and bind a key for players to use to toggle the door open and close them.
+
+
+Implement 8.3 Basic AI
+
 Legend:
 . Empty Space
 

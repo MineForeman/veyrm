@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8.3: Basic AI System - intelligent monster behavior
+  - MonsterAI class with 5 behavioral states (IDLE, ALERT, HOSTILE, FLEEING, RETURNING)
+  - A* pathfinding system with 8-directional movement support
+  - Line-of-sight detection using Bresenham line algorithm
+  - Room-bound territorial behavior for strategic gameplay
+  - Chase mechanics with room-leaving exception for pursuit
+  - Fleeing behavior for low-health monsters (< 25% health)
+  - Turn-integrated AI processing for smooth gameplay
+  - Comprehensive unit tests for all AI behaviors
+- Phase 8.2: Monster Spawning System - dynamic creature population
+  - SpawnManager with room-preference spawning (95% in rooms, 5% in corridors)
+  - Depth-based monster selection with threat scaling
+  - Dynamic spawning during gameplay based on monster count
+  - FOV-aware spawning (outside player vision)
+  - Configurable spawn rates and population limits
 - Phase 8.1: Monster Entity System - complete monster implementation
   - Data-driven monster design with JSON configuration
   - Monster class with combat stats (HP, attack, defense, speed, XP)

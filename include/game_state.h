@@ -25,6 +25,7 @@ class EntityManager;
 class Player;
 class SpawnManager;
 class MapMemory;
+class MonsterAI;
 
 class GameManager {
 public:
@@ -79,6 +80,10 @@ public:
     void updateFOV();
     MapMemory* getMapMemory() { return map_memory.get(); }
     const std::vector<std::vector<bool>>& getCurrentFOV() const { return current_fov; }
+
+    // Monster AI
+    void updateMonsters();
+    MonsterAI* getMonsterAI() { return monster_ai.get(); }
     
 private:
     GameState current_state = GameState::MENU;
@@ -91,6 +96,7 @@ private:
     std::unique_ptr<EntityManager> entity_manager;
     std::unique_ptr<SpawnManager> spawn_manager;
     std::unique_ptr<MapMemory> map_memory;
+    std::unique_ptr<MonsterAI> monster_ai;
     std::vector<std::vector<bool>> current_fov;
     Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;

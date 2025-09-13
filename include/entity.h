@@ -50,9 +50,14 @@ public:
     // Visibility
     void setVisible(bool visible) { is_visible = visible; }
     bool isVisible() const { return is_visible; }
-    
+
+    // User data for AI and other systems
+    void* getUserData() const { return user_data; }
+    void setUserData(void* data) { user_data = data; }
+
 private:
     bool is_visible = true;
+    void* user_data = nullptr;
     
 public:
     

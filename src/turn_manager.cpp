@@ -44,9 +44,12 @@ void TurnManager::processWorldTurn() {
     
     // Process any scheduled actions that are due
     processScheduledActions();
-    
-    // TODO: Update monsters, effects, etc.
-    
+
+    // Update monsters
+    if (game_manager) {
+        game_manager->updateMonsters();
+    }
+
     endTurn();
 }
 

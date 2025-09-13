@@ -14,6 +14,8 @@
 #include "config.h"
 #include "spawn_manager.h"
 #include "monster_factory.h"
+#include "monster_ai.h"
+#include "monster.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -24,7 +26,8 @@ GameManager::GameManager(MapType initial_map)
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
       entity_manager(std::make_unique<EntityManager>()),
-      spawn_manager(std::make_unique<SpawnManager>()),
+      spawn_manager(std::make_unique<SpawnManager>(this)),
+      monster_ai(std::make_unique<MonsterAI>()),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
@@ -238,5 +241,66 @@ void GameManager::updateFOV() {
     // Update entity visibility based on FOV
     if (entity_manager) {
         entity_manager->updateEntityVisibility(current_fov);
+    }
+}
+
+void GameManager::updateMonsters() {
+    if (!entity_manager || !monster_ai) {
+        return;
+    }
+
+    Player* player = getPlayer();
+    if (!player) {
+        return;
+    }
+
+    auto monsters = entity_manager->getMonsters();
+    for (auto& monster_ptr : monsters) {
+        if (!monster_ptr || !monster_ptr->canAct()) {
+            continue;
+        }
+
+        Monster* monster = dynamic_cast<Monster*>(monster_ptr.get());
+        if (!monster) {
+            continue;
+        }
+
+        // Update AI state
+        monster_ai->updateMonsterAI(*monster, *player, *map);
+
+        // Get next move from AI
+        Point next_pos = monster_ai->getNextMove(*monster, *player, *map);
+
+        // Check if the move is valid (not blocked by another entity)
+        if (next_pos != monster->getPosition()) {
+            bool blocked = false;
+
+            // Check if player is at target position (attack)
+            if (next_pos == player->getPosition()) {
+                // Attack player
+                int damage = monster->calculateDamage();
+                player->takeDamage(damage);
+
+                if (message_log) {
+                    message_log->addCombatMessage(
+                        monster->name + " attacks for " + std::to_string(damage) + " damage!"
+                    );
+                }
+                continue;
+            }
+
+            // Check if another monster is blocking
+            for (const auto& other : monsters) {
+                if (other.get() != monster && other->getPosition() == next_pos) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            // Move if not blocked
+            if (!blocked) {
+                monster->moveTo(next_pos.x, next_pos.y);
+            }
+        }
     }
 }
