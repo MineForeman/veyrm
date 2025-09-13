@@ -25,7 +25,7 @@ TEST_CASE("InputHandler: Movement keys", "[input_handler]") {
     SECTION("Diagonal movement not implemented") {
         // Diagonal movement is not yet implemented
         REQUIRE(handler.processEvent(Event::Character('y')) == InputAction::NONE);
-        REQUIRE(handler.processEvent(Event::Character('u')) == InputAction::NONE);
+        // 'u' is now USE_ITEM, not diagonal movement
         REQUIRE(handler.processEvent(Event::Character('b')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('n')) == InputAction::NONE);
     }
@@ -57,10 +57,11 @@ TEST_CASE("InputHandler: Action keys", "[input_handler]") {
         REQUIRE(handler.processEvent(Event::Character('g')) == InputAction::GET_ITEM);
     }
 
-    SECTION("Other keys return NONE") {
-        // These actions aren't implemented yet
-        REQUIRE(handler.processEvent(Event::Character('u')) == InputAction::NONE);
-        REQUIRE(handler.processEvent(Event::Character('D')) == InputAction::NONE);
+    SECTION("Item manipulation actions") {
+        // These actions are now implemented for inventory
+        REQUIRE(handler.processEvent(Event::Character('u')) == InputAction::USE_ITEM);
+        REQUIRE(handler.processEvent(Event::Character('D')) == InputAction::DROP_ITEM);
+        REQUIRE(handler.processEvent(Event::Character('E')) == InputAction::EXAMINE_ITEM);
     }
 }
 
