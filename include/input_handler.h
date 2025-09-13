@@ -25,6 +25,7 @@ enum class InputAction {
     CONFIRM,
     CANCEL,
     OPEN_DOOR,  // Open/close doors
+    GET_ITEM,   // Pick up items
 
     // UI actions
     OPEN_INVENTORY,

@@ -2,36 +2,39 @@
 
 A modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI. Descend through the Spiral Vaults beneath Veyrmspire to shatter the last shard of a dead god's crown.
 
-![Version](https://img.shields.io/badge/version-0.8.2-blue)
+![Version](https://img.shields.io/badge/version-0.10.1-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-23-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 ## 🎮 Features
 
-### Current (v0.8.2)
+### Current (v0.10.1)
+- **Item System** - Complete item entity system with collectibles and treasure
+- **Item Pickup** - Press 'g' to get items, automatic gold collection
+- **Combat System** - d20-based tactical bump-to-attack with critical hits
+- **Monster AI** - State-based AI with pathfinding (IDLE, ALERT, HOSTILE, FLEEING)
 - **Monster Spawning** - Intelligent spawn system with room preference (95% in rooms)
 - **Dynamic Spawning** - Monsters spawn during gameplay based on configurable timers
 - **Monster System** - Data-driven monsters with JSON configuration
 - **Entity System** - Flexible component-based entity architecture
-- **Player Entity** - Full player stats, leveling, and movement
+- **Player Entity** - Full player stats, leveling, movement, and gold tracking
 - **Configuration** - YAML-based game configuration (config.yml)
-- **Lit Rooms** - Angband-style permanently illuminated rooms (95% by default)
+- **Lit Rooms** - Angband-style permanently illuminated rooms
 - **Fullscreen UI** - Dynamic fullscreen mode with responsive layout
 - **Three-Panel Layout** - Map, status bar, and message log
-- **Unicode Tiles** - Beautiful Unicode characters for walls (█), floors (·), etc.
+- **Unicode Tiles** - Beautiful characters for walls (█), floors (·), items (!,$), etc.
 - **FOV System** - Symmetric shadowcasting field of view
 - **Map Memory** - Remember explored areas
 - **Map System** - Procedural dungeon generation with validation
 - **Movement** - 8-directional movement with collision detection
-- **Rendering** - Viewport-based rendering with monster display
+- **Rendering** - Layered rendering (terrain, items, monsters, player)
 - **Turn System** - Action-based timing system
 - **Message Log** - Scrollable message history with color coding
-- **Status Bar** - HP with color coding, position, time, and depth display
+- **Status Bar** - HP with color coding, position, time, depth, and gold display
 
 ### Planned
-- **Monster AI** - Movement and pathfinding for monsters
-- **Combat** - Tactical bump-to-attack system
-- **Items** - Weapons, armor, and consumables
+- **Inventory System** - Equipment and consumable management
+- **Item Effects** - Potions heal, scrolls cast spells
 - **Save/Load** - Persistent game state
 - **Experience System** - Leveling and skill progression
 

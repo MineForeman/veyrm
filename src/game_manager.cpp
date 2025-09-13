@@ -18,6 +18,8 @@
 #include "monster.h"
 #include "combat_system.h"
 #include "log.h"
+#include "item_manager.h"
+#include "item_factory.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -31,6 +33,7 @@ GameManager::GameManager(MapType initial_map)
       spawn_manager(std::make_unique<SpawnManager>(this)),
       monster_ai(std::make_unique<MonsterAI>()),
       combat_system(std::make_unique<CombatSystem>(message_log.get())),
+      item_manager(std::make_unique<ItemManager>(map.get())),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
@@ -39,6 +42,11 @@ GameManager::GameManager(MapType initial_map)
     // Load monster data
     MonsterFactory::getInstance().loadFromFile(
         Config::getInstance().getDataFilePath("monsters.json")
+    );
+
+    // Load item data
+    ItemFactory::getInstance().loadFromJson(
+        Config::getInstance().getDataFilePath("items.json")
     );
     
     // Initialize map with MapGenerator
@@ -95,10 +103,49 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Log map statistics
-    message_log->addSystemMessage("Map: " + std::to_string(validation.walkable_tiles) + 
-                                 " walkable tiles, " + std::to_string(validation.room_count) + 
+    message_log->addSystemMessage("Map: " + std::to_string(validation.walkable_tiles) +
+                                 " walkable tiles, " + std::to_string(validation.room_count) +
                                  " rooms");
-    
+
+    // Spawn initial items
+    if (item_manager) {
+        item_manager->clear();  // Clear any existing items
+
+        // Spawn items in rooms
+        const auto& rooms = map->getRooms();
+        if (!rooms.empty()) {
+            // Spawn 5-10 random items
+            int item_count = 5 + (rand() % 6);
+            for (int i = 0; i < item_count; i++) {
+                const Room& room = rooms[rand() % rooms.size()];
+
+                // Find random position in room
+                int x = room.x + 1 + (rand() % (room.width - 2));
+                int y = room.y + 1 + (rand() % (room.height - 2));
+
+                // Make sure position is walkable and not occupied
+                if (map->isWalkable(x, y)) {
+                    item_manager->spawnRandomItem(x, y, current_depth);
+                }
+            }
+
+            // Spawn some gold piles
+            int gold_count = 3 + (rand() % 4);
+            for (int i = 0; i < gold_count; i++) {
+                const Room& room = rooms[rand() % rooms.size()];
+                int x = room.x + 1 + (rand() % (room.width - 2));
+                int y = room.y + 1 + (rand() % (room.height - 2));
+
+                if (map->isWalkable(x, y)) {
+                    int amount = 10 + (rand() % 41);  // 10-50 gold
+                    item_manager->spawnGold(x, y, amount);
+                }
+            }
+
+            LOG_INFO("Spawned " + std::to_string(item_manager->getItemCount()) + " items");
+        }
+    }
+
     // Calculate initial FOV from player position
     updateFOV();
 }

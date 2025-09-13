@@ -28,6 +28,7 @@ add_executable(veyrm_tests
     test_spawn_manager.cpp
     test_monster_ai.cpp
     test_combat_system.cpp
+    test_item.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -75,6 +76,9 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/pathfinding.cpp
     ${CMAKE_SOURCE_DIR}/src/combat_system.cpp
     ${CMAKE_SOURCE_DIR}/src/log.cpp
+    ${CMAKE_SOURCE_DIR}/src/item.cpp
+    ${CMAKE_SOURCE_DIR}/src/item_factory.cpp
+    ${CMAKE_SOURCE_DIR}/src/item_manager.cpp
 )
 
 # Add compile definitions for tests

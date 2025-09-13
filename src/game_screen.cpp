@@ -12,6 +12,8 @@
 #include "log.h"
 #include "monster.h"
 #include "combat_system.h"
+#include "item_manager.h"
+#include "item.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -318,14 +320,45 @@ Component GameScreen::Create() {
             case InputAction::OPEN_DOOR:
                 return handleDoorInteraction();
 
+            case InputAction::GET_ITEM: {
+                auto* player = game_manager->getPlayer();
+                auto* item_manager = game_manager->getItemManager();
+                auto* msg_log = game_manager->getMessageLog();
+
+                if (player && item_manager) {
+                    auto item = item_manager->getItemAt(player->x, player->y);
+                    if (item) {
+                        // For now, just pick up and destroy the item
+                        // Later we'll add to inventory
+                        msg_log->addMessage("You pick up " + item->name + ".");
+
+                        // If it's gold, add to player's gold
+                        if (item->type == Item::ItemType::GOLD) {
+                            int amount = item->properties["amount"];
+                            player->gold += amount;
+                            msg_log->addMessage("You gain " + std::to_string(amount) + " gold.");
+                        }
+
+                        // Remove the item from the world
+                        item_manager->removeItem(item);
+
+                        game_manager->processPlayerAction(ActionSpeed::FAST);
+                        return true;
+                    } else {
+                        msg_log->addMessage("There is nothing here to pick up.");
+                    }
+                }
+                return false;
+            }
+
             case InputAction::OPEN_INVENTORY:
                 game_manager->setState(GameState::INVENTORY);
                 return true;
-                
+
             case InputAction::OPEN_HELP:
                 game_manager->setState(GameState::HELP);
                 return true;
-                
+
             default:
                 break;
         }

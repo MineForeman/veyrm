@@ -28,6 +28,7 @@ class SpawnManager;
 class MapMemory;
 class MonsterAI;
 class CombatSystem;
+class ItemManager;
 
 class GameManager {
 public:
@@ -89,6 +90,10 @@ public:
 
     // Combat system
     CombatSystem* getCombatSystem() { return combat_system.get(); }
+
+    // Item system
+    ItemManager* getItemManager() { return item_manager.get(); }
+    const ItemManager* getItemManager() const { return item_manager.get(); }
     
 private:
     GameState current_state = GameState::MENU;
@@ -103,6 +108,7 @@ private:
     std::unique_ptr<MapMemory> map_memory;
     std::unique_ptr<MonsterAI> monster_ai;
     std::unique_ptr<CombatSystem> combat_system;
+    std::unique_ptr<ItemManager> item_manager;
     std::vector<std::vector<bool>> current_fov;
     Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;

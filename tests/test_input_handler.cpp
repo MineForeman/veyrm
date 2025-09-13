@@ -53,9 +53,12 @@ TEST_CASE("InputHandler: Action keys", "[input_handler]") {
         REQUIRE(handler.processEvent(Event::Character('?')) == InputAction::OPEN_HELP);
     }
     
+    SECTION("Item actions") {
+        REQUIRE(handler.processEvent(Event::Character('g')) == InputAction::GET_ITEM);
+    }
+
     SECTION("Other keys return NONE") {
         // These actions aren't implemented yet
-        REQUIRE(handler.processEvent(Event::Character('g')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('u')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('D')) == InputAction::NONE);
     }

@@ -371,26 +371,28 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 10: Item System (Day 13-14)
 
-### 10.1 Item Entity
-- [ ] Create `Item` class
-- [ ] Add item types (POTION, SCROLL)
-- [ ] Load item definitions from JSON
-- [ ] **Test:** Items load from data files
-- [ ] **Git tag:** `v0.10.1-item-entity`
+### 10.1 Item Entity ✅ COMPLETE
+- [x] Create `Item` class with full property system
+- [x] Add item types (POTION, SCROLL, WEAPON, ARMOR, FOOD, GOLD, MISC)
+- [x] Load item definitions from JSON (12 types implemented)
+- [x] ItemFactory singleton for item creation
+- [x] ItemManager for world item lifecycle
+- [x] **Test:** Items load from data files (all tests passing)
+- [x] **Git tag:** `v0.10.1-item-entity` (ready to tag)
 
-### 10.2 Ground Items
-- [ ] Spawn items during map generation
-- [ ] Render items on map
-- [ ] Handle multiple items per tile
-- [ ] **Test:** Items appear on map
-- [ ] **Git tag:** `v0.10.2-ground-items`
+### 10.2 Ground Items ✅ COMPLETE (merged with 10.1)
+- [x] Spawn items during map generation (5-10 items, 3-6 gold piles)
+- [x] Render items on map with appropriate colors and symbols
+- [x] Handle multiple items per tile
+- [x] **Test:** Items appear on map (verified)
+- [x] **Merged with 10.1**
 
-### 10.3 Pickup System
-- [ ] Implement 'g' get command
-- [ ] Add items to inventory
-- [ ] Remove items from map on pickup
-- [ ] **Test:** Can pick up items
-- [ ] **Git tag:** `v0.10.3-pickup`
+### 10.3 Pickup System ✅ COMPLETE (merged with 10.1)
+- [x] Implement 'g' get command
+- [x] Gold automatically added to player wealth
+- [x] Remove items from map on pickup
+- [x] **Test:** Can pick up items (verified)
+- [x] **Note:** Full inventory system pending Phase 11
 
 ---
 

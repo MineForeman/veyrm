@@ -1,4 +1,206 @@
 {
-  "version": "0.0.1",
-  "items": []
+  "version": "0.1.0",
+  "items": [
+    {
+      "id": "potion_minor",
+      "name": "Minor Healing Potion",
+      "description": "A small vial of red liquid that restores health",
+      "type": "potion",
+      "symbol": "!",
+      "color": "red",
+      "value": 50,
+      "weight": 1,
+      "stackable": true,
+      "max_stack": 10,
+      "properties": {
+        "heal": 10,
+        "instant": 1
+      },
+      "depth_range": [1, 5]
+    },
+    {
+      "id": "potion_major",
+      "name": "Major Healing Potion",
+      "description": "A large flask of glowing red liquid",
+      "type": "potion",
+      "symbol": "!",
+      "color": "bright_red",
+      "value": 200,
+      "weight": 2,
+      "stackable": true,
+      "max_stack": 5,
+      "properties": {
+        "heal": 50,
+        "instant": 1
+      },
+      "depth_range": [3, 10]
+    },
+    {
+      "id": "potion_full",
+      "name": "Full Healing Potion",
+      "description": "A crystal bottle filled with miraculous healing elixir",
+      "type": "potion",
+      "symbol": "!",
+      "color": "magenta",
+      "value": 500,
+      "weight": 2,
+      "stackable": true,
+      "max_stack": 3,
+      "properties": {
+        "heal": 999,
+        "instant": 1
+      },
+      "depth_range": [5, 20]
+    },
+    {
+      "id": "scroll_identify",
+      "name": "Scroll of Identify",
+      "description": "A parchment inscribed with mystical runes",
+      "type": "scroll",
+      "symbol": "?",
+      "color": "white",
+      "value": 100,
+      "weight": 1,
+      "stackable": true,
+      "max_stack": 20,
+      "properties": {
+        "identify": 1,
+        "single_use": 1
+      },
+      "depth_range": [1, 10]
+    },
+    {
+      "id": "scroll_teleport",
+      "name": "Scroll of Teleportation",
+      "description": "A scroll that warps space around the reader",
+      "type": "scroll",
+      "symbol": "?",
+      "color": "blue",
+      "value": 150,
+      "weight": 1,
+      "stackable": true,
+      "max_stack": 10,
+      "properties": {
+        "teleport": 1,
+        "single_use": 1
+      },
+      "depth_range": [2, 10]
+    },
+    {
+      "id": "scroll_magic_mapping",
+      "name": "Scroll of Magic Mapping",
+      "description": "Reveals the layout of the current floor",
+      "type": "scroll",
+      "symbol": "?",
+      "color": "cyan",
+      "value": 200,
+      "weight": 1,
+      "stackable": true,
+      "max_stack": 5,
+      "properties": {
+        "magic_mapping": 1,
+        "single_use": 1
+      },
+      "depth_range": [1, 15]
+    },
+    {
+      "id": "gold_coins",
+      "name": "Gold Coins",
+      "description": "A pile of shiny gold coins",
+      "type": "gold",
+      "symbol": "$",
+      "color": "yellow",
+      "value": 1,
+      "weight": 0,
+      "stackable": true,
+      "max_stack": 9999,
+      "properties": {
+        "amount": 10
+      },
+      "depth_range": [1, 100]
+    },
+    {
+      "id": "gold_pile",
+      "name": "Large Gold Pile",
+      "description": "A large pile of gold coins",
+      "type": "gold",
+      "symbol": "$",
+      "color": "yellow",
+      "value": 1,
+      "weight": 0,
+      "stackable": true,
+      "max_stack": 9999,
+      "properties": {
+        "amount": 50
+      },
+      "depth_range": [3, 100]
+    },
+    {
+      "id": "ration",
+      "name": "Food Ration",
+      "description": "A wrapped package of preserved food",
+      "type": "food",
+      "symbol": "%",
+      "color": "brown",
+      "value": 10,
+      "weight": 2,
+      "stackable": true,
+      "max_stack": 10,
+      "properties": {
+        "nutrition": 500,
+        "single_use": 1
+      },
+      "depth_range": [1, 10]
+    },
+    {
+      "id": "bread",
+      "name": "Loaf of Bread",
+      "description": "A fresh loaf of bread",
+      "type": "food",
+      "symbol": "%",
+      "color": "brown",
+      "value": 5,
+      "weight": 1,
+      "stackable": true,
+      "max_stack": 5,
+      "properties": {
+        "nutrition": 200,
+        "single_use": 1
+      },
+      "depth_range": [1, 5]
+    },
+    {
+      "id": "torch",
+      "name": "Torch",
+      "description": "A wooden torch that provides light",
+      "type": "misc",
+      "symbol": "/",
+      "color": "brown",
+      "value": 5,
+      "weight": 2,
+      "stackable": true,
+      "max_stack": 10,
+      "properties": {
+        "light_radius": 3,
+        "duration": 1000
+      },
+      "depth_range": [1, 10]
+    },
+    {
+      "id": "key_iron",
+      "name": "Iron Key",
+      "description": "A rusty iron key",
+      "type": "misc",
+      "symbol": "[",
+      "color": "grey",
+      "value": 20,
+      "weight": 1,
+      "stackable": false,
+      "max_stack": 1,
+      "properties": {
+        "unlock": 1
+      },
+      "depth_range": [1, 10]
+    }
+  ]
 }

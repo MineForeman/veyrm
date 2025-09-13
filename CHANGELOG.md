@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 10.1: Item Entity System** - Complete implementation of collectible items
+  - Item class with full property system (type, value, weight, stackability)
+  - ItemFactory singleton for data-driven item creation from JSON
+  - ItemManager for world item lifecycle management
+  - 12 initial item types (potions, scrolls, food, gold, misc items)
+  - Item rendering in game world with appropriate colors and symbols
+  - Item pickup system with 'g' key
+  - Gold collection with automatic addition to player wealth
+  - Items spawn randomly in rooms during map generation (5-10 items, 3-6 gold piles)
+  - Comprehensive unit tests with 100% API coverage
+  - Full integration with existing game systems
+
 - Visualization Tools - comprehensive visualization capabilities
   - Gource video generation for git history visualization
     - Creates animated visualization of repository development

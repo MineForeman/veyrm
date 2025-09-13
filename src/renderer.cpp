@@ -3,6 +3,8 @@
 #include "game_state.h"
 #include "color_scheme.h"
 #include "entity_manager.h"
+#include "item_manager.h"
+#include "item.h"
 #include <ftxui/dom/elements.hpp>
 #include <algorithm>
 
@@ -84,6 +86,13 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
     if (entity_manager) {
         visible_entities = entity_manager->getVisibleEntities();
     }
+
+    // Get items for rendering
+    const auto* item_manager = game.getItemManager();
+    std::vector<const Item*> all_items;
+    if (item_manager) {
+        all_items = item_manager->getAllItems();
+    }
     
     for (int screen_y = 0; screen_y < viewport_height; screen_y++) {
         std::vector<Element> row_elements;
@@ -111,8 +120,38 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                     }
                 }
             }
-            
+
             if (entity_rendered) {
+                continue;
+            }
+
+            // Check for items at this position (only if visible)
+            bool item_rendered = false;
+            if (map.isVisible(map_pos.x, map_pos.y)) {
+                for (const auto& item : all_items) {
+                    if (item && item->x == map_pos.x && item->y == map_pos.y) {
+                        // Convert item color string to ftxui Color
+                        Color item_color = Color::White;  // Default
+                        if (item->color == "red") item_color = Color::Red;
+                        else if (item->color == "bright_red") item_color = Color::RedLight;
+                        else if (item->color == "blue") item_color = Color::Blue;
+                        else if (item->color == "yellow") item_color = Color::Yellow;
+                        else if (item->color == "brown") item_color = Color::RGB(139, 69, 19);  // Brown
+                        else if (item->color == "cyan") item_color = Color::Cyan;
+                        else if (item->color == "magenta") item_color = Color::Magenta;
+                        else if (item->color == "grey") item_color = Color::GrayDark;
+                        else if (item->color == "white") item_color = Color::White;
+
+                        // Render the item
+                        std::string symbol(1, item->symbol);
+                        row_elements.push_back(text(symbol) | color(item_color));
+                        item_rendered = true;
+                        break;
+                    }
+                }
+            }
+
+            if (item_rendered) {
                 continue;
             }
             

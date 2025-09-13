@@ -4,7 +4,7 @@
 
 ## Project Status
 
-Veyrm is a modern roguelike game in active development, currently at Phase 9 (Combat System) completion with recent enhancements to the logging system and door mechanics. The game features procedural dungeon generation, monster AI, and a complete d20-based combat system.
+Veyrm is a modern roguelike game in active development, currently at Phase 10.1 (Item Entity System) completion. The game features procedural dungeon generation, monster AI, a complete d20-based combat system, and now a fully functional item system with collectibles and treasure.
 
 ## Completed Phases
 
@@ -32,12 +32,23 @@ Veyrm is a modern roguelike game in active development, currently at Phase 9 (Co
 - **9.2 Bump Combat**: Player melee attacks
 - **9.3 Death Handling**: Complete death states
 
+### Phase 10: Item System (Partial) ✅
+- **10.1 Item Entity**: Complete item foundation system
+  - Data-driven item definitions (items.json)
+  - Item spawning and management
+  - Item pickup with 'g' key
+  - Gold collection system
+  - 12 initial item types
+
 ## Current Capabilities
 
 ### Gameplay Features
 - Explore procedurally generated dungeons
 - Fight monsters using tactical bump combat
 - Gain experience from defeating enemies
+- **NEW: Collect items and treasure**
+- **NEW: Pick up items with 'g' key**
+- **NEW: Accumulate gold currency**
 - Navigate with 8-directional movement
 - Save and load game progress
 - View message log of events
@@ -46,11 +57,13 @@ Veyrm is a modern roguelike game in active development, currently at Phase 9 (Co
 ### Technical Features
 - YAML configuration system
 - Enhanced multi-category logging system with separate log files
-- Data-driven content (monsters.json)
+- Data-driven content (monsters.json, **items.json**)
 - Fullscreen terminal UI with FTXUI
 - Cross-platform support (macOS, Linux, Windows)
-- Extensive unit test coverage (126 tests, all passing)
+- Extensive unit test coverage (**130 tests, all passing**)
 - Interactive door system with open/close mechanics
+- **Item factory pattern for data-driven items**
+- **Item manager for world item lifecycle**
 
 ## Active Systems
 
@@ -68,10 +81,19 @@ Veyrm is a modern roguelike game in active development, currently at Phase 9 (Co
 4. **FLEEING**: Low health (<25%), runs away
 5. **RETURNING**: Lost player, returns to territory
 
+### Item System
+- **Item Types**: Potions, Scrolls, Weapons, Armor, Food, Gold, Misc
+- **Current Items**: 12 types defined in items.json
+- **Spawn Rate**: 5-10 items per level, 3-6 gold piles
+- **Pickup**: Press 'g' to get items at current position
+- **Gold**: Automatically added to player wealth
+- **Rendering**: Items show appropriate symbols and colors
+
 ### Current Stats (Configurable)
 - **Player HP**: 50
 - **Player Attack**: 8
 - **Player Defense**: 5
+- **Player Gold**: 0 (starting)
 - **FOV Radius**: 10 tiles
 - **Monster Spawn Rate**: 100 turns
 
@@ -93,9 +115,19 @@ veyrm/
 └── CMakeLists.txt   # Build configuration
 ```
 
-## Recent Changes (v0.9.5 - Visualization Tools)
+## Recent Changes (v0.10.1 - Item Entity System)
 
-### Visualization Tools Added
+### Item System Implementation
+- **Complete Item Foundation** - Full item entity system
+  - Item, ItemFactory, and ItemManager classes
+  - 12 initial item types with properties
+  - JSON-based data-driven item definitions
+  - Item spawning during map generation
+  - Item pickup system with 'g' key
+  - Gold collection and wealth tracking
+  - Comprehensive unit tests (49 assertions)
+
+### Previous Update (v0.9.5 - Visualization Tools)
 - **Gource Video Generation** - Animated repository history visualization
   - Creates MP4 video of development timeline
   - Shows file changes and developer contributions

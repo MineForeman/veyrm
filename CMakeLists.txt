@@ -124,7 +124,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # ========================================
 # Main executable
 # ========================================
-add_executable(veyrm 
+add_executable(veyrm
     src/main.cpp
     src/game_screen.cpp
     src/game_manager.cpp
@@ -157,6 +157,9 @@ add_executable(veyrm
     src/pathfinding.cpp
     src/combat_system.cpp
     src/log.cpp
+    src/item.cpp
+    src/item_factory.cpp
+    src/item_manager.cpp
 )
 
 # Link libraries

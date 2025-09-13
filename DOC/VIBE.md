@@ -73,12 +73,14 @@ Implement doors and bind a key for players to use to toggle the door open and cl
 Implement and log 8.3 Basic AI
 
 
-
+Refactor
 Multiplayer
 Ranged attacks
 Spell system
-Classes/Races
-
+Classes
+Races
+Character Generation
 Quests
+Help
 
 

@@ -26,6 +26,7 @@ void InputHandler::initializeDefaultBindings() {
     // Actions
     keyBindings["."] = InputAction::WAIT;
     keyBindings["o"] = InputAction::OPEN_DOOR;
+    keyBindings["g"] = InputAction::GET_ITEM;
     keyBindings["Return"] = InputAction::CONFIRM;
     keyBindings["Escape"] = InputAction::CANCEL;
     keyBindings["q"] = InputAction::QUIT;
