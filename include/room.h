@@ -19,9 +19,10 @@ public:
     };
     
     RoomType type = RoomType::NORMAL;
+    bool lit = false;  // Angband-style lit room (entire room visible when entered)
     
     // Constructor
-    Room(int x, int y, int w, int h, RoomType t = RoomType::NORMAL);
+    Room(int x, int y, int w, int h, RoomType t = RoomType::NORMAL, bool isLit = false);
     
     // Get room center for corridor connections
     Point center() const;
@@ -50,4 +51,8 @@ public:
     
     // Check if room is valid
     bool isValid() const;
+    
+    // Check if room is lit
+    bool isLit() const { return lit; }
+    void setLit(bool value) { lit = value; }
 };

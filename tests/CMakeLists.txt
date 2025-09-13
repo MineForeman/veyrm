@@ -21,6 +21,7 @@ add_executable(veyrm_tests
     test_visibility.cpp
     test_status_bar.cpp
     test_layout_system.cpp
+    test_lit_rooms.cpp
 )
 
 # Link with Catch2 and other dependencies

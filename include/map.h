@@ -2,6 +2,7 @@
 
 #include "tile.h"
 #include "point.h"
+#include "room.h"
 #include <vector>
 #include <map>
 
@@ -50,12 +51,22 @@ public:
     // Get tile properties for a given tile type
     static TileProperties getTileProperties(TileType type);
     
+    // Room management
+    void addRoom(const Room& room);
+    Room* getRoomAt(int x, int y);
+    const Room* getRoomAt(int x, int y) const;
+    Room* getRoomAt(const Point& pos) { return getRoomAt(pos.x, pos.y); }
+    const Room* getRoomAt(const Point& pos) const { return getRoomAt(pos.x, pos.y); }
+    const std::vector<Room>& getRooms() const { return rooms; }
+    void clearRooms() { rooms.clear(); }
+    
 private:
     int width;
     int height;
     std::vector<std::vector<TileType>> tiles;
     std::vector<std::vector<bool>> visible;
     std::vector<std::vector<bool>> explored;
+    std::vector<Room> rooms;  // Store all rooms in the map
     
     // Tile properties lookup
     static const std::map<TileType, TileProperties> tileProperties;

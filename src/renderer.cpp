@@ -122,11 +122,22 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                 row_elements.push_back(tile);
             } else if (map.isExplored(map_pos.x, map_pos.y)) {
                 // Previously seen but not currently visible
-                // Use a darker color that works on both black and white terminals
-                Color memory_color = (glyph == "█") ? Color::Magenta : Color::GrayDark;
-                row_elements.push_back(
-                    text(glyph) | color(memory_color) | dim
-                );
+                // Check if this tile is in a lit room that we've explored
+                const Room* room = game.getMap()->getRoomAt(map_pos);
+                if (room && room->isLit()) {
+                    // Lit rooms remain bright when explored (Angband-style)
+                    // Use normal colors, not dimmed
+                    Color lit_memory_color = (glyph == "█") ? Color::Yellow : Color::White;
+                    row_elements.push_back(
+                        text(glyph) | color(lit_memory_color)
+                    );
+                } else {
+                    // Normal memory - use darker colors
+                    Color memory_color = (glyph == "█") ? Color::Magenta : Color::GrayDark;
+                    row_elements.push_back(
+                        text(glyph) | color(memory_color) | dim
+                    );
+                }
             } else {
                 // Never seen - should show as blank
                 row_elements.push_back(text(" "));

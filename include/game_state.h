@@ -44,6 +44,7 @@ public:
     FrameStats* getFrameStats() { return frame_stats.get(); }
     FrameStats* getFrameStats() const { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
+    const Map* getMap() const { return map.get(); }
     EntityManager* getEntityManager() { return entity_manager.get(); }
     const EntityManager* getEntityManager() const { return entity_manager.get(); }
     Player* getPlayer();
@@ -86,5 +87,6 @@ private:
     std::unique_ptr<EntityManager> entity_manager;
     std::unique_ptr<MapMemory> map_memory;
     std::vector<std::vector<bool>> current_fov;
+    Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;
 };

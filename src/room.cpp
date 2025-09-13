@@ -1,8 +1,8 @@
 #include "room.h"
 #include <algorithm>
 
-Room::Room(int x, int y, int w, int h, RoomType t)
-    : x(x), y(y), width(w), height(h), type(t) {
+Room::Room(int x, int y, int w, int h, RoomType t, bool isLit)
+    : x(x), y(y), width(w), height(h), type(t), lit(isLit) {
 }
 
 Point Room::center() const {

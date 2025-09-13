@@ -413,13 +413,18 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, unsigned int seed)
 std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng) {
     std::vector<Room> rooms;
     
+    // Clear any existing rooms in the map
+    map.clearRooms();
+    
     // Distribution for room dimensions and positions
     std::uniform_int_distribution<int> room_width(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
     std::uniform_int_distribution<int> room_height(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
     std::uniform_int_distribution<int> x_pos(2, std::max(2, map.getWidth() - MAX_ROOM_SIZE - 2));
     std::uniform_int_distribution<int> y_pos(2, std::max(2, map.getHeight() - MAX_ROOM_SIZE - 2));
     std::uniform_int_distribution<int> room_count(MIN_ROOMS, MAX_ROOMS);
+    std::uniform_real_distribution<float> lit_dist(0.0f, 1.0f);
     
+    const float LIT_ROOM_CHANCE = 0.3f;  // 30% chance for a room to be lit
     int target_rooms = room_count(rng);
     int attempts = 0;
     
@@ -439,7 +444,10 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
             continue;
         }
         
-        Room new_room(x, y, w, h);
+        // Determine if room should be lit (Angband-style)
+        bool isLit = lit_dist(rng) < LIT_ROOM_CHANCE;
+        
+        Room new_room(x, y, w, h, Room::RoomType::NORMAL, isLit);
         
         // Check for overlaps with existing rooms (with 2 tile padding)
         bool overlaps = false;
@@ -452,6 +460,7 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
         
         if (!overlaps && new_room.isValid()) {
             rooms.push_back(new_room);
+            map.addRoom(new_room);  // Add room to map for later reference
             carveRoom(map, new_room);
         }
         
@@ -465,8 +474,10 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
         int h = MIN_ROOM_SIZE + 2;
         int x = map.getWidth() / 2 - w / 2;
         int y = map.getHeight() / 2 - h / 2;
-        Room emergency_room(x, y, w, h);
+        bool isLit = lit_dist(rng) < LIT_ROOM_CHANCE;
+        Room emergency_room(x, y, w, h, Room::RoomType::NORMAL, isLit);
         rooms.push_back(emergency_room);
+        map.addRoom(emergency_room);
         carveRoom(map, emergency_room);
     }
     

@@ -150,6 +150,58 @@ void GameManager::updateFOV() {
     Point playerPos(player->x, player->y);
     FOV::calculate(*map, playerPos, FOV::DEFAULT_RADIUS, current_fov);
     
+    // Check if player entered a new room
+    Room* new_room = map->getRoomAt(playerPos);
+    if (new_room != current_room) {
+        // Player entered a different room (or left a room)
+        Room* old_room = current_room;
+        current_room = new_room;
+        
+        // If entering a lit room, reveal it
+        if (current_room && current_room->isLit()) {
+            // Make entire lit room visible
+            for (const auto& tile : current_room->getFloorTiles()) {
+                if (map->inBounds(tile)) {
+                    current_fov[tile.y][tile.x] = true;
+                    map->setExplored(tile.x, tile.y, true);
+                }
+            }
+            
+            // Also reveal the walls around the room
+            for (int y = current_room->top() - 1; y <= current_room->bottom() + 1; y++) {
+                for (int x = current_room->left() - 1; x <= current_room->right() + 1; x++) {
+                    if (map->inBounds(x, y)) {
+                        current_fov[y][x] = true;
+                        map->setExplored(x, y, true);
+                    }
+                }
+            }
+            
+            message_log->addSystemMessage("The room is lit!");
+        }
+        
+        // If leaving a lit room, keep it explored but not fully visible
+        if (old_room && old_room->isLit() && old_room != current_room) {
+            message_log->addSystemMessage("You leave the lit room.");
+        }
+    } else if (current_room && current_room->isLit()) {
+        // Player is still in a lit room, keep it fully visible
+        for (const auto& tile : current_room->getFloorTiles()) {
+            if (map->inBounds(tile)) {
+                current_fov[tile.y][tile.x] = true;
+            }
+        }
+        
+        // Keep walls visible too
+        for (int y = current_room->top() - 1; y <= current_room->bottom() + 1; y++) {
+            for (int x = current_room->left() - 1; x <= current_room->right() + 1; x++) {
+                if (map->inBounds(x, y)) {
+                    current_fov[y][x] = true;
+                }
+            }
+        }
+    }
+    
     // Update map memory with new visibility
     if (map_memory) {
         map_memory->updateVisibility(*map, current_fov);

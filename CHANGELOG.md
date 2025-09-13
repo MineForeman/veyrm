@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Angband-style lit rooms - 30% of rooms are permanently illuminated
+  - Entire room becomes visible when player enters
+  - Lit rooms remain bright in memory (not dimmed like normal tiles)
+  - "The room is lit!" message when entering lit rooms
+  - Strategic gameplay element with risk/reward tradeoffs
+
 ### Fixed
 - FOV initialization bug - removed debug code that was setting entire map as visible at startup
 - FOV movement update bug - added updateFOV() calls after player movement to properly recalculate visibility

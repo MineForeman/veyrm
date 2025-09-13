@@ -215,3 +215,25 @@ void Map::createCorridor(const Point& start, const Point& end) {
     // Set the end point
     setTile(end, TileType::FLOOR);
 }
+
+void Map::addRoom(const Room& room) {
+    rooms.push_back(room);
+}
+
+Room* Map::getRoomAt(int x, int y) {
+    for (auto& room : rooms) {
+        if (room.contains(x, y)) {
+            return &room;
+        }
+    }
+    return nullptr;
+}
+
+const Room* Map::getRoomAt(int x, int y) const {
+    for (const auto& room : rooms) {
+        if (room.contains(x, y)) {
+            return &room;
+        }
+    }
+    return nullptr;
+}
