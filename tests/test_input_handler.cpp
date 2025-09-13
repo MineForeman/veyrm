@@ -31,11 +31,12 @@ TEST_CASE("InputHandler: Movement keys", "[input_handler]") {
     }
     
     SECTION("Capital letters for movement not implemented") {
-        // Capital letter movement is not yet implemented
+        // Capital letter movement is not yet implemented (except L which is load)
         REQUIRE(handler.processEvent(Event::Character('H')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('J')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('K')) == InputAction::NONE);
-        REQUIRE(handler.processEvent(Event::Character('L')) == InputAction::NONE);
+        // L is now used for OPEN_LOAD_MENU
+        REQUIRE(handler.processEvent(Event::Character('L')) == InputAction::OPEN_LOAD_MENU);
     }
 }
 
