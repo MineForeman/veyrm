@@ -93,34 +93,44 @@ veyrm/
 └── CMakeLists.txt   # Build configuration
 ```
 
-## Recent Changes (Post-Phase 9)
+## Recent Changes (v0.9.5 - Visualization Tools)
 
-### Enhanced Logging System
+### Visualization Tools Added
+- **Gource Video Generation** - Animated repository history visualization
+  - Creates MP4 video of development timeline
+  - Shows file changes and developer contributions
+  - Configurable speed and duration settings
+  - Output to tmp/veyrm-gource.mp4 (gitignored)
+- **Class Diagram Generator** - Visual architecture documentation
+  - UML-style class diagrams with Graphviz
+  - Color-coded subsystems and relationships
+  - Shows inheritance, composition, and usage patterns
+  - Outputs SVG and PNG formats
+- **Documentation** of 12 future visualization options
+  - Comprehensive guide in DOC/VISUALIZATION_OPTIONS.md
+  - Includes dependency graphs, git statistics, memory layout, and more
+
+### Previous v0.9.4 Changes
+
+#### Enhanced Logging System
 - Separated logs into category-specific files
 - Created logs/ directory for all log files
 - Added 10 specialized log files (player, AI, combat, environment, etc.)
 - Main debug log contains all events chronologically
 - Fixed monster movements incorrectly appearing in player log
 
-### Door System Implementation
+#### Door System Implementation
 - Added interactive door tiles (open/closed states)
 - 'o' key toggles adjacent doors
 - Doors block movement and vision when closed
 - Automatic door placement at room entrances
 - Support for multiple door interactions per turn
 
-### Test Suite Improvements
+#### Test Suite Improvements
 - Fixed all failing tests (126 tests now passing)
 - Updated tests to use Config values
 - Fixed procedural dungeon stairs placement
 - Resolved map validation issues with doors
-
-### Previous Phase 9 Additions
-- CombatSystem class with full d20 mechanics
-- Player bump-to-attack functionality
-- Death screen with menu options
-- Combat message integration
-- Experience rewards for kills
 
 ## Next Steps (Phase 10: Item System)
 
@@ -201,7 +211,14 @@ This is an active development project. All code changes should:
 
 ## Version
 
-Current Version: 0.9.4 (Post-Phase 9 Enhancements)
+Current Version: 0.9.5 (Visualization Tools)
+
+- Gource video generation for repository history
+- Class diagram generator with UML-style output
+- Documentation of 12 additional visualization options
+- All outputs to gitignored tmp/ directory
+
+Previous: 0.9.4 (Post-Phase 9 Enhancements)
 
 - Enhanced logging system with category separation
 - Door system implementation

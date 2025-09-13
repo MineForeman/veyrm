@@ -49,6 +49,403 @@ clear_logs() {
     echo -e "${GREEN}Logs cleared${NC}"
 }
 
+# Function to generate visual class diagram
+class_diagram() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Visual Class Diagram Generator${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if graphviz is installed
+    if ! command -v dot &> /dev/null; then
+        echo -e "${RED}Error: graphviz is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install graphviz${NC}"
+        exit 1
+    fi
+
+    # Create tmp directory if it doesn't exist
+    mkdir -p "${PROJECT_ROOT}/tmp"
+
+    local dot_file="${PROJECT_ROOT}/tmp/veyrm_classes.dot"
+    local output_svg="${PROJECT_ROOT}/tmp/veyrm_classes.svg"
+    local output_png="${PROJECT_ROOT}/tmp/veyrm_classes.png"
+
+    echo -e "${YELLOW}Analyzing C++ classes...${NC}"
+
+    # Create DOT file with class relationships
+    cat > "${dot_file}" << 'EOF'
+digraph VeyrmClasses {
+    // Graph settings
+    rankdir=TB;
+    node [shape=record, style=filled, fillcolor=lightyellow, fontname="Arial"];
+    edge [fontname="Arial", fontsize=10];
+
+    // Title
+    labelloc="t";
+    label="Veyrm Class Hierarchy";
+    fontsize=20;
+    fontname="Arial Bold";
+
+    // Core Game Classes
+    subgraph cluster_core {
+        label="Core Systems";
+        style=filled;
+        color=lightgrey;
+
+        Game [label="{Game|+run()\l+init()\l+shutdown()\l}", fillcolor=lightblue];
+        GameScreen [label="{GameScreen|+render()\l+handleInput()\l+update()\l}"];
+        MainMenuScreen [label="{MainMenuScreen|+render()\l+handleInput()\l}"];
+        Screen [label="{«interface»\nScreen|+render()\l+handleInput()\l}", fillcolor=lightgreen];
+    }
+
+    // Entity System
+    subgraph cluster_entities {
+        label="Entity System";
+        style=filled;
+        color=lightgrey;
+
+        Entity [label="{Entity|#x, y: int\l#hp, max_hp: int\l#symbol: char\l|+move()\l+takeDamage()\l}", fillcolor=lightcoral];
+        Player [label="{Player|+attack: int\l+defense: int\l+exp: int\l|+gainExp()\l+levelUp()\l}"];
+        Monster [label="{Monster|+threat_level: char\l+exp_reward: int\l+aggressive: bool\l|+dropLoot()\l}"];
+        EntityManager [label="{EntityManager|+entities: vector\l|+spawn()\l+remove()\l+update()\l}"];
+    }
+
+    // Map System
+    subgraph cluster_map {
+        label="Map System";
+        style=filled;
+        color=lightgrey;
+
+        Map [label="{Map|+tiles: vector\l+width, height: int\l|+getTile()\l+setTile()\l+isValid()\l}"];
+        MapGenerator [label="{MapGenerator|+rooms: vector\l|+generate()\l+placeRooms()\l+connectRooms()\l}"];
+        MapValidator [label="{MapValidator|+validate()\l+findPath()\l}"];
+        Room [label="{Room|+x, y: int\l+width, height: int\l+lit: bool\l}"];
+    }
+
+    // Combat System
+    subgraph cluster_combat {
+        label="Combat System";
+        style=filled;
+        color=lightgrey;
+
+        CombatSystem [label="{CombatSystem|+rollDice()\l+attack()\l+calculateDamage()\l+criticalHit()\l}", fillcolor=pink];
+        CombatStats [label="{CombatStats|+hp: int\l+attack: int\l+defense: int\l+damage: string\l}"];
+    }
+
+    // AI System
+    subgraph cluster_ai {
+        label="AI System";
+        style=filled;
+        color=lightgrey;
+
+        MonsterAI [label="{MonsterAI|+state: AIState\l|+update()\l+patrol()\l+chase()\l+flee()\l}", fillcolor=lightsteelblue];
+        Pathfinder [label="{Pathfinder|+findPath()\l+aStar()\l}"];
+        AIState [label="{«enum»\nAIState|IDLE\lALERT\lHOSTILE\lFLEEING\lRETURNING\l}", fillcolor=lightgreen];
+    }
+
+    // Utility Systems
+    subgraph cluster_utils {
+        label="Utilities";
+        style=filled;
+        color=lightgrey;
+
+        FOV [label="{FOV|+calculate()\l+isVisible()\l+shadowcast()\l}"];
+        Config [label="{Config|+instance: Config\l|+getInstance()\l+getValue()\l}", fillcolor=yellow];
+        Log [label="{Log|+debug()\l+info()\l+error()\l+combat()\l}"];
+        MessageLog [label="{MessageLog|+messages: deque\l|+addMessage()\l+render()\l}"];
+        SpawnManager [label="{SpawnManager|+spawnMonster()\l+getSpawnLocation()\l}"];
+        MonsterFactory [label="{MonsterFactory|+templates: map\l|+create()\l+loadTemplates()\l}"];
+    }
+
+    // Inheritance relationships
+    Player -> Entity [label="inherits", style=solid, arrowhead=empty];
+    Monster -> Entity [label="inherits", style=solid, arrowhead=empty];
+    GameScreen -> Screen [label="implements", style=dashed, arrowhead=empty];
+    MainMenuScreen -> Screen [label="implements", style=dashed, arrowhead=empty];
+
+    // Composition relationships
+    Game -> GameScreen [label="contains", style=solid, arrowhead=diamond];
+    Game -> MainMenuScreen [label="contains", style=solid, arrowhead=diamond];
+    GameScreen -> Map [label="uses", style=dashed];
+    GameScreen -> Player [label="has", style=solid, arrowhead=diamond];
+    GameScreen -> EntityManager [label="has", style=solid, arrowhead=diamond];
+    GameScreen -> MessageLog [label="has", style=solid, arrowhead=diamond];
+    GameScreen -> FOV [label="uses", style=dashed];
+
+    EntityManager -> Monster [label="manages", style=solid, arrowhead=vee];
+    EntityManager -> SpawnManager [label="uses", style=dashed, constraint=false];
+
+    MapGenerator -> Room [label="creates", style=dashed, arrowhead=vee];
+    MapGenerator -> Map [label="generates", style=dashed, arrowhead=vee];
+    MapGenerator -> MapValidator [label="uses", style=dashed];
+
+    Monster -> MonsterAI [label="has", style=solid, arrowhead=diamond];
+    Monster -> CombatStats [label="has", style=solid, arrowhead=diamond];
+    Player -> CombatStats [label="has", style=solid, arrowhead=diamond];
+
+    MonsterAI -> Pathfinder [label="uses", style=dashed];
+    MonsterAI -> AIState [label="has state", style=solid];
+
+    GameScreen -> CombatSystem [label="uses", style=dashed];
+    CombatSystem -> Entity [label="operates on", style=dashed];
+
+    SpawnManager -> MonsterFactory [label="uses", style=dashed];
+    MonsterFactory -> Monster [label="creates", style=dashed, arrowhead=vee];
+
+    // Singleton pattern
+    Config -> Config [label="singleton", style=dotted];
+    Log -> Log [label="singleton", style=dotted];
+}
+EOF
+
+    echo -e "${YELLOW}Generating visual diagram...${NC}"
+
+    # Generate SVG
+    dot -Tsvg "${dot_file}" -o "${output_svg}" 2>/dev/null
+
+    # Generate PNG for better compatibility
+    dot -Tpng "${dot_file}" -o "${output_png}" -Gdpi=150 2>/dev/null
+
+    if [ $? -eq 0 ]; then
+        echo
+        echo -e "${GREEN}Class diagram generated successfully!${NC}"
+        echo -e "${CYAN}Files created:${NC}"
+        echo -e "  SVG: ${output_svg}"
+        echo -e "  PNG: ${output_png}"
+        echo
+
+        # Open the diagram
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            echo -e "${YELLOW}Opening diagram...${NC}"
+            open "${output_svg}"
+        else
+            echo -e "${YELLOW}Open in your image viewer:${NC}"
+            echo "  ${output_svg}"
+        fi
+
+        echo
+        echo -e "${YELLOW}Note: Diagrams are in tmp/ directory which is gitignored${NC}"
+    else
+        echo -e "${RED}Failed to generate class diagram${NC}"
+        exit 1
+    fi
+}
+
+# Function to generate class diagram with Doxygen+Graphviz (old version)
+class_diagram_doxygen() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Class Diagram Generator${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if doxygen is installed
+    if ! command -v doxygen &> /dev/null; then
+        echo -e "${RED}Error: doxygen is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install doxygen${NC}"
+        exit 1
+    fi
+
+    # Check if graphviz is installed
+    if ! command -v dot &> /dev/null; then
+        echo -e "${RED}Error: graphviz is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install graphviz${NC}"
+        exit 1
+    fi
+
+    # Create tmp directory if it doesn't exist
+    mkdir -p "${PROJECT_ROOT}/tmp"
+
+    local output_dir="${PROJECT_ROOT}/tmp/doxygen"
+    rm -rf "${output_dir}"
+    mkdir -p "${output_dir}"
+
+    echo -e "${YELLOW}Creating Doxyfile configuration...${NC}"
+
+    # Create optimized Doxyfile for class diagrams
+    cat > "${PROJECT_ROOT}/tmp/Doxyfile" << EOF
+# Doxygen configuration for Veyrm class diagrams
+
+# Project settings
+PROJECT_NAME           = "Veyrm"
+PROJECT_BRIEF          = "Modern Roguelike Game"
+OUTPUT_DIRECTORY       = ${output_dir}
+
+# Input settings
+INPUT                  = ${PROJECT_ROOT}/include ${PROJECT_ROOT}/src
+FILE_PATTERNS          = *.h *.cpp
+RECURSIVE              = YES
+
+# Extraction settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+# Output settings
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+# Graph settings
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 0
+CLASS_DIAGRAMS         = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+UML_LOOK               = YES
+UML_LIMIT_NUM_FIELDS   = 50
+TEMPLATE_RELATIONS     = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+
+# Graph appearance
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_GRAPH_MAX_NODES    = 100
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_TRANSPARENT        = YES
+
+# HTML settings
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+HTML_TIMESTAMP         = YES
+HTML_DYNAMIC_SECTIONS  = YES
+HTML_INDEX_NUM_ENTRIES = 100
+
+# Quiet output
+QUIET                  = YES
+WARNINGS               = NO
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = NO
+EOF
+
+    echo -e "${YELLOW}Generating documentation and class diagrams...${NC}"
+    cd "${PROJECT_ROOT}"
+    doxygen tmp/Doxyfile 2>&1 | grep -v "warning:" | grep -v "Notice:"
+
+    if [ $? -eq 0 ]; then
+        echo
+        echo -e "${GREEN}Class diagrams generated successfully!${NC}"
+        echo -e "${CYAN}Output directory: ${output_dir}/html${NC}"
+        echo
+        echo -e "${YELLOW}Main files of interest:${NC}"
+        echo -e "  ${CYAN}Class hierarchy:${NC} ${output_dir}/html/inherits.html"
+        echo -e "  ${CYAN}Class list:${NC} ${output_dir}/html/annotated.html"
+        echo -e "  ${CYAN}File list:${NC} ${output_dir}/html/files.html"
+        echo
+
+        # Open in browser if on macOS
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            echo -e "${YELLOW}Opening in browser...${NC}"
+            open "${output_dir}/html/index.html"
+        else
+            echo -e "${YELLOW}Open in browser:${NC}"
+            echo "  file://${output_dir}/html/index.html"
+        fi
+
+        echo
+        echo -e "${YELLOW}Note: Documentation is in tmp/ directory which is gitignored${NC}"
+    else
+        echo -e "${RED}Failed to generate class diagrams${NC}"
+        exit 1
+    fi
+}
+
+# Function to create Gource visualization video
+gource_video() {
+    # Parse arguments
+    local delete_old=false
+    if [ "$1" == "--clean" ] || [ "$1" == "-c" ]; then
+        delete_old=true
+    fi
+
+    # Create tmp directory in repository if it doesn't exist
+    mkdir -p "${PROJECT_ROOT}/tmp"
+
+    # Delete old videos if requested
+    if [ "$delete_old" = true ]; then
+        echo -e "${YELLOW}Removing old Gource videos...${NC}"
+        rm -f "${PROJECT_ROOT}/tmp/"*.mp4
+    fi
+
+    # Use fixed filename (will overwrite)
+    local video_file="${PROJECT_ROOT}/tmp/veyrm-gource.mp4"
+
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Gource Visualization${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if gource is installed
+    if ! command -v gource &> /dev/null; then
+        echo -e "${RED}Error: gource is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install gource (macOS) or apt install gource (Linux)${NC}"
+        exit 1
+    fi
+
+    # Check if ffmpeg is installed (needed for video output)
+    if ! command -v ffmpeg &> /dev/null; then
+        echo -e "${RED}Error: ffmpeg is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install ffmpeg (macOS) or apt install ffmpeg (Linux)${NC}"
+        exit 1
+    fi
+
+    echo -e "${YELLOW}Creating Gource visualization...${NC}"
+    echo -e "${YELLOW}Output: ${video_file}${NC}"
+    echo
+
+    # Gource settings for a nice visualization
+    gource \
+        --title "Veyrm Development History" \
+        --seconds-per-day 2.0 \
+        --auto-skip-seconds 0.5 \
+        --file-idle-time 60 \
+        --max-file-lag 0.5 \
+        --bloom-multiplier 0.5 \
+        --bloom-intensity 0.5 \
+        --highlight-users \
+        --highlight-dirs \
+        --multi-sampling \
+        --stop-at-end \
+        --hide mouse,progress \
+        --font-size 18 \
+        --date-format "%B %d, %Y" \
+        --dir-name-depth 2 \
+        --filename-time 3 \
+        --start-date "2025-01-01" \
+        --time-scale 1.5 \
+        --max-files 0 \
+        --background-colour 000000 \
+        --font-colour FFFFFF \
+        --dir-colour 888888 \
+        --file-extensions \
+        --output-framerate 30 \
+        --output-ppm-stream - \
+        "${PROJECT_ROOT}" | \
+    ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i - \
+        -vcodec libx264 -preset medium -pix_fmt yuv420p -crf 23 \
+        -threads 0 "${video_file}"
+
+    if [ $? -eq 0 ]; then
+        echo
+        echo -e "${GREEN}Gource video created successfully!${NC}"
+        echo -e "${CYAN}Video saved to: ${video_file}${NC}"
+        echo -e "${CYAN}File size: $(du -h "${video_file}" | cut -f1)${NC}"
+        echo
+        echo -e "${YELLOW}Note: Video is in tmp/ directory which is gitignored${NC}"
+        echo -e "${YELLOW}The file will be overwritten on next run${NC}"
+        echo
+        echo -e "${CYAN}Use --clean to delete old videos before creating new one${NC}"
+    else
+        echo -e "${RED}Failed to create Gource video${NC}"
+        exit 1
+    fi
+}
+
 # Function to configure project
 configure_project() {
     local build_type=${1:-Debug}
@@ -228,6 +625,8 @@ show_menu() {
     echo -e "${BLUE}9)${NC} Clean"
     echo -e "${BLUE}10)${NC} Reset Terminal"
     echo -e "${BLUE}11)${NC} Clear Logs"
+    echo -e "${BLUE}12)${NC} Create Gource Video"
+    echo -e "${BLUE}13)${NC} Generate Class Diagrams"
     echo -e "${BLUE}0)${NC} Exit"
     echo
 }
@@ -247,6 +646,8 @@ show_help() {
     echo "  check                  Run system checks"
     echo "  reset                  Reset terminal"
     echo "  clearlog               Clear all log files"
+    echo "  gource [--clean]       Create Gource video (--clean deletes old videos)"
+    echo "  diagram                Generate class diagrams with Doxygen"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -262,6 +663,7 @@ show_help() {
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
     echo "  $0 keys '\\njjjq'      # Run game with automated keys"
+    echo "  $0 gource             # Create Gource video"
     echo "  $0 reset              # Reset terminal"
     echo
 }
@@ -335,6 +737,12 @@ main() {
         clearlog)
             clear_logs
             ;;
+        gource)
+            gource_video "$2"
+            ;;
+        diagram)
+            class_diagram
+            ;;
         help|--help|-h)
             show_help
             ;;
@@ -386,6 +794,12 @@ main() {
                         ;;
                     11)
                         clear_logs
+                        ;;
+                    12)
+                        gource_video
+                        ;;
+                    13)
+                        class_diagram
                         ;;
                     0)
                         echo -e "${GREEN}Goodbye!${NC}"

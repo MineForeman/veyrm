@@ -32,6 +32,9 @@ Shows an interactive menu with options:
 8. Run Dump Mode Test
 9. Clean
 10. Reset Terminal
+11. Clear Logs
+12. Create Gource Video
+13. Generate Class Diagrams
 0. Exit
 
 ### Command Line Mode
@@ -52,6 +55,9 @@ Shows an interactive menu with options:
 | `keys [keystrokes]` | Run with automated key input | `./build.sh keys '\n3\njjjq'` |
 | `check` | Run system checks | `./build.sh check` |
 | `reset` | Reset terminal | `./build.sh reset` |
+| `clearlog` | Clear all log files | `./build.sh clearlog` |
+| `gource [--clean]` | Create Gource visualization video | `./build.sh gource --clean` |
+| `diagram` | Generate visual class diagrams | `./build.sh diagram` |
 | `menu` | Show interactive menu | `./build.sh menu` |
 | `help` | Show help message | `./build.sh help` |
 
@@ -225,6 +231,53 @@ The script is integrated with Veyrm's features:
 - Dump mode uses `--dump` argument for automated testing
 - System check runs `--test` argument
 
+## Visualization Tools
+
+The build script includes powerful visualization capabilities:
+
+### Gource Video Generation
+
+Creates an animated visualization of the repository's development history:
+
+```bash
+# Create visualization video
+./build.sh gource
+
+# Clean old videos and create new one
+./build.sh gource --clean
+```
+
+Features:
+- Animated commit history showing file changes over time
+- Developer contributions visualization
+- Configurable speed and duration
+- Output saved to `tmp/veyrm-gource.mp4` (gitignored)
+- Fixed filename with overwrite on each run
+
+### Class Diagram Generation
+
+Generates UML-style class diagrams showing the project architecture:
+
+```bash
+# Generate class diagrams
+./build.sh diagram
+```
+
+Features:
+- Visual representation of all classes and their relationships
+- Color-coded subsystems (Core, Entity, Map, Combat, AI, Utilities)
+- Shows inheritance, composition, and usage relationships
+- Outputs both SVG (interactive) and PNG formats
+- Saved to `tmp/veyrm_classes.svg` and `tmp/veyrm_classes.png`
+- Automatically opens in default image viewer (macOS)
+
+### Output Directory
+
+All visualization outputs are saved to the `tmp/` directory which is:
+- Automatically created if it doesn't exist
+- Excluded from git via `.gitignore`
+- Safe for temporary files and experiments
+
 ## Future Enhancements
 
 Planned improvements:
@@ -233,3 +286,4 @@ Planned improvements:
 - Installation targets
 - Package generation
 - Cross-compilation support
+- Additional visualization tools (see DOC/VISUALIZATION_OPTIONS.md)

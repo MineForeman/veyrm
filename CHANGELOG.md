@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Visualization Tools - comprehensive visualization capabilities
+  - Gource video generation for git history visualization
+    - Creates animated visualization of repository development
+    - Saves to tmp/ directory (gitignored)
+    - Configurable speed and duration settings
+    - Option to clean old videos with --clean flag
+  - Visual class diagram generator using Graphviz
+    - Creates UML-style class diagrams with inheritance and relationships
+    - Color-coded subsystems (Core, Entity, Map, Combat, AI, Utilities)
+    - Shows inheritance, composition, and usage relationships
+    - Outputs both SVG and PNG formats
+  - Documentation of 12 additional visualization options for future implementation
+    - Code metrics dashboard
+    - Dependency graphs
+    - Git statistics
+    - Memory layout visualization
+    - Performance flamegraphs
+    - And more in DOC/VISUALIZATION_OPTIONS.md
+
+### Changed
+
+- Build script enhancements
+  - Added 'gource' command for creating repository visualization videos
+  - Added 'diagram' command for generating class diagrams
+  - Gource videos now use fixed filename (veyrm-gource.mp4) with overwrite
+  - All visualization outputs go to tmp/ directory which is gitignored
+
+## Previous Release (v0.9.4)
+
 - Enhanced Logging System - separate log files by category
   - Created separate log files for each category (player, AI, combat, environment, etc.)
   - All logs now stored in logs/ directory for better organization
