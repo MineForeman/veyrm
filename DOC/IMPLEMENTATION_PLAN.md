@@ -303,12 +303,17 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Documentation:** Created DOC/PHASES/8.1_MONSTER_ENTITY.md
 - [ ] **Git tag:** `v0.8.1-monster-entity`
 
-### 8.2 Monster Spawning
-- [ ] Add monsters to map generation
-- [ ] Implement spawn distribution
-- [ ] Create Gutter Rat and Orc Rookling
-- [ ] **Test:** Monsters spawn in valid locations
-- [ ] **Git tag:** `v0.8.2-spawning`
+### 8.2 Monster Spawning ✓ COMPLETE
+- [x] Add monsters to map generation
+- [x] Implement spawn distribution (95% rooms, 5% corridors)
+- [x] Create all 5 base monsters (Gutter Rat, Cave Spider, Kobold, Orc Rookling, Zombie)
+- [x] Implement SpawnManager for initial and dynamic spawning
+- [x] Add configurable spawn parameters (rate, distance, FOV checks)
+- [x] Fix monster rendering in MapRenderer
+- [x] **Test:** Monsters spawn in valid locations
+- [x] **Test:** Room preference spawning works correctly
+- [x] **Documentation:** [Phase 8.2 Documentation](PHASES/8.2_MONSTER_SPAWNING.md)
+- [x] **Git tag:** `v0.8.2-spawning`
 
 ### 8.3 Basic AI
 - [ ] Implement simple chase behavior

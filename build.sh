@@ -282,13 +282,13 @@ main() {
             # Check if a map type was specified
             if [ -n "${2}" ]; then
                 case "${2}" in
-                    room|dungeon|corridor|arena|stress)
+                    procedural|room|dungeon|corridor|arena|stress)
                         run_with_args --map "${2}"
                         reset_terminal
                         ;;
                     *)
                         echo -e "${RED}Unknown map type: ${2}${NC}"
-                        echo -e "Valid types: room, dungeon, corridor, arena, stress"
+                        echo -e "Valid types: procedural, room, dungeon, corridor, arena, stress"
                         ;;
                 esac
             else

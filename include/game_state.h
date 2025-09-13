@@ -23,6 +23,7 @@ class FrameStats;
 class Map;
 class EntityManager;
 class Player;
+class SpawnManager;
 class MapMemory;
 
 class GameManager {
@@ -58,6 +59,9 @@ public:
     void setDebugMode(bool enabled) { debug_mode = enabled; }
     void enableFrameStats() { /* Frame stats are always enabled if available */ }
     
+    // Spawn management
+    SpawnManager* getSpawnManager() { return spawn_manager.get(); }
+    
     // Game data (deprecated - use entity_manager->getPlayer() instead)
     int player_hp = 10;      // DEPRECATED
     int player_max_hp = 10;  // DEPRECATED
@@ -85,8 +89,10 @@ private:
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
     std::unique_ptr<EntityManager> entity_manager;
+    std::unique_ptr<SpawnManager> spawn_manager;
     std::unique_ptr<MapMemory> map_memory;
     std::vector<std::vector<bool>> current_fov;
     Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;
+    int current_depth = 1;  // Track dungeon depth for spawning
 };

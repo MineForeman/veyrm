@@ -51,9 +51,13 @@ public:
     }
     
     // === Monster Settings ===
+    int getInitialMonsterCount() const { return initial_monster_count; }
     int getMaxMonstersPerLevel() const { return max_monsters_per_level; }
     int getMonsterSpawnRate() const { return monster_spawn_rate; }
     int getAggressionRadius() const { return aggression_radius; }
+    bool getSpawnOutsideFOV() const { return spawn_outside_fov; }
+    int getMinSpawnDistance() const { return min_spawn_distance; }
+    float getRoomSpawnPercentage() const { return room_spawn_percentage; }
     
     // === Player Settings ===
     int getPlayerStartingHP() const { return player_starting_hp; }
@@ -104,9 +108,13 @@ private:
     std::string corridor_style = "straight";
     
     // Monster settings
+    int initial_monster_count = 10;
     int max_monsters_per_level = 30;
     int monster_spawn_rate = 100;
     int aggression_radius = 10;
+    bool spawn_outside_fov = true;
+    int min_spawn_distance = 5;
+    float room_spawn_percentage = 0.95f;
     
     // Player settings
     int player_starting_hp = 20;

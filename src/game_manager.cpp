@@ -12,6 +12,8 @@
 #include "fov.h"
 #include "map_memory.h"
 #include "config.h"
+#include "spawn_manager.h"
+#include "monster_factory.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -22,10 +24,16 @@ GameManager::GameManager(MapType initial_map)
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
       entity_manager(std::make_unique<EntityManager>()),
+      spawn_manager(std::make_unique<SpawnManager>()),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
     ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
+    
+    // Load monster data
+    MonsterFactory::getInstance().loadFromFile(
+        Config::getInstance().getDataFilePath("monsters.json")
+    );
     
     // Initialize map with MapGenerator
     initializeMap(initial_map);
@@ -69,6 +77,9 @@ void GameManager::initializeMap(MapType type) {
     // Create player entity at spawn point
     auto player = entity_manager->createPlayer(spawn.x, spawn.y);
     
+    // Spawn initial monsters after player placement
+    spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
+    
     // Update deprecated variables for compatibility
     if (player) {
         player_x = player->x;
@@ -102,6 +113,12 @@ void GameManager::returnToPreviousState() {
 
 void GameManager::processPlayerAction(ActionSpeed speed) {
     turn_manager->executePlayerAction(speed);
+    
+    // After player acts, check for dynamic spawning
+    Player* player = getPlayer();
+    if (player && spawn_manager) {
+        spawn_manager->update(*map, *entity_manager, player, current_depth);
+    }
 }
 
 Player* GameManager::getPlayer() {

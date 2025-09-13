@@ -152,6 +152,7 @@ add_executable(veyrm
     src/monster.cpp
     src/monster_factory.cpp
     src/config.cpp
+    src/spawn_manager.cpp
 )
 
 # Link libraries

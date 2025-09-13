@@ -49,9 +49,16 @@ Can you make it so that I dont have to escape characters when sending keys to bu
 
 Can you make it so that build.sh reports on the binary size and other stats on the main menu.  Also, remove the Press Enter to continue... messages and just go back.
 
+
+Create any testss needed and run them.
+
 Document all changes sinse the last check in.  Update the existing md documents as well.  Add any additional md documents as nessery.
 
 Do a git add -A, tag, check in and push.
+
+
+The "load" screen loks odd, jazz it up!
+
 
 Legend:
 . Empty Space

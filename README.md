@@ -2,13 +2,15 @@
 
 A modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI. Descend through the Spiral Vaults beneath Veyrmspire to shatter the last shard of a dead god's crown.
 
-![Version](https://img.shields.io/badge/version-0.8.1-blue)
+![Version](https://img.shields.io/badge/version-0.8.2-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-23-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 ## 🎮 Features
 
-### Current (v0.8.1)
+### Current (v0.8.2)
+- **Monster Spawning** - Intelligent spawn system with room preference (95% in rooms)
+- **Dynamic Spawning** - Monsters spawn during gameplay based on configurable timers
 - **Monster System** - Data-driven monsters with JSON configuration
 - **Entity System** - Flexible component-based entity architecture
 - **Player Entity** - Full player stats, leveling, and movement
@@ -21,7 +23,7 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 - **Map Memory** - Remember explored areas
 - **Map System** - Procedural dungeon generation with validation
 - **Movement** - 8-directional movement with collision detection
-- **Rendering** - Viewport-based rendering with adaptive colors
+- **Rendering** - Viewport-based rendering with monster display
 - **Turn System** - Action-based timing system
 - **Message Log** - Scrollable message history with color coding
 - **Status Bar** - HP with color coding, position, time, and depth display
@@ -29,7 +31,6 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 ### Planned
 - **Monster AI** - Movement and pathfinding for monsters
 - **Combat** - Tactical bump-to-attack system
-- **Monster Spawning** - Dynamic monster placement in dungeons
 - **Items** - Weapons, armor, and consumables
 - **Save/Load** - Persistent game state
 - **Experience System** - Leveling and skill progression

@@ -84,11 +84,23 @@ bool Config::loadFromFile(const std::string& filename) {
         // Monster settings
         if (root.has_child("monsters")) {
             auto monsters = root["monsters"];
+            if (monsters.has_child("initial_monster_count")) {
+                monsters["initial_monster_count"] >> initial_monster_count;
+            }
             if (monsters.has_child("max_per_level")) {
                 monsters["max_per_level"] >> max_monsters_per_level;
             }
             if (monsters.has_child("spawn_rate")) {
                 monsters["spawn_rate"] >> monster_spawn_rate;
+            }
+            if (monsters.has_child("spawn_outside_fov")) {
+                monsters["spawn_outside_fov"] >> spawn_outside_fov;
+            }
+            if (monsters.has_child("min_spawn_distance")) {
+                monsters["min_spawn_distance"] >> min_spawn_distance;
+            }
+            if (monsters.has_child("room_spawn_percentage")) {
+                monsters["room_spawn_percentage"] >> room_spawn_percentage;
             }
             if (monsters.has_child("behavior")) {
                 auto behavior = monsters["behavior"];

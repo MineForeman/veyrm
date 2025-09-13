@@ -69,11 +69,23 @@ map_generation:
 
 # Monster Settings
 monsters:
-  # Maximum monsters per level
-  max_per_level: 30
+  # Initial spawn settings
+  initial_monster_count: 10    # Monsters spawned at map generation
+  max_per_level: 30            # Maximum monsters allowed on level
   
-  # Spawn rate (turns between spawn checks)
-  spawn_rate: 100
+  # Dynamic spawning
+  spawn_rate: 100              # Turns between spawn attempts
+  spawn_outside_fov: true      # Only spawn where player can't see
+  min_spawn_distance: 5        # Minimum tiles from player
+  
+  # Difficulty
+  depth_scaling: 0.1           # Difficulty increase per level
+  threat_budget: 100           # Total threat points per level
+  
+  # Spawn preferences
+  prefer_rooms: true           # Spawn in rooms vs corridors
+  room_spawn_percentage: 0.95  # Percentage of monsters to spawn in rooms (0.0-1.0)
+  pack_spawn_chance: 0.2       # Chance of group spawns
   
   # Monster behavior
   behavior:

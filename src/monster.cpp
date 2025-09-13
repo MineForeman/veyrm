@@ -16,6 +16,7 @@ Monster::Monster(int x, int y, const std::string& species)
     color = ftxui::Color::Red;
     is_blocking = true;
     blocks_movement = true;
+    setVisible(true);  // Monsters start visible
     
     // Set monster flag
     is_monster = true;

@@ -78,6 +78,13 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
     std::vector<Element> rows;
     Point player_screen = mapToScreen(game.player_x, game.player_y);
     
+    // Get visible entities for rendering
+    auto entity_manager = game.getEntityManager();
+    std::vector<std::shared_ptr<Entity>> visible_entities;
+    if (entity_manager) {
+        visible_entities = entity_manager->getVisibleEntities();
+    }
+    
     for (int screen_y = 0; screen_y < viewport_height; screen_y++) {
         std::vector<Element> row_elements;
         
@@ -89,6 +96,23 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                 isInViewport(game.player_x, game.player_y)) {
                 const auto& colors = ColorScheme::getCurrentColors();
                 row_elements.push_back(text("@") | color(colors.player) | bold);
+                continue;
+            }
+            
+            // Check for visible entities at this position
+            bool entity_rendered = false;
+            if (map.isVisible(map_pos.x, map_pos.y)) {
+                for (const auto& entity : visible_entities) {
+                    if (entity && !entity->is_player && entity->x == map_pos.x && entity->y == map_pos.y) {
+                        // Render the entity
+                        row_elements.push_back(text(entity->glyph) | color(entity->color) | bold);
+                        entity_rendered = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (entity_rendered) {
                 continue;
             }
             
