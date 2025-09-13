@@ -72,15 +72,32 @@ Implement doors and bind a key for players to use to toggle the door open and cl
 
 Implement and log 8.3 Basic AI
 
+I declear that this is the MVP!  Document it as such.  Create a branch for it so we can preserve it for posterity and the switch back to the main branch.
+
+Redundent
+
+Seach through the code base and find any redundent code and dicument it.
 
 Refactor
+
+I want to refactor the documentation, search through the md files and suggest what could be improved.
+
+Comments
+
+Doxygen
+
+MySQL
 Multiplayer
+
+Server authritive
+
 Ranged attacks
 Spell system
 Classes
 Races
 Character Generation
+Town
 Quests
 Help
-
-
+World Map
+Player Hoseing

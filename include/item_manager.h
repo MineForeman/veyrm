@@ -18,6 +18,7 @@ public:
 
     // Item management
     void spawnItem(const std::string& item_id, int x, int y);
+    void spawnItem(std::unique_ptr<Item> item, int x, int y);
     void spawnRandomItem(int x, int y, int depth);
     void removeItem(Item* item);
     void removeItemAt(int x, int y);

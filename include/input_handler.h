@@ -30,10 +30,15 @@ enum class InputAction {
     // UI actions
     OPEN_INVENTORY,
     OPEN_HELP,
-    
+
+    // Inventory actions
+    USE_ITEM,
+    DROP_ITEM,
+    EXAMINE_ITEM,
+
     // Debug
     DEBUG_TOGGLE,
-    
+
     NONE
 };
 

@@ -35,6 +35,28 @@ void ItemManager::spawnItem(const std::string& item_id, int x, int y) {
     items.push_back(std::move(item));
 }
 
+void ItemManager::spawnItem(std::unique_ptr<Item> item, int x, int y) {
+    if (!item) return;
+
+    // Check if position is valid
+    if (!map_ref || !map_ref->inBounds(x, y)) {
+        LOG_ERROR("Invalid spawn position for item: " + std::to_string(x) + "," + std::to_string(y));
+        return;
+    }
+
+    // Check if position is walkable
+    if (!map_ref->isWalkable(x, y)) {
+        LOG_WARN("Attempting to spawn item on non-walkable tile");
+        return;
+    }
+
+    // Set position and add to manager
+    std::string item_name = item->name;
+    item->setPosition(x, y);
+    LOG_INFO("Dropped item '" + item_name + "' at (" + std::to_string(x) + "," + std::to_string(y) + ")");
+    items.push_back(std::move(item));
+}
+
 void ItemManager::spawnRandomItem(int x, int y, int depth) {
     std::string item_id = ItemFactory::getInstance().getRandomItemForDepth(depth);
     if (!item_id.empty()) {

@@ -10,6 +10,7 @@
 #include "player.h"
 #include "status_bar.h"
 #include "layout_system.h"
+#include "inventory_renderer.h"
 #include "log.h"
 #include "monster.h"
 #include "combat_system.h"
@@ -24,12 +25,13 @@
 
 using namespace ftxui;
 
-GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen) 
+GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
     : game_manager(manager),
       screen_ref(screen),
       renderer(std::make_unique<MapRenderer>(200, 60)),  // Large default for fullscreen
       status_bar(std::make_unique<StatusBar>()),
-      layout_system(std::make_unique<LayoutSystem>()) {
+      layout_system(std::make_unique<LayoutSystem>()),
+      inventory_renderer(nullptr) {
     // Center renderer on player's starting position
     if (auto* player = game_manager->getPlayer()) {
         renderer->centerOn(player->x, player->y);
@@ -237,8 +239,25 @@ Component GameScreen::CreateLogPanel() {
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
         // Fixed width matching log panel
-        return status_bar->render(*game_manager) | 
+        return status_bar->render(*game_manager) |
                size(WIDTH, EQUAL, 42);  // Fixed width
+    });
+}
+
+Component GameScreen::CreateInventoryPanel() {
+    return Renderer([this] {
+        // Initialize inventory renderer if needed
+        if (!inventory_renderer) {
+            if (auto* player = game_manager->getPlayer()) {
+                inventory_renderer = std::make_unique<InventoryRenderer>(player);
+            }
+        }
+
+        if (inventory_renderer) {
+            return inventory_renderer->render() | center;
+        }
+
+        return text("Inventory not available") | center;
     });
 }
 
@@ -264,24 +283,52 @@ Component GameScreen::Create() {
     auto map_panel = CreateMapPanel();
     auto log_panel = CreateLogPanel();
     auto status_panel = CreateStatusPanel();
-    
+    auto inventory_panel = CreateInventoryPanel();
+
     // Create structured layout with proper separation
     // The key is to use Container::Horizontal to properly separate left and right
     auto right_panel = Container::Vertical({
         status_panel,
         log_panel
     });
-    
-    auto layout = Container::Horizontal({
+
+    auto game_layout = Container::Horizontal({
         map_panel,     // Map on the left
         right_panel    // Status and log on the right
     });
-    
+
+    // Combine both layouts - let the renderer decide which to show
+    auto combined_layout = Container::Vertical({
+        game_layout,
+        inventory_panel
+    });
+
+    // Create a renderer that switches between game and inventory display
+    auto layout = Renderer(combined_layout, [this, game_layout, inventory_panel] {
+        if (game_manager->getState() == GameState::INVENTORY) {
+            return inventory_panel->Render();
+        } else {
+            return game_layout->Render();
+        }
+    });
+
     // Add input handling
-    layout |= CatchEvent([this](Event event) {
+    layout = CatchEvent(layout, [this](Event event) {
         InputHandler* input = game_manager->getInputHandler();
         InputAction action = input->processEvent(event);
-        
+
+        // Log the input for debugging
+        if (event.is_character()) {
+            LOG_DEBUG("Character input: " + event.character());
+        }
+        LOG_DEBUG("Action: " + std::to_string(static_cast<int>(action)) +
+                  ", State: " + std::to_string(static_cast<int>(game_manager->getState())));
+
+        // Handle inventory-specific input when in inventory state
+        if (game_manager->getState() == GameState::INVENTORY) {
+            return handleInventoryInput(action, event);
+        }
+
         switch(action) {
             case InputAction::QUIT:
                 game_manager->setState(GameState::MENU);
@@ -374,14 +421,138 @@ Component GameScreen::Create() {
         
         return false;
     });
-    
-    return Renderer(layout, [=] {
-        return hbox({
-            map_panel->Render(),
-            vbox({
-                status_panel->Render(),
-                log_panel->Render()
-            })
-        });
-    });
+
+    return layout;
+}
+
+bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& event) {
+    LOG_INFO("handleInventoryInput: action=" + std::to_string(static_cast<int>(action)));
+
+    if (!inventory_renderer) {
+        // Initialize if needed
+        if (auto* player = game_manager->getPlayer()) {
+            inventory_renderer = std::make_unique<InventoryRenderer>(player);
+            LOG_INFO("Created inventory renderer");
+        }
+        if (!inventory_renderer) {
+            LOG_ERROR("Failed to create inventory renderer");
+            return false;
+        }
+    }
+
+    // Handle direct slot selection with letter keys
+    // Now includes 'd' and 'e' since we use uppercase D and E for actions
+    if (event.is_character()) {
+        char c = event.character()[0];
+        if (c >= 'a' && c <= 'z') {
+            int slot = c - 'a';
+            inventory_renderer->selectSlot(slot);
+            return true;
+        }
+    }
+
+    switch (action) {
+        case InputAction::OPEN_INVENTORY:  // Toggle close with 'i'
+            LOG_INFO("Closing inventory with 'i'");
+            game_manager->setState(GameState::PLAYING);
+            inventory_renderer->reset();
+            return true;
+
+        case InputAction::CANCEL:           // Close with ESC
+            LOG_INFO("Closing inventory with ESC");
+            game_manager->setState(GameState::PLAYING);
+            inventory_renderer->reset();
+            return true;
+
+        case InputAction::MOVE_UP:
+            LOG_INFO("Moving selection up");
+            inventory_renderer->selectPrevious();
+            return true;
+
+        case InputAction::MOVE_DOWN:
+            LOG_INFO("Moving selection down");
+            inventory_renderer->selectNext();
+            return true;
+
+        case InputAction::USE_ITEM: {
+            auto* player = game_manager->getPlayer();
+            auto* msg_log = game_manager->getMessageLog();
+            Item* item = inventory_renderer->getSelectedItem();
+
+            if (item && player && msg_log) {
+                // Handle potion use
+                if (item->type == Item::ItemType::POTION) {
+                    if (item->properties.count("heal")) {
+                        int heal_amount = item->properties.at("heal");
+                        player->heal(heal_amount);
+                        msg_log->addMessage("You drink the " + item->name + " and recover " +
+                                          std::to_string(heal_amount) + " HP.");
+
+                        // Remove the item
+                        player->inventory->removeItem(inventory_renderer->getSelectedSlot());
+
+                        // Close inventory and consume turn
+                        game_manager->setState(GameState::PLAYING);
+                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+                        inventory_renderer->reset();
+                        return true;
+                    }
+                }
+                msg_log->addMessage("You can't use that item.");
+            }
+            return true;
+        }
+
+        case InputAction::DROP_ITEM: {
+            auto* player = game_manager->getPlayer();
+            auto* item_manager = game_manager->getItemManager();
+            auto* msg_log = game_manager->getMessageLog();
+
+            if (player && item_manager && msg_log) {
+                auto dropped = player->inventory->removeItem(inventory_renderer->getSelectedSlot());
+                if (dropped) {
+                    std::string item_name = dropped->name;
+                    int px = player->x;
+                    int py = player->y;
+
+                    msg_log->addMessage("You drop the " + item_name + ".");
+                    LOG_INFO("Dropping item: " + item_name + " at (" +
+                             std::to_string(px) + ", " + std::to_string(py) + ")");
+
+                    // Spawn item at player position
+                    item_manager->spawnItem(std::move(dropped), px, py);
+
+                    // Log item count after drop
+                    LOG_INFO("Items in world after drop: " +
+                             std::to_string(item_manager->getItemCount()));
+
+                    // Consume turn
+                    game_manager->processPlayerAction(ActionSpeed::FAST);
+                }
+            }
+            return true;
+        }
+
+        case InputAction::EXAMINE_ITEM: {
+            auto* msg_log = game_manager->getMessageLog();
+            Item* item = inventory_renderer->getSelectedItem();
+
+            if (item && msg_log) {
+                msg_log->addMessage("Examining: " + item->name);
+                if (!item->description.empty()) {
+                    msg_log->addMessage(item->description);
+                }
+                // Add more detailed info
+                if (item->type == Item::ItemType::POTION && item->properties.count("heal")) {
+                    msg_log->addMessage("Heals " + std::to_string(item->properties.at("heal")) + " HP when used.");
+                }
+            }
+            return true;
+        }
+
+        default:
+            break;
+    }
+
+    return false;
 }

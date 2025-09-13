@@ -35,7 +35,12 @@ void InputHandler::initializeDefaultBindings() {
     // UI
     keyBindings["i"] = InputAction::OPEN_INVENTORY;
     keyBindings["?"] = InputAction::OPEN_HELP;
-    
+
+    // Inventory actions (uppercase to avoid conflict with slot selection)
+    keyBindings["u"] = InputAction::USE_ITEM;
+    keyBindings["D"] = InputAction::DROP_ITEM;  // Uppercase D
+    keyBindings["E"] = InputAction::EXAMINE_ITEM;  // Uppercase E
+
     // Debug
     keyBindings["F1"] = InputAction::DEBUG_TOGGLE;
 }

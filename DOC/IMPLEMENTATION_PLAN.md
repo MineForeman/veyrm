@@ -407,20 +407,25 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.11.1-inventory-storage`
 - **Notes:** Complete implementation with stacking, weight tracking, full test coverage
 
-### 11.2 Inventory UI
-- [ ] Implement 'i' inventory command
-- [ ] Display numbered item list
-- [ ] Show item details
-- [ ] **Test:** Inventory displays correctly
-- [ ] **Git tag:** `v0.11.2-inventory-ui`
+### 11.2 Inventory UI ✅
+- [x] Implement 'i' inventory command to open/close
+- [x] Display formatted item list with a-z slots
+- [x] Show item details panel with properties
+- [x] Navigation with arrows and letter keys
+- [x] Actions: 'u'se, 'D'rop, 'E'xamine (uppercase)
+- [x] **Test:** Full inventory UI working correctly
+- [x] **Git tag:** `v0.11.2-inventory-ui`
+- **Notes:** Complete UI with selection, actions, proper event routing
 
 ### 11.3 Item Usage
-- [ ] Implement 'u' use command
-- [ ] Add healing potion effect
-- [ ] Implement 'D' drop command
-- [ ] **Test:** Items can be used and dropped
-- [ ] **Documentation:** Document item effects
-- [ ] **Git tag:** `v0.11.3-item-usage`
+- [x] Implement 'u' use command
+- [x] Add healing potion effect
+- [x] Implement 'D' drop command
+- [x] **Test:** Items can be used and dropped
+- [x] **Documentation:** Document item effects
+- [x] **Git tag:** `v0.11.3-item-usage`
+- **Status:** ✅ COMPLETE (2025-01-14)
+- **Notes:** Integrated with Phase 11.2, full turn-based usage
 
 ---
 

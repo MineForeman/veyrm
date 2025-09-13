@@ -288,12 +288,7 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                         text("Press ESC to resume") | center
                     }) | border;
                 case GameState::INVENTORY:
-                    return vbox({
-                        text("INVENTORY") | bold,
-                        separator(),
-                        text("(Not yet implemented)"),
-                        text("Press ESC to return")
-                    }) | border;
+                    return game_component->Render();  // Use game screen's inventory panel
                 case GameState::HELP:
                     return vbox({
                         text("HELP") | bold,
@@ -376,10 +371,10 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                 main_menu->OnEvent(event);
                 break;
             case GameState::PLAYING:
+            case GameState::INVENTORY:  // Inventory also needs game_component events
                 game_component->OnEvent(event);
                 break;
             case GameState::PAUSED:
-            case GameState::INVENTORY:
             case GameState::HELP:
                 if (event == Event::Escape) {
                     game_manager.returnToPreviousState();
@@ -445,12 +440,7 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                     text("Press ESC to resume") | center
                 }) | border;
             case GameState::INVENTORY:
-                return vbox({
-                    text("INVENTORY") | bold,
-                    separator(),
-                    text("(Not yet implemented)"),
-                    text("Press ESC to return")
-                }) | border;
+                return game_component->Render();  // Use game screen's inventory panel
             case GameState::HELP:
                 return vbox({
                     text("HELP") | bold,
@@ -543,9 +533,9 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
             case GameState::MENU:
                 return main_menu->OnEvent(event);
             case GameState::PLAYING:
+            case GameState::INVENTORY:  // Inventory needs game_component events too
                 return game_component->OnEvent(event);
             case GameState::PAUSED:
-            case GameState::INVENTORY:
             case GameState::HELP:
                 if (event == Event::Escape) {
                     game_manager.returnToPreviousState();
