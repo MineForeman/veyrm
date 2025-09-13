@@ -128,7 +128,7 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                     text(glyph) | color(memory_color) | dim
                 );
             } else {
-                // Never seen
+                // Never seen - should show as blank
                 row_elements.push_back(text(" "));
             }
         }

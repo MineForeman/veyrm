@@ -140,6 +140,7 @@ Component GameScreen::Create() {
                         game_manager->processPlayerAction(ActionSpeed::NORMAL);
                         game_manager->getMessageLog()->addMessage("You move north.");
                         renderer->centerOn(player->x, player->y);
+                        game_manager->updateFOV();
                     }
                 }
                 return true;
@@ -155,6 +156,7 @@ Component GameScreen::Create() {
                         game_manager->processPlayerAction(ActionSpeed::NORMAL);
                         game_manager->getMessageLog()->addMessage("You move south.");
                         renderer->centerOn(player->x, player->y);
+                        game_manager->updateFOV();
                     }
                 }
                 return true;
@@ -170,6 +172,7 @@ Component GameScreen::Create() {
                         game_manager->processPlayerAction(ActionSpeed::NORMAL);
                         game_manager->getMessageLog()->addMessage("You move west.");
                         renderer->centerOn(player->x, player->y);
+                        game_manager->updateFOV();
                     }
                 }
                 return true;
@@ -185,6 +188,7 @@ Component GameScreen::Create() {
                         game_manager->processPlayerAction(ActionSpeed::NORMAL);
                         game_manager->getMessageLog()->addMessage("You move east.");
                         renderer->centerOn(player->x, player->y);
+                        game_manager->updateFOV();
                     }
                 }
                 return true;

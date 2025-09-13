@@ -29,13 +29,7 @@ GameManager::GameManager(MapType initial_map)
     // Initialize map with MapGenerator
     initializeMap(initial_map);
     
-    // Set everything visible for now (no FOV yet)
-    for (int y = 0; y < map->getHeight(); y++) {
-        for (int x = 0; x < map->getWidth(); x++) {
-            map->setVisible(x, y, true);
-            map->setExplored(x, y, true);  // Also mark as explored
-        }
-    }
+    // Don't set anything visible initially - FOV will handle visibility
 }
 
 GameManager::~GameManager() = default;
