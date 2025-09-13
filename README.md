@@ -2,21 +2,26 @@
 
 A modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI. Descend through the Spiral Vaults beneath Veyrmspire to shatter the last shard of a dead god's crown.
 
-![Version](https://img.shields.io/badge/version-0.3.1-blue)
+![Version](https://img.shields.io/badge/version-0.7.3-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-23-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 ## 🎮 Features
 
-### Current (v0.3.1)
+### Current (v0.7.3)
 - **Entity System** - Flexible component-based entity architecture
 - **Player Entity** - Full player stats, leveling, and movement
-- **Terminal UI** - Clean, responsive interface using FTXUI
+- **Fullscreen UI** - Dynamic fullscreen mode with responsive layout
+- **Three-Panel Layout** - Map, status bar, and message log
+- **Unicode Tiles** - Beautiful Unicode characters for walls (█), floors (·), etc.
+- **FOV System** - Symmetric shadowcasting field of view
+- **Map Memory** - Remember explored areas
 - **Map System** - Multiple test maps with validation
 - **Movement** - 8-directional movement with collision detection
 - **Rendering** - Viewport-based rendering with adaptive colors
 - **Turn System** - Action-based timing system
-- **Message Log** - Scrollable message history
+- **Message Log** - Scrollable message history with color coding
+- **Status Bar** - HP with color coding, position, time, and depth display
 
 ### Planned
 - **Monsters** - Basic AI and enemy entities

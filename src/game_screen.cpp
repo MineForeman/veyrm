@@ -11,6 +11,7 @@
 #include "layout_system.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/terminal.hpp>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -41,41 +42,46 @@ Component GameScreen::CreateMapPanel() {
             return text("No map loaded") | border;
         }
         
-        // For fullscreen mode, we need to dynamically calculate the viewport
-        // The map should take up most of the screen, leaving room for status/log
-        // We'll use conservative estimates that work for most terminal sizes
+        // Get actual terminal dimensions
+        auto term_size = Terminal::Size();
         
-        // Reserve space for right panel (status + log) - about 40 columns
-        // This prevents the map from overlapping with the right panels
-        int map_width = 100;   // Conservative width that leaves room for right panel
-        int map_height = 35;   // Conservative height for most terminals
+        // Calculate map viewport size
+        // Reserve more space for right panels to ensure no overlap
+        // Right panels need at least 40 chars + borders/separators
+        int right_panel_width = 45;  // Increased to ensure separation
+        int map_width = std::max(50, term_size.dimx - right_panel_width - 4);  // -4 for borders
+        int map_height = std::max(20, term_size.dimy - 2);  // -2 for borders
         
-        // Update renderer viewport to respect the layout boundaries
+        // Clamp map width to prevent it from being too wide
+        map_width = std::min(map_width, term_size.dimx - 50);  // Ensure at least 50 chars for right side
+        
+        // Update renderer viewport to match available space
         renderer->setViewport(map_width, map_height);
         
         // Use the new Renderer class to render the map
         Element rendered = renderer->render(*map, *game_manager);
         
-        // Add border and explicitly size to prevent overflow into right panels
+        // Add border and size constraints to prevent overlap
+        // Use explicit width to ensure it doesn't expand into right panel area
         return rendered | border | 
-               size(WIDTH, EQUAL, map_width + 2) |   // +2 for borders
-               size(HEIGHT, EQUAL, map_height + 2);  // +2 for borders
+               size(WIDTH, EQUAL, map_width + 2);  // +2 for borders
     });
 }
 
 Component GameScreen::CreateLogPanel() {
     return Renderer([this] {
-        // Show last 10 messages with fixed width for right panel
+        // Fixed width for right panel to ensure consistent layout
         return game_manager->getMessageLog()->render(10) | 
                border | 
-               size(WIDTH, EQUAL, 38);  // Fixed width for right panel
+               size(WIDTH, EQUAL, 42);  // Fixed width
     });
 }
 
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
+        // Fixed width matching log panel
         return status_bar->render(*game_manager) | 
-               size(WIDTH, EQUAL, 38);  // Match log panel width
+               size(WIDTH, EQUAL, 42);  // Fixed width
     });
 }
 

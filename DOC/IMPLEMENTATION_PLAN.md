@@ -264,12 +264,12 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Implemented StatusBar class with HP color coding, position display, time formatting
 
 ### 7.3 Layout System
-- [ ] Implement three-panel layout (map, log, status)
-- [ ] Handle window resizing
-- [ ] Ensure minimum 80x24 size
-- [ ] **Test:** Layout responds to terminal size
-- [ ] **Documentation:** Document UI components
-- [ ] **Git tag:** `v0.7.3-layout`
+- [x] Implement three-panel layout (map, log, status)
+- [x] Handle window resizing
+- [x] Ensure minimum 80x24 size
+- [x] **Test:** Layout responds to terminal size
+- [x] **Documentation:** Document UI components
+- [x] **Git tag:** `v0.7.3-layout`
 
 ---
 

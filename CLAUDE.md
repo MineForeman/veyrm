@@ -51,6 +51,7 @@ Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for termin
 ## Dependency Sources
 
 The source code for all dependencies is automatically downloaded by CMake and can be found in `build/_deps/` after building. For example:
+
 - **FTXUI source:** `build/_deps/ftxui-src/`
 - **nlohmann/json source:** `build/_deps/json-src/`
 - **Catch2 source:** `build/_deps/catch2-src/`
@@ -141,4 +142,5 @@ The game starts in Ring 1: Woundworks of the Spiral Vaults. The world documentat
 ## Special Files
 
 ### VIBE.md - User Notes
+
 **IMPORTANT:** `DOC/VIBE.md` contains the user's personal notes and should NOT be edited by Claude. This file should be checked into git when changes are made, but Claude should never modify its contents. It serves as the user's scratchpad and working notes for the project.
