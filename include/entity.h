@@ -55,6 +55,17 @@ public:
     void* getUserData() const { return user_data; }
     void setUserData(void* data) { user_data = data; }
 
+    // Combat interface - override in subclasses
+    virtual int getAttackBonus() const;
+    virtual int getDefenseBonus() const;
+    virtual int getBaseDamage() const;
+    virtual std::string getCombatName() const;
+
+    // Combat events (for future extensibility)
+    virtual void onAttack([[maybe_unused]] Entity& target) {}
+    virtual void onHit([[maybe_unused]] Entity& attacker, [[maybe_unused]] int damage) {}
+    virtual void onMiss([[maybe_unused]] Entity& attacker) {}
+
 private:
     bool is_visible = true;
     void* user_data = nullptr;

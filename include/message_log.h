@@ -16,6 +16,7 @@ public:
     
     // Get messages for display
     std::vector<std::string> getRecentMessages(size_t count = 5) const;
+    std::vector<std::string> getMessages() const;  // For testing
     ftxui::Element render(size_t count = 5) const;
     
     // Clear

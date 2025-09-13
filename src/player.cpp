@@ -3,17 +3,24 @@
 #include "entity_manager.h"
 #include "color_scheme.h"
 #include "config.h"
+#include "monster.h"
+#include "combat_system.h"
+#include "game_state.h"
+#include "message_log.h"
+#include "log.h"
 
-Player::Player(int x, int y) 
+Player::Player(int x, int y)
     : Entity(x, y, "@", ftxui::Color::White, "Player"),
-      hp(Config::getInstance().getPlayerStartingHP()),
-      max_hp(Config::getInstance().getPlayerStartingHP()),
       attack(Config::getInstance().getPlayerStartingAttack()),
       defense(Config::getInstance().getPlayerStartingDefense()),
       level(1),
       experience(0),
       gold(0) {
-    
+
+    // Set HP from config (base class members)
+    hp = Config::getInstance().getPlayerStartingHP();
+    max_hp = Config::getInstance().getPlayerStartingHP();
+
     // Set entity flags
     is_player = true;
     blocks_movement = true;

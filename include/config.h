@@ -117,9 +117,9 @@ private:
     float room_spawn_percentage = 0.95f;
     
     // Player settings
-    int player_starting_hp = 20;
-    int player_starting_attack = 5;
-    int player_starting_defense = 2;
+    int player_starting_hp = 50;
+    int player_starting_attack = 8;
+    int player_starting_defense = 5;
     int inventory_capacity = 26;
     int fov_radius = 10;
     

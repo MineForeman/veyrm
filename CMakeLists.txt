@@ -155,6 +155,8 @@ add_executable(veyrm
     src/spawn_manager.cpp
     src/monster_ai.cpp
     src/pathfinding.cpp
+    src/combat_system.cpp
+    src/log.cpp
 )
 
 # Link libraries

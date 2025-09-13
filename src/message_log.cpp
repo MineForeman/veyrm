@@ -26,12 +26,20 @@ void MessageLog::addSystemMessage(const std::string& message) {
 std::vector<std::string> MessageLog::getRecentMessages(size_t count) const {
     std::vector<std::string> recent;
     size_t start = messages.size() > count ? messages.size() - count : 0;
-    
+
     for (size_t i = start; i < messages.size(); ++i) {
         recent.push_back(messages[i]);
     }
-    
+
     return recent;
+}
+
+std::vector<std::string> MessageLog::getMessages() const {
+    std::vector<std::string> all_messages;
+    for (const auto& msg : messages) {
+        all_messages.push_back(msg);
+    }
+    return all_messages;
 }
 
 Element MessageLog::render(size_t count) const {

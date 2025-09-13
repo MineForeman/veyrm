@@ -4,6 +4,7 @@
 #include "map.h"
 #include "room.h"
 #include "pathfinding.h"
+#include "log.h"
 #include <random>
 #include <algorithm>
 
@@ -23,6 +24,19 @@ Point MonsterAI::getNextMove(Monster& monster, const Player& player, const Map& 
 
     Point next_pos = monster.getPosition();
 
+    std::string state_name;
+    switch (data->current_state) {
+        case AIState::IDLE: state_name = "IDLE"; break;
+        case AIState::ALERT: state_name = "ALERT"; break;
+        case AIState::HOSTILE: state_name = "HOSTILE"; break;
+        case AIState::FLEEING: state_name = "FLEEING"; break;
+        case AIState::RETURNING: state_name = "RETURNING"; break;
+    }
+
+    LOG_AI("Monster " + monster.name + " in state " + state_name +
+           " at (" + std::to_string(monster.x) + "," + std::to_string(monster.y) + ")" +
+           " player at (" + std::to_string(player.x) + "," + std::to_string(player.y) + ")");
+
     switch (data->current_state) {
         case AIState::IDLE:
             next_pos = chooseIdleMove(monster, map);
@@ -31,6 +45,8 @@ Point MonsterAI::getNextMove(Monster& monster, const Player& player, const Map& 
         case AIState::ALERT:
             if (data->last_player_pos.x >= 0) {
                 next_pos = chooseHostileMove(monster, player, map);
+            } else {
+                LOG_AI("Monster " + monster.name + " in ALERT but no last_player_pos");
             }
             break;
 
@@ -45,6 +61,13 @@ Point MonsterAI::getNextMove(Monster& monster, const Player& player, const Map& 
         case AIState::RETURNING:
             next_pos = chooseReturnMove(monster, map);
             break;
+    }
+
+    if (next_pos != monster.getPosition()) {
+        LOG_AI("Monster " + monster.name + " choosing to move to (" +
+               std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
+    } else {
+        LOG_AI("Monster " + monster.name + " choosing to stay at current position");
     }
 
     return next_pos;
@@ -82,6 +105,9 @@ void MonsterAI::updateState(Monster& monster, const Player& player, const Map& m
 
     bool can_see = canSeePlayer(monster, player, map);
     float distance = Pathfinding::getDistance(monster_pos, player_pos);
+
+    LOG_AI("Monster " + monster.name + " updateState: can_see=" + std::string(can_see ? "true" : "false") +
+           ", distance=" + std::to_string(distance));
 
     float health_percent = (float)monster.hp / (float)monster.max_hp;
     bool should_flee = health_percent < 0.25f && monster.species != "orc";

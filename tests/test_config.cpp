@@ -37,9 +37,9 @@ TEST_CASE("Config System", "[config]") {
         REQUIRE(fresh_config.getAggressionRadius() == 10);
         
         // Player defaults
-        REQUIRE(fresh_config.getPlayerStartingHP() == 20);
-        REQUIRE(fresh_config.getPlayerStartingAttack() == 5);
-        REQUIRE(fresh_config.getPlayerStartingDefense() == 2);
+        REQUIRE(fresh_config.getPlayerStartingHP() == 50);
+        REQUIRE(fresh_config.getPlayerStartingAttack() == 8);
+        REQUIRE(fresh_config.getPlayerStartingDefense() == 5);
         REQUIRE(fresh_config.getInventoryCapacity() == 26);
         REQUIRE(fresh_config.getFOVRadius() == 10);
         

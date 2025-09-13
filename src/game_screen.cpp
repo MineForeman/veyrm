@@ -9,6 +9,9 @@
 #include "player.h"
 #include "status_bar.h"
 #include "layout_system.h"
+#include "log.h"
+#include "monster.h"
+#include "combat_system.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -34,6 +37,90 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
 }
 
 GameScreen::~GameScreen() = default;
+
+bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
+    auto* player = game_manager->getPlayer();
+    auto* map = game_manager->getMap();
+    auto* entity_manager = game_manager->getEntityManager();
+    auto* combat_system = game_manager->getCombatSystem();
+
+    LOG_MOVEMENT("Player attempting to move " + direction + " (dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ")");
+
+    if (!player || !map || !entity_manager) {
+        LOG_ERROR("Missing required components for player movement");
+        return false;
+    }
+
+    int new_x = player->x + dx;
+    int new_y = player->y + dy;
+    LOG_MOVEMENT("Target position: (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
+
+    // Check for monsters to attack
+    auto blocking = entity_manager->getBlockingEntityAt(new_x, new_y);
+    if (blocking && blocking->is_monster) {
+        LOG_COMBAT("Player bumping into monster at (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
+
+        // Attack the monster
+        if (combat_system) {
+            LOG_COMBAT("Initiating player attack on monster");
+            auto result = combat_system->processAttack(*player, *blocking);
+
+            // Log messages to both debug log and game message log
+            auto* msg_log = game_manager->getMessageLog();
+            if (msg_log) {
+                LOG_INFO("Adding combat messages to game message log");
+                if (!result.attack_message.empty()) {
+                    msg_log->addMessage(result.attack_message);
+                    LOG_INFO("Added attack message: " + result.attack_message);
+                }
+                if (!result.damage_message.empty()) {
+                    msg_log->addMessage(result.damage_message);
+                    LOG_INFO("Added damage message: " + result.damage_message);
+                }
+                if (!result.result_message.empty()) {
+                    msg_log->addMessage(result.result_message);
+                    LOG_INFO("Added result message: " + result.result_message);
+                }
+            }
+
+            if (result.fatal) {
+                LOG_COMBAT("Monster killed! Removing from entity manager");
+                entity_manager->destroyEntity(blocking);
+
+                // Award experience if it's a monster
+                if (auto* monster = dynamic_cast<Monster*>(blocking.get())) {
+                    int exp = monster->xp_value;
+                    player->gainExperience(exp);
+                    msg_log->addMessage("You gain " + std::to_string(exp) + " experience.");
+                    LOG_COMBAT("Player gained " + std::to_string(exp) + " experience");
+                }
+            }
+        } else {
+            LOG_ERROR("Combat system not available!");
+        }
+
+        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+        game_manager->updateMonsters();  // Let monsters respond
+        return true;
+    } else if (player->tryMove(*map, entity_manager, dx, dy)) {
+        LOG_MOVEMENT("Player moved successfully to (" + std::to_string(player->x) + ", " + std::to_string(player->y) + ")");
+        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+
+        // Only add movement message if not in combat
+        if (!direction.empty()) {
+            // Commenting out movement messages to reduce log spam
+            // game_manager->getMessageLog()->addMessage("You move " + direction + ".");
+        }
+
+        renderer->centerOn(player->x, player->y);
+        game_manager->updateFOV();
+        game_manager->updateMonsters();  // Let monsters act after player moves
+        return true;
+    } else {
+        LOG_MOVEMENT("Player movement blocked");
+    }
+    return false;
+}
 
 Component GameScreen::CreateMapPanel() {
     return Renderer([this] {
@@ -130,73 +217,35 @@ Component GameScreen::Create() {
                 game_manager->setState(GameState::MENU);
                 return true;
                 
-            case InputAction::MOVE_UP: {
-                auto* player = game_manager->getPlayer();
-                auto* map = game_manager->getMap();
-                auto* entity_manager = game_manager->getEntityManager();
-                
-                if (player && map && entity_manager) {
-                    if (player->tryMove(*map, entity_manager, 0, -1)) {
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        game_manager->getMessageLog()->addMessage("You move north.");
-                        renderer->centerOn(player->x, player->y);
-                        game_manager->updateFOV();
-                    }
-                }
-                return true;
-            }
-                
-            case InputAction::MOVE_DOWN: {
-                auto* player = game_manager->getPlayer();
-                auto* map = game_manager->getMap();
-                auto* entity_manager = game_manager->getEntityManager();
-                
-                if (player && map && entity_manager) {
-                    if (player->tryMove(*map, entity_manager, 0, 1)) {
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        game_manager->getMessageLog()->addMessage("You move south.");
-                        renderer->centerOn(player->x, player->y);
-                        game_manager->updateFOV();
-                    }
-                }
-                return true;
-            }
-                
-            case InputAction::MOVE_LEFT: {
-                auto* player = game_manager->getPlayer();
-                auto* map = game_manager->getMap();
-                auto* entity_manager = game_manager->getEntityManager();
-                
-                if (player && map && entity_manager) {
-                    if (player->tryMove(*map, entity_manager, -1, 0)) {
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        game_manager->getMessageLog()->addMessage("You move west.");
-                        renderer->centerOn(player->x, player->y);
-                        game_manager->updateFOV();
-                    }
-                }
-                return true;
-            }
-                
-            case InputAction::MOVE_RIGHT: {
-                auto* player = game_manager->getPlayer();
-                auto* map = game_manager->getMap();
-                auto* entity_manager = game_manager->getEntityManager();
-                
-                if (player && map && entity_manager) {
-                    if (player->tryMove(*map, entity_manager, 1, 0)) {
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        game_manager->getMessageLog()->addMessage("You move east.");
-                        renderer->centerOn(player->x, player->y);
-                        game_manager->updateFOV();
-                    }
-                }
-                return true;
-            }
-                
+            case InputAction::MOVE_UP:
+                return handlePlayerMovement(0, -1, "north");
+
+            case InputAction::MOVE_DOWN:
+                return handlePlayerMovement(0, 1, "south");
+
+            case InputAction::MOVE_LEFT:
+                return handlePlayerMovement(-1, 0, "west");
+
+            case InputAction::MOVE_RIGHT:
+                return handlePlayerMovement(1, 0, "east");
+
+            case InputAction::MOVE_UP_LEFT:
+                return handlePlayerMovement(-1, -1, "northwest");
+
+            case InputAction::MOVE_UP_RIGHT:
+                return handlePlayerMovement(1, -1, "northeast");
+
+            case InputAction::MOVE_DOWN_LEFT:
+                return handlePlayerMovement(-1, 1, "southwest");
+
+            case InputAction::MOVE_DOWN_RIGHT:
+                return handlePlayerMovement(1, 1, "southeast");
+
             case InputAction::WAIT:
+                LOG_MOVEMENT("Player waiting");
                 game_manager->processPlayerAction(ActionSpeed::NORMAL);
                 game_manager->getMessageLog()->addMessage("You wait.");
+                game_manager->updateMonsters();  // Let monsters act
                 return true;
                 
             case InputAction::OPEN_INVENTORY:

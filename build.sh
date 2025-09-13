@@ -41,6 +41,13 @@ clean_build() {
     echo -e "${GREEN}Clean complete${NC}"
 }
 
+# Function to clear logs
+clear_logs() {
+    echo -e "${YELLOW}Clearing log files...${NC}"
+    rm -rf "${PROJECT_ROOT}/logs"
+    echo -e "${GREEN}Logs cleared${NC}"
+}
+
 # Function to configure project
 configure_project() {
     local build_type=${1:-Debug}
@@ -219,6 +226,7 @@ show_menu() {
     echo -e "${BLUE}8)${NC} Run Dump Mode Test"
     echo -e "${BLUE}9)${NC} Clean"
     echo -e "${BLUE}10)${NC} Reset Terminal"
+    echo -e "${BLUE}11)${NC} Clear Logs"
     echo -e "${BLUE}0)${NC} Exit"
     echo
 }
@@ -237,6 +245,7 @@ show_help() {
     echo "  keys <keystrokes>      Run game with automated keys"
     echo "  check                  Run system checks"
     echo "  reset                  Reset terminal"
+    echo "  clearlog               Clear all log files"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -322,6 +331,9 @@ main() {
         reset)
             reset_terminal
             ;;
+        clearlog)
+            clear_logs
+            ;;
         help|--help|-h)
             show_help
             ;;
@@ -370,6 +382,9 @@ main() {
                         ;;
                     10)
                         reset_terminal
+                        ;;
+                    11)
+                        clear_logs
                         ;;
                     0)
                         echo -e "${GREEN}Goodbye!${NC}"

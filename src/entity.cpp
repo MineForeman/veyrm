@@ -51,3 +51,20 @@ void Entity::savePreviousPosition() {
     prev_x = x;
     prev_y = y;
 }
+
+// Combat interface default implementations
+int Entity::getAttackBonus() const {
+    return 0; // Base entities have no attack bonus
+}
+
+int Entity::getDefenseBonus() const {
+    return 0; // Base entities have no defense bonus
+}
+
+int Entity::getBaseDamage() const {
+    return 1; // Base entities do minimal damage
+}
+
+std::string Entity::getCombatName() const {
+    return name; // Default to entity name
+}

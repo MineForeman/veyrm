@@ -28,4 +28,7 @@ private:
     
     // Update layout based on terminal size
     void updateLayout();
+
+    // Handle player movement and attacks
+    bool handlePlayerMovement(int dx, int dy, const std::string& direction);
 };

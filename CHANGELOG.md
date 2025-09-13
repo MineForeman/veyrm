@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 9: Complete Combat System Implementation
+  - Phase 9.1: Combat Stats - full d20 combat mechanics
+    - CombatSystem class with d20 attack rolls and defense values
+    - Critical hits (natural 20) and critical misses (natural 1)
+    - Attack bonuses, defense bonuses, and damage calculations
+    - Combat integration with Entity base class
+    - Comprehensive combat logging system
+  - Phase 9.2: Bump Combat - player melee combat
+    - Player attacks monsters by moving into them (bump-to-attack)
+    - Combat messages displayed in game message log
+    - Experience rewards for defeating monsters
+    - Automatic combat resolution with visual feedback
+  - Phase 9.3: Death Handling - complete death mechanics
+    - Player death triggers death screen with options to return to menu or quit
+    - Monster death removes entity and awards experience
+    - Death messages in combat log
+    - HP display fixed (no longer shows 1/1 for all entities)
+- Global Logging System - comprehensive debug infrastructure
+  - Multi-level logging (ERROR, WARN, INFO, DEBUG, TRACE)
+  - Category-specific logging (COMBAT, AI, MOVEMENT, etc.)
+  - File-based log output to logs/veyrm_debug.log
+  - Automatic log directory creation
+  - Combat logging with detailed d20 roll information
+- Player Stat Improvements
+  - Increased starting HP from 20 to 50
+  - Increased starting attack from 5 to 8
+  - Increased starting defense from 2 to 5
+  - All values configurable via config system
 - Phase 8.3: Basic AI System - intelligent monster behavior
   - MonsterAI class with 5 behavioral states (IDLE, ALERT, HOSTILE, FLEEING, RETURNING)
   - A* pathfinding system with 8-directional movement support
@@ -54,6 +82,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests updated to use config values instead of hardcoded constants
 
 ### Fixed
+- Critical HP display bug - Player and Entity classes had duplicate hp/max_hp members causing combat to use wrong values
+- Player could not attack monsters - bump-to-attack was not implemented in input handling
+- Combat messages not appearing in game log - messages were only going to debug log, not the UI
+- Debug log output interfering with game display - reduced console output to ERROR level only
+- Test failures after stat changes - updated test expectations to match new config values
 - FOV initialization bug - removed debug code that was setting entire map as visible at startup
 - FOV movement update bug - added updateFOV() calls after player movement to properly recalculate visibility
 - Lit room probability now correctly uses config value instead of hardcoded 30%

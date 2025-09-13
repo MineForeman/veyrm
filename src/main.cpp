@@ -19,6 +19,8 @@
 // JSON include
 #include <nlohmann/json.hpp>
 
+#include "log.h"
+
 // Game includes
 #include "game_state.h"
 #include "game_screen.h"
@@ -305,6 +307,31 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                         separator(),
                         text("Press ESC to return")
                     }) | border;
+                case GameState::DEATH:
+                    return vbox({
+                        text("") | size(WIDTH, EQUAL, 1),
+                        hbox({
+                            text("                 "),
+                            vbox({
+                                text("╔═══════════════════════════════════════╗") | color(Color::Red),
+                                text("║                                       ║") | color(Color::Red),
+                                text("║            Y O U   D I E D            ║") | color(Color::Red) | bold,
+                                text("║                                       ║") | color(Color::Red),
+                                text("║  Your adventure has come to an end.   ║") | color(Color::White),
+                                text("║                                       ║") | color(Color::Red),
+                                text("║  The darkness claims another soul...  ║") | color(Color::White),
+                                text("║                                       ║") | color(Color::Red),
+                                text("╠═══════════════════════════════════════╣") | color(Color::Red),
+                                text("║                                       ║") | color(Color::Red),
+                                text("║    [R] Return to Main Menu            ║") | color(Color::Yellow),
+                                text("║    [Q] Quit Game                      ║") | color(Color::Yellow),
+                                text("║                                       ║") | color(Color::Red),
+                                text("╚═══════════════════════════════════════╝") | color(Color::Red)
+                            }),
+                            text("                 ")
+                        }) | center,
+                        text("") | size(WIDTH, EQUAL, 1)
+                    }) | center | size(HEIGHT, EQUAL, 20);
                 case GameState::QUIT:
                     return text("Exiting...");
             }
@@ -324,6 +351,7 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::PAUSED: std::cout << "PAUSED"; break;
             case GameState::INVENTORY: std::cout << "INVENTORY"; break;
             case GameState::HELP: std::cout << "HELP"; break;
+            case GameState::DEATH: std::cout << "DEATH"; break;
             case GameState::QUIT: std::cout << "QUIT"; break;
         }
         std::cout << "\nInput: ";
@@ -355,6 +383,13 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::HELP:
                 if (event == Event::Escape) {
                     game_manager.returnToPreviousState();
+                }
+                break;
+            case GameState::DEATH:
+                if (event == Event::Character('r') || event == Event::Character('R')) {
+                    game_manager.setState(GameState::MENU);
+                } else if (event == Event::Character('q') || event == Event::Character('Q')) {
+                    game_manager.setState(GameState::QUIT);
                 }
                 break;
             case GameState::QUIT:
@@ -429,6 +464,31 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                     separator(),
                     text("Press ESC to return")
                 }) | border;
+            case GameState::DEATH:
+                return vbox({
+                    text("") | size(WIDTH, EQUAL, 1),
+                    hbox({
+                        text("                 "),
+                        vbox({
+                            text("╔═══════════════════════════════════════╗") | color(Color::Red),
+                            text("║                                       ║") | color(Color::Red),
+                            text("║            Y O U   D I E D            ║") | color(Color::Red) | bold,
+                            text("║                                       ║") | color(Color::Red),
+                            text("║  Your adventure has come to an end.   ║") | color(Color::White),
+                            text("║                                       ║") | color(Color::Red),
+                            text("║  The darkness claims another soul...  ║") | color(Color::White),
+                            text("║                                       ║") | color(Color::Red),
+                            text("╠═══════════════════════════════════════╣") | color(Color::Red),
+                            text("║                                       ║") | color(Color::Red),
+                            text("║    [R] Return to Main Menu            ║") | color(Color::Yellow),
+                            text("║    [Q] Quit Game                      ║") | color(Color::Yellow),
+                            text("║                                       ║") | color(Color::Red),
+                            text("╚═══════════════════════════════════════╝") | color(Color::Red)
+                        }),
+                        text("                 ")
+                    }) | center,
+                    text("") | size(WIDTH, EQUAL, 1)
+                }) | center | size(HEIGHT, EQUAL, 20);
             case GameState::QUIT:
                 screen.ExitLoopClosure()();
                 return text("Exiting...");
@@ -492,6 +552,15 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                     return true;
                 }
                 return false;
+            case GameState::DEATH:
+                if (event == Event::Character('r') || event == Event::Character('R')) {
+                    game_manager.setState(GameState::MENU);
+                    return true;
+                } else if (event == Event::Character('q') || event == Event::Character('Q')) {
+                    game_manager.setState(GameState::QUIT);
+                    return true;
+                }
+                return false;
             case GameState::QUIT:
             default:
                 return false;
@@ -540,9 +609,16 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
  * Main entry point
  */
 int main(int argc, char* argv[]) {
+    // Create log directory
+    system("mkdir -p logs");
+
+    // Initialize logging first
+    Log::init("logs/veyrm_debug.log", Log::DEBUG);
+    LOG_INFO("=== Veyrm starting up ===");
+
     // Initialize platform-specific settings
     initializePlatform();
-    
+
     // Load configuration file
     Config& config = Config::getInstance();
     config.loadFromFile("config.yml");

@@ -44,6 +44,12 @@ public:
     bool isDead() const { return hp <= 0; }
     int getAttackRoll() const;
     int getDefenseValue() const;
+
+    // Combat interface overrides
+    int getAttackBonus() const override { return attack; }
+    int getDefenseBonus() const override { return defense; }
+    int getBaseDamage() const override { return attack; }
+    std::string getCombatName() const override { return name; }
     
     // AI state (for future use)
     enum class AIState {

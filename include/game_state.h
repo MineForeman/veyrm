@@ -10,6 +10,7 @@ enum class GameState {
     PAUSED,
     INVENTORY,
     HELP,
+    DEATH,
     QUIT
 };
 
@@ -26,6 +27,7 @@ class Player;
 class SpawnManager;
 class MapMemory;
 class MonsterAI;
+class CombatSystem;
 
 class GameManager {
 public:
@@ -84,6 +86,9 @@ public:
     // Monster AI
     void updateMonsters();
     MonsterAI* getMonsterAI() { return monster_ai.get(); }
+
+    // Combat system
+    CombatSystem* getCombatSystem() { return combat_system.get(); }
     
 private:
     GameState current_state = GameState::MENU;
@@ -97,6 +102,7 @@ private:
     std::unique_ptr<SpawnManager> spawn_manager;
     std::unique_ptr<MapMemory> map_memory;
     std::unique_ptr<MonsterAI> monster_ai;
+    std::unique_ptr<CombatSystem> combat_system;
     std::vector<std::vector<bool>> current_fov;
     Room* current_room = nullptr;  // Track which room the player is currently in
     bool debug_mode = false;

@@ -12,9 +12,7 @@ public:
     // Constructor
     Player(int x, int y);
     
-    // Stats
-    int hp;
-    int max_hp;
+    // Stats (hp and max_hp are inherited from Entity)
     int attack;
     int defense;
     int level;
@@ -44,6 +42,12 @@ public:
     // Override base class
     virtual void onDeath() override;
     virtual void update(double delta_time) override;
+
+    // Combat interface overrides
+    int getAttackBonus() const override { return attack; }
+    int getDefenseBonus() const override { return defense; }
+    int getBaseDamage() const override { return attack; }
+    std::string getCombatName() const override { return "You"; }
     
 private:
     // Calculate level from experience

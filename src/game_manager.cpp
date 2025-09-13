@@ -16,6 +16,8 @@
 #include "monster_factory.h"
 #include "monster_ai.h"
 #include "monster.h"
+#include "combat_system.h"
+#include "log.h"
 
 GameManager::GameManager(MapType initial_map) 
     : current_state(GameState::MENU),
@@ -28,6 +30,7 @@ GameManager::GameManager(MapType initial_map)
       entity_manager(std::make_unique<EntityManager>()),
       spawn_manager(std::make_unique<SpawnManager>(this)),
       monster_ai(std::make_unique<MonsterAI>()),
+      combat_system(std::make_unique<CombatSystem>(message_log.get())),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
@@ -271,21 +274,36 @@ void GameManager::updateMonsters() {
         // Get next move from AI
         Point next_pos = monster_ai->getNextMove(*monster, *player, *map);
 
+        LOG_AI("Monster " + monster->name + " AI suggests move from (" +
+               std::to_string(monster->x) + "," + std::to_string(monster->y) + ") to (" +
+               std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
+
         // Check if the move is valid (not blocked by another entity)
         if (next_pos != monster->getPosition()) {
             bool blocked = false;
 
             // Check if player is at target position (attack)
             if (next_pos == player->getPosition()) {
-                // Attack player
-                int damage = monster->calculateDamage();
-                player->takeDamage(damage);
+                LOG_AI("Monster " + monster->name + " at (" + std::to_string(monster->x) + "," + std::to_string(monster->y) + ") attacking player at (" + std::to_string(player->x) + "," + std::to_string(player->y) + ")");
 
-                if (message_log) {
-                    message_log->addCombatMessage(
-                        monster->name + " attacks for " + std::to_string(damage) + " damage!"
-                    );
+                // Use CombatSystem for attack resolution
+                auto result = combat_system->processAttack(*monster, *player);
+
+                LOG_AI("Attack result: hit=" + std::string(result.hit ? "true" : "false") +
+                      ", damage=" + std::to_string(result.damage) +
+                      ", critical=" + std::string(result.critical ? "true" : "false") +
+                      ", fatal=" + std::string(result.fatal ? "true" : "false"));
+
+                // Handle player death
+                if (result.fatal) {
+                    LOG_ERROR("=== PLAYER DEATH ===");
+                    LOG_ERROR("Player has been killed by " + monster->name + "!");
+                    LOG_ERROR("Final player HP: " + std::to_string(player->hp));
+                    LOG_ERROR("Game Over - Setting state to DEATH");
+                    LOG_ERROR("=== GAME OVER ===");
+                    setState(GameState::DEATH);
                 }
+
                 continue;
             }
 
@@ -299,8 +317,13 @@ void GameManager::updateMonsters() {
 
             // Move if not blocked
             if (!blocked) {
+                LOG_MOVEMENT("Monster " + monster->name + " moving to (" + std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
                 monster->moveTo(next_pos.x, next_pos.y);
+            } else {
+                LOG_AI("Monster " + monster->name + " movement blocked");
             }
+        } else {
+            LOG_AI("Monster " + monster->name + " AI returned current position - no movement");
         }
     }
 }

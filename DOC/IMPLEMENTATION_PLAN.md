@@ -339,25 +339,31 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 9: Combat System (Day 12)
 
-### 9.1 Combat Stats
-- [ ] Add HP, attack, defense to all entities
-- [ ] Create `CombatSystem` class
-- [ ] Implement damage calculation
-- [ ] **Test:** Damage calculates correctly
+### 9.1 Combat Stats ✅
+- [x] Add HP, attack, defense to all entities
+- [x] Create `CombatSystem` class
+- [x] Implement damage calculation
+- [x] Integrate with Phase 8.3 AI system
+- [x] Add comprehensive combat unit tests
+- [x] **Test:** Damage calculates correctly
+- [x] **Test:** AI combat integration works properly
+- [x] **Documentation:** [Phase 9.1 Requirements](PHASES/9.1_COMBAT_STATS_REQUIREMENTS.md)
+- [x] **Documentation:** [Phase 9.1 Implementation Plan](PHASES/9.1_IMPLEMENTATION_PLAN.md)
+- [x] **Documentation:** [Phase 9.1 AI Integration](PHASES/9.1_AI_INTEGRATION_POINTS.md)
 - [ ] **Git tag:** `v0.9.1-combat-stats`
 
-### 9.2 Bump Combat
-- [ ] Detect bump-to-attack
-- [ ] Apply damage on collision
-- [ ] Add combat messages to log
-- [ ] **Test:** Bumping causes damage
+### 9.2 Bump Combat ✅
+- [x] Detect bump-to-attack
+- [x] Apply damage on collision
+- [x] Add combat messages to log
+- [x] **Test:** Bumping causes damage
 - [ ] **Git tag:** `v0.9.2-bump-combat`
 
-### 9.3 Death Handling
-- [ ] Remove entities at 0 HP
-- [ ] Handle player death (game over)
-- [ ] Handle monster death (remove from map)
-- [ ] **Test:** Death states work correctly
+### 9.3 Death Handling ✅
+- [x] Remove entities at 0 HP
+- [x] Handle player death (game over)
+- [x] Handle monster death (remove from map)
+- [x] **Test:** Death states work correctly
 - [ ] **Documentation:** Document combat formulas
 - [ ] **Git tag:** `v0.9.3-death-handling`
 
