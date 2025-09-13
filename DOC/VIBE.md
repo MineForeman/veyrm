@@ -72,7 +72,13 @@ Implement doors and bind a key for players to use to toggle the door open and cl
 
 Implement and log 8.3 Basic AI
 
-I declear that this is the MVP!  Document it as such.  Create a branch for it so we can preserve it for posterity and the switch back to the main branch.
+I declear that this is the MVP!  Document and tag it as such.  Create a branch for it so we can preserve it for posterity and the switch back to the main branch.
+
+Create a new brach where we will refactor and optimize and switch to it.
+
+I want to refactor the documentation, search through the md files and document what could be improved.
+I want to refactor the classes, search through the md files and document what could be improved.
+
 
 TODO
 
@@ -82,10 +88,6 @@ Redundent
 
 Seach through the code base and find any redundent code and document it.
 
-Refactor
-
-I want to refactor the documentation, search through the md files and document what could be improved.
-I want to refactor the classes, search through the md files and document what could be improved.
 
 Tests
 
