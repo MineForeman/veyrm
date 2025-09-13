@@ -1,4 +1,5 @@
 #include "game_screen.h"
+#include "item_factory.h"
 #include "input_handler.h"
 #include "turn_manager.h"
 #include "message_log.h"
@@ -328,22 +329,30 @@ Component GameScreen::Create() {
                 if (player && item_manager) {
                     auto item = item_manager->getItemAt(player->x, player->y);
                     if (item) {
-                        // For now, just pick up and destroy the item
-                        // Later we'll add to inventory
-                        msg_log->addMessage("You pick up " + item->name + ".");
+                        // Create a copy for inventory
+                        auto item_copy = ItemFactory::getInstance().create(item->id);
+                        if (item_copy) {
+                            // Copy stack size and properties
+                            item_copy->stack_size = item->stack_size;
+                            item_copy->properties = item->properties;
 
-                        // If it's gold, add to player's gold
-                        if (item->type == Item::ItemType::GOLD) {
-                            int amount = item->properties["amount"];
-                            player->gold += amount;
-                            msg_log->addMessage("You gain " + std::to_string(amount) + " gold.");
+                            // Try to pick up the item
+                            if (player->pickupItem(std::move(item_copy))) {
+                                msg_log->addMessage("You pick up " + item->name + ".");
+
+                                // Special message for gold
+                                if (item->type == Item::ItemType::GOLD) {
+                                    msg_log->addMessage("You gain " + std::to_string(item->properties["amount"]) + " gold.");
+                                }
+
+                                // Remove from world
+                                item_manager->removeItem(item);
+                                game_manager->processPlayerAction(ActionSpeed::FAST);
+                                return true;
+                            } else {
+                                msg_log->addMessage("Your inventory is full!");
+                            }
                         }
-
-                        // Remove the item from the world
-                        item_manager->removeItem(item);
-
-                        game_manager->processPlayerAction(ActionSpeed::FAST);
-                        return true;
                     } else {
                         msg_log->addMessage("There is nothing here to pick up.");
                     }

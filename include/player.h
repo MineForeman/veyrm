@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entity.h"
+#include "inventory.h"
 #include <vector>
 #include <memory>
 
@@ -31,9 +32,14 @@ public:
     void gainExperience(int amount);
     void levelUp();
     
-    // Inventory (future)
-    std::vector<std::shared_ptr<Entity>> inventory;
-    int inventory_capacity = 20;
+    // Inventory
+    std::unique_ptr<Inventory> inventory;
+
+    // Inventory helpers
+    bool pickupItem(std::unique_ptr<Item> item);
+    bool dropItem(int slot);
+    bool hasItem(const std::string& item_id) const;
+    int countItems(const std::string& item_id) const;
     
     // Actions
     bool canPickUp() const;

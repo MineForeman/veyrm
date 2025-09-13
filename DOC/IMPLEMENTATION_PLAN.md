@@ -398,12 +398,14 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 
 ## Phase 11: Inventory System (Day 15)
 
-### 11.1 Inventory Storage
-- [ ] Create `Inventory` class
-- [ ] Implement 10-slot limit
-- [ ] Add inventory to player
-- [ ] **Test:** Inventory stores items correctly
-- [ ] **Git tag:** `v0.11.1-inventory-storage`
+### 11.1 Inventory Storage ✅
+- [x] Create `Inventory` class with 26-slot capacity
+- [x] Implement smart stacking for stackable items
+- [x] Add inventory to player with special gold handling
+- [x] Integrate with game pickup system
+- [x] **Test:** All inventory tests passing (332 lines of tests)
+- [x] **Git tag:** `v0.11.1-inventory-storage`
+- **Notes:** Complete implementation with stacking, weight tracking, full test coverage
 
 ### 11.2 Inventory UI
 - [ ] Implement 'i' inventory command

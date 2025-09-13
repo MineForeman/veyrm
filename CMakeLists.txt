@@ -160,6 +160,7 @@ add_executable(veyrm
     src/item.cpp
     src/item_factory.cpp
     src/item_manager.cpp
+    src/inventory.cpp
 )
 
 # Link libraries

@@ -8,6 +8,7 @@
 #include "game_state.h"
 #include "message_log.h"
 #include "log.h"
+#include "item.h"
 
 Player::Player(int x, int y)
     : Entity(x, y, "@", ftxui::Color::White, "Player"),
@@ -15,7 +16,8 @@ Player::Player(int x, int y)
       defense(Config::getInstance().getPlayerStartingDefense()),
       level(1),
       experience(0),
-      gold(0) {
+      gold(0),
+      inventory(std::make_unique<Inventory>()) {
 
     // Set HP from config (base class members)
     hp = Config::getInstance().getPlayerStartingHP();
@@ -98,7 +100,54 @@ void Player::levelUp() {
 }
 
 bool Player::canPickUp() const {
-    return inventory.size() < static_cast<size_t>(inventory_capacity);
+    return inventory && !inventory->isFull();
+}
+
+bool Player::pickupItem(std::unique_ptr<Item> item) {
+    if (!item) return false;
+
+    // Special handling for gold - goes directly to gold counter, not inventory
+    if (item->type == Item::ItemType::GOLD) {
+        gold += item->properties["amount"];
+        LOG_INFO("Player collected " + std::to_string(item->properties["amount"]) + " gold");
+        return true;  // Gold doesn't go in inventory
+    }
+
+    // Try to add to inventory
+    if (inventory) {
+        return inventory->addItem(std::move(item));
+    }
+    return false;
+}
+
+bool Player::dropItem(int slot) {
+    if (!inventory) return false;
+
+    auto item = inventory->removeItem(slot);
+    if (item) {
+        // In the future, this would drop the item at player's position
+        // For now, just remove it from inventory
+        LOG_INFO("Player dropped " + item->name);
+        return true;
+    }
+    return false;
+}
+
+bool Player::hasItem(const std::string& item_id) const {
+    return inventory && inventory->findItem(item_id) != nullptr;
+}
+
+int Player::countItems(const std::string& item_id) const {
+    if (!inventory) return 0;
+
+    int count = 0;
+    auto items = inventory->getAllItems();
+    for (const auto& item : items) {
+        if (item && item->id == item_id) {
+            count += item->stackable ? item->stack_size : 1;
+        }
+    }
+    return count;
 }
 
 void Player::onDeath() {
