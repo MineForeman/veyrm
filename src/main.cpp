@@ -139,51 +139,58 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     
     // Create the main component with renderer
     auto component = Renderer(menu, [=] {
-        // Title
+        // ANSI art title - properly centered
         auto title = vbox({
-            text("╔══════════════════════════════════════╗") | color(Color::Yellow),
-            text("║         VEYRM ROGUELIKE              ║") | color(Color::Yellow),
-            text("║     The Shattered Crown Awaits       ║") | color(Color::Yellow),
-            text("╚══════════════════════════════════════╝") | color(Color::Yellow),
+            text(""),
+            text("██╗   ██╗███████╗██╗   ██╗██████╗ ███╗   ███╗") | color(Color::Red) | center,
+            text("██║   ██║██╔════╝╚██╗ ██╔╝██╔══██╗████╗ ████║") | color(Color::RedLight) | center,
+            text("██║   ██║█████╗   ╚████╔╝ ██████╔╝██╔████╔██║") | color(Color::Yellow) | center,
+            text("╚██╗ ██╔╝██╔══╝    ╚██╔╝  ██╔══██╗██║╚██╔╝██║") | color(Color::Yellow) | center,
+            text(" ╚████╔╝ ███████╗   ██║   ██║  ██║██║ ╚═╝ ██║") | color(Color::YellowLight) | center,
+            text("  ╚═══╝  ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝") | color(Color::RedLight) | center,
+            text(""),
+            text("The Shattered Crown Awaits") | dim | center,
+            text(""),
             separator(),
         });
         
-        // Menu
+        // Simple menu
         auto menu_display = vbox({
-            text("Main Menu") | bold,
-            separator(),
+            text("Main Menu") | bold | center,
+            text(""),
             menu->Render(),
         }) | border | size(WIDTH, EQUAL, 30);
         
-        // About box (conditional)
+        // Clean about box
         Element about_box = emptyElement();
         if (selected == 3) {  // Show about when About is selected
             about_box = vbox({
-                separator(),
-                window(text("About"), vbox({
+                text(""),
+                window(text(" About ") | bold, vbox({
                     text("Version: " + std::string(VEYRM_VERSION)),
-                    text("Build Date: " + std::string(VEYRM_BUILD_DATE)),
+                    text("Build: " + std::string(VEYRM_BUILD_DATE)),
+                    text("Website: veyrm.com"),
                     separator(),
                     text("A modern roguelike inspired by Angband"),
-                    text("Built with FTXUI, C++23"),
-                    separator(),
-                    text("Press ESC or Q to quit"),
-                })),
+                    text("Deep beneath Veyrmspire, the Spiral"),
+                    text("Vaults hold the last shard of the"),
+                    text("dead god's crown."),
+                })) | size(WIDTH, EQUAL, 45),
             });
         }
         
-        // Status line
+        // Clean status line
         auto status = hbox({
-            text("Use ↑↓ to navigate, Enter to select, Q to quit") | dim,
-        });
+            text("[↑↓] Navigate  [Enter] Select  [Q] Quit") | dim,
+        }) | center;
         
         // Combine all elements
         return vbox({
             title,
             flex(vbox({
-                menu_display,
-                about_box,
-            })) | center,
+                menu_display | center,
+                about_box | center,
+            })),
             separator(),
             status,
         });

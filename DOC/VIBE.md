@@ -55,7 +55,7 @@ Create any testss needed and run them.
 Document all changes sinse the last check in.  Update the existing md documents as well.  Add any additional md documents as nessery.
 
 Do a git add -A, tag, check in and push.
-
+Do a git add -A, check in and push.
 
 The "load" screen loks odd, jazz it up!
 
