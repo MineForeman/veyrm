@@ -139,6 +139,7 @@ add_executable(veyrm
     src/fov.cpp
     src/map_memory.cpp
     src/status_bar.cpp
+    src/layout_system.cpp
 )
 
 # Link libraries

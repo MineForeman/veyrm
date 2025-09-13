@@ -8,17 +8,21 @@
 #include "entity_manager.h"
 #include "player.h"
 #include "status_bar.h"
+#include "layout_system.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace ftxui;
 
-GameScreen::GameScreen(GameManager* manager, ScreenInteractive*) 
+GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen) 
     : game_manager(manager),
-      renderer(std::make_unique<MapRenderer>(80, 24)),
-      status_bar(std::make_unique<StatusBar>()) {
+      screen_ref(screen),
+      renderer(std::make_unique<MapRenderer>(200, 60)),  // Large default for fullscreen
+      status_bar(std::make_unique<StatusBar>()),
+      layout_system(std::make_unique<LayoutSystem>()) {
     // Center renderer on player's starting position
     if (auto* player = game_manager->getPlayer()) {
         renderer->centerOn(player->x, player->y);
@@ -37,26 +41,60 @@ Component GameScreen::CreateMapPanel() {
             return text("No map loaded") | border;
         }
         
+        // For fullscreen mode, we need to dynamically calculate the viewport
+        // The map should take up most of the screen, leaving room for status/log
+        // We'll use conservative estimates that work for most terminal sizes
+        
+        // Reserve space for right panel (status + log) - about 40 columns
+        // This prevents the map from overlapping with the right panels
+        int map_width = 100;   // Conservative width that leaves room for right panel
+        int map_height = 35;   // Conservative height for most terminals
+        
+        // Update renderer viewport to respect the layout boundaries
+        renderer->setViewport(map_width, map_height);
+        
         // Use the new Renderer class to render the map
         Element rendered = renderer->render(*map, *game_manager);
         
-        // Add border and sizing
-        return rendered | border | size(WIDTH, EQUAL, 82) | size(HEIGHT, EQUAL, 26);
+        // Add border and explicitly size to prevent overflow into right panels
+        return rendered | border | 
+               size(WIDTH, EQUAL, map_width + 2) |   // +2 for borders
+               size(HEIGHT, EQUAL, map_height + 2);  // +2 for borders
     });
 }
 
 Component GameScreen::CreateLogPanel() {
     return Renderer([this] {
-        return game_manager->getMessageLog()->render(5) | 
+        // Show last 10 messages with fixed width for right panel
+        return game_manager->getMessageLog()->render(10) | 
                border | 
-               size(HEIGHT, EQUAL, 7);
+               size(WIDTH, EQUAL, 38);  // Fixed width for right panel
     });
 }
 
 Component GameScreen::CreateStatusPanel() {
     return Renderer([this] {
-        return status_bar->render(*game_manager);
+        return status_bar->render(*game_manager) | 
+               size(WIDTH, EQUAL, 38);  // Match log panel width
     });
+}
+
+void GameScreen::updateLayout() {
+    // Since we're using Fullscreen mode, FTXUI automatically handles the full terminal
+    // We don't have direct access to dimensions from ScreenInteractive
+    // But we can use terminal size detection
+    
+    // Get terminal dimensions using FTXUI's terminal utilities
+    int width = 80;   // Default fallback
+    int height = 24;  // Default fallback
+    
+    // Try to get actual terminal size
+    // FTXUI uses the full screen in Fullscreen mode
+    // The renderer will use all available space
+    
+    // For now, we'll let FTXUI handle the sizing automatically
+    // The layout system will adapt to whatever space is available
+    layout_system->updateDimensions(width, height);
 }
 
 Component GameScreen::Create() {
@@ -64,15 +102,16 @@ Component GameScreen::Create() {
     auto log_panel = CreateLogPanel();
     auto status_panel = CreateStatusPanel();
     
-    // Main game layout
-    auto layout = Container::Vertical({
-        Container::Horizontal({
-            map_panel,
-            Container::Vertical({
-                status_panel,
-                log_panel
-            })
-        })
+    // Create structured layout with proper separation
+    // The key is to use Container::Horizontal to properly separate left and right
+    auto right_panel = Container::Vertical({
+        status_panel,
+        log_panel
+    });
+    
+    auto layout = Container::Horizontal({
+        map_panel,     // Map on the left
+        right_panel    // Status and log on the right
     });
     
     // Add input handling

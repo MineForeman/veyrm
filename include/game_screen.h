@@ -6,6 +6,7 @@
 
 class MapRenderer;
 class StatusBar;
+class LayoutSystem;
 
 class GameScreen {
 public:
@@ -15,11 +16,16 @@ public:
     
 private:
     GameManager* game_manager;
+    [[maybe_unused]] ftxui::ScreenInteractive* screen_ref;
     std::unique_ptr<MapRenderer> renderer;
     std::unique_ptr<StatusBar> status_bar;
+    std::unique_ptr<LayoutSystem> layout_system;
     
     // UI components
     ftxui::Component CreateMapPanel();
     ftxui::Component CreateLogPanel();
     ftxui::Component CreateStatusPanel();
+    
+    // Update layout based on terminal size
+    void updateLayout();
 };

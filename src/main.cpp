@@ -251,7 +251,7 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
     GameManager game_manager(initial_map);
     
     // Create components
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
     Component main_menu = createMainMenu(&game_manager, &screen);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
@@ -371,7 +371,7 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
     
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
     
     // Disable mouse tracking to prevent terminal artifacts
     screen.TrackMouse(false);

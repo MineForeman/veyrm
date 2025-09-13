@@ -48,6 +48,15 @@ Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for termin
 - **RNG:** std::mt19937_64
 - **Target Platforms:** macOS, Linux, Windows (UTF-8 terminals)
 
+## Dependency Sources
+
+The source code for all dependencies is automatically downloaded by CMake and can be found in `build/_deps/` after building. For example:
+- **FTXUI source:** `build/_deps/ftxui-src/`
+- **nlohmann/json source:** `build/_deps/json-src/`
+- **Catch2 source:** `build/_deps/catch2-src/`
+
+This is useful for exploring the available APIs and understanding how the libraries work.
+
 ## Build Commands
 
 **IMPORTANT:** Always use `./build.sh` as the preferred way to build and run the game. It handles all build configurations, dependency management, and provides helpful utilities.
