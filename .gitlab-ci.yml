@@ -51,22 +51,19 @@ build:windows:
   script:
     # Check build environment
     - Write-Host "Windows native build starting"
+    - cmake --version
     - |
-      try {
-        cmake --version
-      } catch {
-        Write-Host "CMake not installed"
+      $msvc = where.exe cl 2>$null
+      if ($msvc) {
+        Write-Host "MSVC found at: $msvc"
+      } else {
+        Write-Host "MSVC not found"
       }
     - |
-      try {
-        where.exe cl
-      } catch {
-        Write-Host "MSVC not found, trying MinGW..."
-      }
-    - |
-      try {
-        where.exe gcc
-      } catch {
+      $gcc = where.exe gcc 2>$null
+      if ($gcc) {
+        Write-Host "GCC found at: $gcc"
+      } else {
         Write-Host "GCC not found"
       }
     # Create build directory
@@ -75,20 +72,34 @@ build:windows:
         New-Item -ItemType Directory -Path build
       }
     - Set-Location build
-    # Try to build with available compiler
+    # Try to configure and build
+    - Write-Host "Attempting CMake configuration..."
     - |
-      try {
+      # Try MinGW first if gcc is available
+      $gcc = where.exe gcc 2>$null
+      if ($gcc) {
+        Write-Host "Trying MinGW Makefiles..."
         cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-      } catch {
-        try {
-          cmake -G "Visual Studio 17 2022" -A x64 ..
-        } catch {
-          Write-Host "Failed to configure CMake"
-          exit 1
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "Configured with MinGW"
+          cmake --build . -j
+        }
+      } else {
+        # Try Visual Studio
+        Write-Host "Trying Visual Studio..."
+        cmake -G "Visual Studio 17 2022" -A x64 ..
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "Configured with Visual Studio"
+          cmake --build . --config Release -j
+        } else {
+          # Try without specifying generator (let CMake auto-detect)
+          Write-Host "Trying CMake auto-detection..."
+          cmake ..
+          cmake --build . --config Release -j
         }
       }
-    - cmake --build . --config Release -j
-    - Get-ChildItem -Path . -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue
+    - Write-Host "Checking for built executables..."
+    - Get-ChildItem -Path . -Recurse -Filter "*.exe" | Select-Object FullName
   artifacts:
     paths:
       - build/bin/
