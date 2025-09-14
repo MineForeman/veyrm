@@ -256,7 +256,7 @@ ConnectivityResult MapValidator::checkAdvancedConnectivity(const Map& map) {
     
     // Find all components
     result.components = findAllComponents(map);
-    result.numComponents = result.components.size();
+    result.numComponents = static_cast<int>(result.components.size());
     
     // Find largest component
     if (!result.components.empty()) {
@@ -269,7 +269,7 @@ ConnectivityResult MapValidator::checkAdvancedConnectivity(const Map& map) {
             }
         }
         result.largestComponent = result.components[maxIdx];
-        result.reachableFloorTiles = result.largestComponent.size();
+        result.reachableFloorTiles = static_cast<int>(result.largestComponent.size());
     }
     
     // Check if fully connected
@@ -412,7 +412,7 @@ bool MapValidator::ensureStairsReachable(Map& map) {
         int stairsComp = -1;
         for (size_t i = 0; i < components.size(); i++) {
             if (components[i].find(stairs) != components[i].end()) {
-                stairsComp = i;
+                stairsComp = static_cast<int>(i);
                 break;
             }
         }

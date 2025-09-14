@@ -73,7 +73,7 @@ Element InventoryRenderer::renderItemList() {
 }
 
 Element InventoryRenderer::renderSlotLine(int slot, Item* item) {
-    char slot_letter = 'a' + slot;
+    char slot_letter = static_cast<char>('a' + slot);
     std::string line;
 
     if (item) {

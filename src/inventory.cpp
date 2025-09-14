@@ -164,7 +164,7 @@ std::vector<Item*> Inventory::getAllItems() const {
 
 int Inventory::findEmptySlot() const {
     if (items.size() < static_cast<size_t>(capacity)) {
-        return items.size();
+        return static_cast<int>(items.size());
     }
     return -1;
 }

@@ -831,8 +831,8 @@ std::vector<std::pair<int, int>> MapGenerator::getMSTConnections(const std::vect
                 
                 if (dist < min_dist) {
                     min_dist = dist;
-                    from_idx = i;
-                    to_idx = j;
+                    from_idx = static_cast<int>(i);
+                    to_idx = static_cast<int>(j);
                 }
             }
         }
@@ -873,8 +873,8 @@ std::vector<std::pair<int, int>> MapGenerator::getNearestConnections(const std::
                 
                 if (dist < min_dist) {
                     min_dist = dist;
-                    nearest = j;
-                    connections.push_back({k, j});
+                    nearest = static_cast<int>(j);
+                    connections.push_back({static_cast<int>(k), static_cast<int>(j)});
                 }
             }
         }
