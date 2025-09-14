@@ -45,22 +45,39 @@ test:linux:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
 
-# Windows build - Try without specifying image to avoid volume mount issues
+# Windows build (native runner with shell executor)
 build:windows:
   stage: build
   tags:
-    - windows
-  variables:
-    # Environment variables to help with Windows Docker issues
-    COMPOSE_CONVERT_WINDOWS_PATHS: "1"
-    FF_NETWORK_PER_BUILD: "true"  # Use a new network for each build
-    DOCKER_HOST: "npipe:////./pipe/docker_engine"  # Windows named pipe
+    - windows  # Native Windows runner
   script:
-    # Simple test to see if the runner works without volume mounts
-    - echo "Testing Windows runner"
-    - echo "Current directory:"
-    - cd
-    - echo "PowerShell test:"
-    - powershell -Command "Write-Host 'PowerShell is working'"
-    - powershell -Command "[System.Environment]::OSVersion"
+    # Check build environment
+    - echo "Windows native build starting"
+    - cmake --version || echo "CMake not installed"
+    - where cl 2>nul || echo "MSVC not found, trying MinGW..."
+    - where gcc 2>nul || echo "GCC not found"
+    # Create build directory
+    - if not exist build mkdir build
+    - cd build
+    # Try to build with available compiler
+    - cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .. || cmake -G "Visual Studio 17 2022" -A x64 ..
+    - cmake --build . --config Release -j
+    - dir bin\Release 2>nul || dir bin 2>nul
+  artifacts:
+    paths:
+      - build/bin/
+    expire_in: 1 week
+  allow_failure: true  # Allow failure until build tools are confirmed
+
+# Windows test (native runner)
+test:windows:
+  stage: test
+  tags:
+    - windows
+  needs: ["build:windows"]
+  script:
+    - echo "Testing Windows build"
+    - if exist build\bin\Release\veyrm_tests.exe (build\bin\Release\veyrm_tests.exe) else (echo "Tests not found in Release")
+    - if exist build\bin\veyrm_tests.exe (build\bin\veyrm_tests.exe) else (echo "Tests not found in bin")
+    - if exist build\bin\Release\veyrm.exe (build\bin\Release\veyrm.exe --help) else (echo "Game not found")
   allow_failure: true

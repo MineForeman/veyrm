@@ -1,0 +1,68 @@
+# Alternative Windows configuration using PowerShell
+# Use this if the CMD version has issues
+
+build:windows:powershell:
+  stage: build
+  tags:
+    - windows
+  script:
+    - |
+      Write-Host "Windows PowerShell build starting"
+
+      # Check for build tools
+      try { cmake --version } catch { Write-Host "CMake not installed" }
+      try { cl 2>$null } catch { Write-Host "MSVC not found" }
+      try { gcc --version } catch { Write-Host "GCC not found" }
+
+      # Create build directory
+      if (Test-Path build) { Remove-Item -Recurse -Force build }
+      New-Item -ItemType Directory -Force -Path build
+      Set-Location build
+
+      # Configure CMake (try different generators)
+      $configured = $false
+
+      # Try MinGW first
+      try {
+        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+        $configured = $true
+        Write-Host "Configured with MinGW"
+      } catch {
+        Write-Host "MinGW configuration failed"
+      }
+
+      # Try MSVC if MinGW failed
+      if (-not $configured) {
+        try {
+          cmake -G "Visual Studio 17 2022" -A x64 ..
+          $configured = $true
+          Write-Host "Configured with Visual Studio 2022"
+        } catch {
+          Write-Host "Visual Studio configuration failed"
+        }
+      }
+
+      # Try older Visual Studio versions
+      if (-not $configured) {
+        try {
+          cmake -G "Visual Studio 16 2019" -A x64 ..
+          $configured = $true
+          Write-Host "Configured with Visual Studio 2019"
+        } catch {
+          Write-Host "Visual Studio 2019 configuration failed"
+        }
+      }
+
+      # Build if configuration succeeded
+      if ($configured) {
+        cmake --build . --config Release -j
+        Get-ChildItem -Path . -Recurse -Filter "*.exe" | Select-Object FullName
+      } else {
+        Write-Host "ERROR: Could not configure CMake with any generator"
+        exit 1
+      }
+  artifacts:
+    paths:
+      - build/bin/
+    expire_in: 1 week
+  allow_failure: true
