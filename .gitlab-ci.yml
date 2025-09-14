@@ -170,23 +170,29 @@ create_gitlab_release:
   only:
     - tags
 
-# Windows build (simplified for Docker)
+# Windows build
 build:windows:
   stage: build
   tags:
     - windows
   allow_failure: true  # Allow failure while we debug Windows setup
-  before_script:
-    - echo "Checking for build tools..."
-    - where cmake || echo "CMake not found"
-    - where cl || echo "MSVC not found"
   script:
-    - echo "Attempting build..."
-    - mkdir build 2>$null || echo "Build dir exists"
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release .. || echo "CMake configuration failed"
-    - cmake --build . --config Release -j || echo "Build failed"
-    - dir bin\Release\ 2>$null || dir bin\ 2>$null || echo "No binaries found"
+    - |
+      Write-Host "Starting Windows build..."
+      Write-Host "Checking for build tools..."
+      cmake --version
+      Write-Host "Creating build directory..."
+      if (Test-Path build) { Remove-Item -Recurse -Force build }
+      New-Item -ItemType Directory -Force -Path build
+      Set-Location build
+      Write-Host "Configuring CMake..."
+      cmake -DCMAKE_BUILD_TYPE=Release ..
+      if ($LASTEXITCODE -ne 0) { Write-Host "CMake configuration failed"; exit 1 }
+      Write-Host "Building project..."
+      cmake --build . --config Release -j
+      if ($LASTEXITCODE -ne 0) { Write-Host "Build failed"; exit 1 }
+      Write-Host "Build completed successfully"
+      Get-ChildItem -Path bin\Release -ErrorAction SilentlyContinue
   artifacts:
     name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-windows"
     paths:
