@@ -45,12 +45,22 @@ test:linux:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
 
-# Windows build (native runner)
+# Windows build - Try without specifying image to avoid volume mount issues
 build:windows:
   stage: build
   tags:
     - windows
+  variables:
+    # Environment variables to help with Windows Docker issues
+    COMPOSE_CONVERT_WINDOWS_PATHS: "1"
+    FF_NETWORK_PER_BUILD: "true"  # Use a new network for each build
+    DOCKER_HOST: "npipe:////./pipe/docker_engine"  # Windows named pipe
   script:
-    - echo "Windows build"
-    - cmake --version || echo "CMake not installed"
+    # Simple test to see if the runner works without volume mounts
+    - echo "Testing Windows runner"
+    - echo "Current directory:"
+    - cd
+    - echo "PowerShell test:"
+    - powershell -Command "Write-Host 'PowerShell is working'"
+    - powershell -Command "[System.Environment]::OSVersion"
   allow_failure: true
