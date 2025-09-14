@@ -233,7 +233,7 @@ bool Inventory::deserialize(const json& data) {
         }
 
         return true;
-    } catch (const std::exception& e) {
+    } catch (const std::exception&) {
         return false;
     }
 }

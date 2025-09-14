@@ -131,7 +131,7 @@ public:
     bool hasSpace(int count = 1) const;
 
     /** @brief Get number of occupied slots @return Used slot count */
-    int getUsedSlots() const { return items.size(); }
+    int getUsedSlots() const { return static_cast<int>(items.size()); }
 
     /** @brief Get total slot capacity @return Maximum slots */
     int getTotalSlots() const { return capacity; }

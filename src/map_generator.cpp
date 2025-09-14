@@ -479,18 +479,18 @@ std::vector<Room> MapGenerator::generateRandomRooms(Map& map, std::mt19937& rng)
     
     // Get config values
     Config& config = Config::getInstance();
-    const int MIN_ROOM_SIZE = config.getMinRoomSize();
-    const int MAX_ROOM_SIZE = config.getMaxRoomSize();
-    const int MIN_ROOMS = config.getMinRooms();
-    const int MAX_ROOMS = config.getMaxRooms();
+    const int min_room_size_cfg = config.getMinRoomSize();
+    const int max_room_size_cfg = config.getMaxRoomSize();
+    const int min_rooms_cfg = config.getMinRooms();
+    const int max_rooms_cfg = config.getMaxRooms();
     const float LIT_ROOM_CHANCE = config.getLitRoomChance();
     
     // Distribution for room dimensions and positions
-    std::uniform_int_distribution<int> room_width(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
-    std::uniform_int_distribution<int> room_height(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
-    std::uniform_int_distribution<int> x_pos(2, std::max(2, map.getWidth() - MAX_ROOM_SIZE - 2));
-    std::uniform_int_distribution<int> y_pos(2, std::max(2, map.getHeight() - MAX_ROOM_SIZE - 2));
-    std::uniform_int_distribution<int> room_count(MIN_ROOMS, MAX_ROOMS);
+    std::uniform_int_distribution<int> room_width(min_room_size_cfg, max_room_size_cfg);
+    std::uniform_int_distribution<int> room_height(min_room_size_cfg, max_room_size_cfg);
+    std::uniform_int_distribution<int> x_pos(2, std::max(2, map.getWidth() - max_room_size_cfg - 2));
+    std::uniform_int_distribution<int> y_pos(2, std::max(2, map.getHeight() - max_room_size_cfg - 2));
+    std::uniform_int_distribution<int> room_count(min_rooms_cfg, max_rooms_cfg);
     std::uniform_real_distribution<float> lit_dist(0.0f, 1.0f);
     
     int target_rooms = room_count(rng);
@@ -856,7 +856,7 @@ std::vector<std::pair<int, int>> MapGenerator::getNearestConnections(const std::
     connected[0] = true;
     
     // Connect each room to its nearest unconnected neighbor
-    for (size_t i = 0; i < rooms.size() - 1; i++) {
+    for (size_t i = 0; i + 1 < rooms.size(); i++) {
         int min_dist = INT_MAX;
         int nearest = -1;
         

@@ -172,7 +172,7 @@ Point MonsterAI::chooseIdleMove(const Monster& monster, const Map& map) {
 
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, valid_moves.size() - 1);
+    std::uniform_int_distribution<size_t> dis(0, valid_moves.size() - 1);
 
     return valid_moves[dis(gen)];
 }

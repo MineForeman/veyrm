@@ -266,7 +266,7 @@ bool SpawnManager::isValidSpawnPoint(const Map& map, const Player* player, int x
     return true;
 }
 
-std::string SpawnManager::selectMonsterSpecies(int depth, std::mt19937& rng) const {
+std::string SpawnManager::selectMonsterSpecies(int depth, std::mt19937& random_gen) const {
     // Build list of valid monsters for this depth
     std::vector<std::pair<std::string, float>> candidates;
     
@@ -286,7 +286,7 @@ std::string SpawnManager::selectMonsterSpecies(int depth, std::mt19937& rng) con
     
     // Weighted random selection
     std::uniform_real_distribution<float> dist(0.0f, total_weight);
-    float roll = dist(rng);
+    float roll = dist(random_gen);
     
     float current_weight = 0.0f;
     for (const auto& [species, weight] : candidates) {

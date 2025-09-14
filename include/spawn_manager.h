@@ -48,7 +48,7 @@ public:
     std::vector<Point> getCorridorSpawnPoints(const Map& map, const Player* player) const;
     
     // Select appropriate monster for current depth
-    std::string selectMonsterSpecies(int depth, std::mt19937& rng) const;
+    std::string selectMonsterSpecies(int depth, std::mt19937& random_gen) const;
     
     // Check if a point is valid for spawning
     bool isValidSpawnPoint(const Map& map, const Player* player, int x, int y) const;

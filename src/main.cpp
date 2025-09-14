@@ -92,7 +92,7 @@ bool runSystemChecks() {
     
     // Check C++ version
     std::cout << "  [";
-    if (__cplusplus >= 202302L) {
+    if constexpr (__cplusplus >= 202302L) {
         std::cout << "✓";
     } else {
         std::cout << "✗";
