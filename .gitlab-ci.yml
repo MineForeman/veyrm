@@ -170,13 +170,21 @@ create_gitlab_release:
   only:
     - tags
 
-# Windows build
+# Windows build (Docker-based)
 build:windows:
   stage: build
+  image: mcr.microsoft.com/windows/servercore:ltsc2022
   tags:
     - windows
+    - docker
   before_script:
-    - echo "Using pre-installed CMake and MSVC"
+    # Install Chocolatey
+    - powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+    # Install build tools
+    - choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+    - choco install -y visualstudio2022buildtools
+    - choco install -y visualstudio2022-workload-vctools
+    - refreshenv
   script:
     - echo "CMake version:"
     - cmake --version
@@ -191,6 +199,37 @@ build:windows:
     name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-windows"
     paths:
       - build/bin/Release/
+      - data/
+      - README.md
+      - CHANGELOG.md
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Alternative: Linux build with Docker
+build:docker:
+  stage: build
+  image: ubuntu:24.04
+  tags:
+    - docker
+    - linux
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq cmake build-essential git
+  script:
+    - cmake --version
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake --build . --config Release -j
+    - echo "Build completed successfully"
+    - ls -la bin/
+  artifacts:
+    name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-docker"
+    paths:
+      - build/bin/
       - data/
       - README.md
       - CHANGELOG.md
