@@ -2,6 +2,9 @@
 # This file contains default settings for the game.
 # Command-line arguments will override these settings.
 
+# Version Information
+version: "0.0.2"
+
 # Game Settings
 game:
   # Starting map type: procedural, dungeon, room, corridor, arena, stress
