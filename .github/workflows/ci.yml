@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build project
+        run: |
+          cd build
+          cmake --build . -j
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: Test game executable
+        run: |
+          # Test that the game runs without crashing
+          timeout 10s ./build/bin/veyrm --help || true

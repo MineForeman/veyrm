@@ -77,7 +77,7 @@ I declear that this is the MVP!  Document and tag it as such.  Create a branch f
 Create a new brach where we will refactor and optimize and switch to it.
 
 I want to refactor the documentation, search through the md files and document what could be improved.
-I want to refactor the classes, search through the md files and document what could be improved.
+I want to refactor abd optimize the classes and implement Doxygen comments, search through the md files and document what could be improved.
 
 
 TODO
@@ -151,6 +151,16 @@ services:
 
 I want everythiong in data/, logs/ and saves/ to be moved there.
 
+Tables I want;-
+
+player (for indiviual players)
+charachter (for players characters)
+character_state (for the current character state)
+character_inventory (for the characters inventory)
+monsters ( for the monsters)
+items (for items)
+and anything else needed.
+
 I want build.sh to be able to load, clear, view, backup and reload the data.
 
 Document was must be done.  
@@ -171,5 +181,7 @@ Quests
 Help
 Auction House
 World Map
-Player Houseing
 Crafting
+Player Houseing
+Guilds
+Guild Halls

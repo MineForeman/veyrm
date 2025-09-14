@@ -2,13 +2,13 @@
 
 A modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI. Descend through the Spiral Vaults beneath Veyrmspire to shatter the last shard of a dead god's crown.
 
-![Version](https://img.shields.io/badge/version-0.10.1-blue)
+![Version](https://img.shields.io/badge/version-1.0.0--MVP-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-23-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 ## 🎮 Features
 
-### Current (v0.10.1)
+### Current (v1.0.0-MVP)
 - **Item System** - Complete item entity system with collectibles and treasure
 - **Item Pickup** - Press 'g' to get items, automatic gold collection
 - **Combat System** - d20-based tactical bump-to-attack with critical hits
@@ -32,11 +32,16 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 - **Message Log** - Scrollable message history with color coding
 - **Status Bar** - HP with color coding, position, time, depth, and gold display
 
+### Recently Added
+- **Inventory System** - Full 26-slot inventory with use, drop, and examine
+- **Item Effects** - Healing potions restore HP
+- **Save/Load** - 9 save slots with seed-based map regeneration
+
 ### Planned
-- **Inventory System** - Equipment and consumable management
-- **Item Effects** - Potions heal, scrolls cast spells
-- **Save/Load** - Persistent game state
 - **Experience System** - Leveling and skill progression
+- **Multiple Levels** - Stairs functionality to descend deeper
+- **More Items** - Weapons, armor, scrolls, and magic items
+- **Quests** - Story objectives and NPC interactions
 
 ## 🚀 Quick Start
 
@@ -110,7 +115,14 @@ player:
 | **Arrow Keys** | Move in 4 directions |
 | **5 (numpad)** | Wait one turn |
 | **.** | Wait one turn |
-| **i** | Open inventory (coming soon) |
+| **i** | Open inventory |
+| **g** | Get/pickup item |
+| **u** | Use item |
+| **D** | Drop item |
+| **E** | Examine item |
+| **S** | Save game |
+| **L** | Load game |
+| **o** | Open/close doors |
 | **?** | Show help |
 | **q** / **Q** | Quit to menu |
 | **ESC** | Cancel/return to previous screen |
