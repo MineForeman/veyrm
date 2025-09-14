@@ -12,6 +12,7 @@
 #include "renderable_component.h"
 #include "health_component.h"
 #include "combat_component.h"
+#include "ai_system.h"
 #include "../color_scheme.h"
 #include <memory>
 #include <string>
@@ -149,6 +150,23 @@ public:
     }
 
     /**
+     * @brief Add AI component with behavior
+     * @param behavior AI behavior type
+     * @param vision_range How far the AI can see
+     * @param aggro_range Range at which AI becomes hostile
+     * @return Builder reference for chaining
+     */
+    EntityBuilder& withAI(AIBehavior behavior = AIBehavior::WANDERING,
+                         int vision_range = 6,
+                         int aggro_range = 4) {
+        auto& ai = entity->addComponent<AIComponent>();
+        ai.behavior = behavior;
+        ai.vision_range = vision_range;
+        ai.aggro_range = aggro_range;
+        return *this;
+    }
+
+    /**
      * @brief Build the entity
      * @return Unique pointer to built entity
      */
@@ -211,6 +229,7 @@ public:
                 .withHealth(20)
                 .withCombatRange(1, 4, 1, 0)
                 .withCombatName("Goblin")
+                .withAI(AIBehavior::AGGRESSIVE, 5, 3)
                 .build();
         });
 
@@ -221,6 +240,7 @@ public:
                 .withHealth(35)
                 .withCombatRange(2, 6, 2, 1)
                 .withCombatName("Orc")
+                .withAI(AIBehavior::AGGRESSIVE, 6, 4)
                 .build();
         });
 
@@ -231,6 +251,7 @@ public:
                 .withHealth(50)
                 .withCombatRange(3, 8, 3, 2)
                 .withCombatName("Troll")
+                .withAI(AIBehavior::DEFENSIVE, 5, 3)
                 .build();
         });
 
@@ -241,6 +262,7 @@ public:
                 .withHealth(15)
                 .withCombatRange(1, 3, 2, 0)
                 .withCombatName("Skeleton")
+                .withAI(AIBehavior::WANDERING, 4, 2)
                 .build();
         });
 
@@ -251,6 +273,7 @@ public:
                 .withHealth(100)
                 .withCombatRange(5, 15, 5, 5)
                 .withCombatName("Dragon")
+                .withAI(AIBehavior::AGGRESSIVE, 8, 6)
                 .asBlocking()
                 .build();
         });

@@ -70,6 +70,7 @@ public:
     std::string glyph;      ///< Character(s) displayed for this entity
     ftxui::Color color;     ///< Color used when rendering
     bool is_visible;        ///< Whether entity should be rendered
+    std::string name;       ///< Display name for combat messages
 
     // Optional rendering hints
     bool always_visible = false;  ///< Ignore FOV (for important items)

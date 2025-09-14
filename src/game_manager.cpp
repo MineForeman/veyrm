@@ -21,6 +21,7 @@
 #include "item_manager.h"
 #include "item_factory.h"
 #include "game_serializer.h"
+#include "ecs/game_world.h"
 #include <random>
 
 GameManager::GameManager(MapType initial_map) 
@@ -105,7 +106,16 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Create player entity at spawn point
-    auto player = entity_manager->createPlayer(spawn.x, spawn.y);
+    std::shared_ptr<Player> player;
+    if (use_ecs && ecs_world) {
+        // Create player using ECS
+        [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
+        // Get legacy player for compatibility
+        player = entity_manager->getPlayer();
+    } else {
+        // Create player using legacy system
+        player = entity_manager->createPlayer(spawn.x, spawn.y);
+    }
     
     // Spawn initial monsters after player placement
     spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
@@ -203,8 +213,14 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
     if (current_state != GameState::PLAYING) {
         return;
     }
-    
-    // Update all entities
+
+    // Update ECS if enabled
+    if (use_ecs && ecs_world) {
+        ecs_world->update(deltaTime);
+        ecs_world->removeDeadEntities();
+    }
+
+    // Update all entities (legacy or synced)
     if (entity_manager) {
         entity_manager->updateAll(deltaTime);
     }
@@ -307,6 +323,11 @@ void GameManager::updateFOV() {
     // Update entity visibility based on FOV
     if (entity_manager) {
         entity_manager->updateEntityVisibility(current_fov);
+    }
+
+    // Update ECS FOV if enabled
+    if (use_ecs && ecs_world) {
+        ecs_world->updateFOV(current_fov);
     }
 }
 
@@ -421,5 +442,33 @@ bool GameManager::loadGame(int slot) {
         message_log->addMessage("Failed to load game!");
     }
     return success;
+}
+
+void GameManager::initializeECS(bool migrate_existing) {
+    // Create ECS world if not already created
+    if (!ecs_world) {
+        ecs_world = std::make_unique<ecs::GameWorld>(
+            entity_manager.get(),
+            combat_system.get(),
+            message_log.get(),
+            map.get()
+        );
+    }
+
+    // Initialize the ECS world
+    ecs_world->initialize(migrate_existing);
+
+    // Update FOV in ECS
+    if (!current_fov.empty()) {
+        ecs_world->updateFOV(current_fov);
+    }
+
+    // Enable ECS mode
+    use_ecs = true;
+
+    // Log the transition
+    if (message_log) {
+        message_log->addSystemMessage("ECS mode enabled");
+    }
 }
 

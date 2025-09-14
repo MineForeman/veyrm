@@ -43,6 +43,11 @@ class CombatSystem;
 class ItemManager;
 class GameSerializer;
 
+// Forward declare ECS namespace
+namespace ecs {
+    class GameWorld;
+}
+
 /**
  * @class GameManager
  * @brief Central game state and system coordinator
@@ -226,6 +231,33 @@ public:
      */
     GameSerializer* getSerializer() { return serializer.get(); }
 
+    // ECS Integration
+
+    /**
+     * @brief Get ECS game world
+     * @return Pointer to ECS GameWorld
+     */
+    ecs::GameWorld* getECSWorld() { return ecs_world.get(); }
+    const ecs::GameWorld* getECSWorld() const { return ecs_world.get(); }
+
+    /**
+     * @brief Enable ECS mode
+     * @param enable If true, use ECS for entity management
+     */
+    void setECSMode(bool enable) { use_ecs = enable; }
+
+    /**
+     * @brief Check if ECS mode is enabled
+     * @return true if using ECS
+     */
+    bool isECSMode() const { return use_ecs; }
+
+    /**
+     * @brief Initialize ECS world
+     * @param migrate_existing If true, migrate existing entities to ECS
+     */
+    void initializeECS(bool migrate_existing = true);
+
 private:
     GameState current_state = GameState::MENU;
     GameState previous_state = GameState::MENU;
@@ -241,7 +273,9 @@ private:
     std::unique_ptr<CombatSystem> combat_system;
     std::unique_ptr<ItemManager> item_manager;
     std::unique_ptr<GameSerializer> serializer;
+    std::unique_ptr<ecs::GameWorld> ecs_world;  ///< ECS world manager
     std::vector<std::vector<bool>> current_fov;
+    bool use_ecs = false;  ///< Flag to enable ECS mode
 
     // Room tracking - using observer pointer since Map owns the rooms
     // This is safe because rooms lifetime is tied to Map lifetime

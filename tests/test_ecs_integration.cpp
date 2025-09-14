@@ -1,0 +1,173 @@
+#include <catch2/catch_test_macros.hpp>
+#include "../include/game_state.h"
+#include "../include/ecs/game_world.h"
+#include "../include/ecs/movement_system.h"
+#include "../include/ecs/render_system.h"
+#include "../include/entity_manager.h"
+#include "../include/combat_system.h"
+#include "../include/message_log.h"
+#include "../include/map.h"
+#include "../include/config.h"
+
+TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
+    // Initialize config
+    Config::getInstance();
+
+    SECTION("GameManager can initialize ECS") {
+        GameManager game(MapType::TEST_ROOM);
+
+        // Initially ECS should be disabled
+        REQUIRE(game.isECSMode() == false);
+        REQUIRE(game.getECSWorld() == nullptr);
+
+        // Initialize ECS
+        game.initializeECS(false);  // Don't migrate existing
+
+        // Now ECS should be enabled
+        REQUIRE(game.isECSMode() == true);
+        REQUIRE(game.getECSWorld() != nullptr);
+    }
+
+    SECTION("ECS world creates entities") {
+        // Create standalone components
+        EntityManager entity_manager;
+        CombatSystem combat_system;
+        MessageLog message_log;
+        Map map(20, 20);
+
+        // Create ECS world
+        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        world.initialize(false);
+
+        // Create player
+        auto player_id = world.createPlayer(10, 10);
+        REQUIRE(player_id > 0);
+
+        auto* player = world.getEntity(player_id);
+        REQUIRE(player != nullptr);
+        REQUIRE(player->hasComponent<ecs::PositionComponent>());
+        REQUIRE(player->hasComponent<ecs::RenderableComponent>());
+        REQUIRE(player->hasComponent<ecs::HealthComponent>());
+        REQUIRE(player->hasComponent<ecs::CombatComponent>());
+
+        // Verify position
+        auto* pos = player->getComponent<ecs::PositionComponent>();
+        REQUIRE(pos->position.x == 10);
+        REQUIRE(pos->position.y == 10);
+    }
+
+    SECTION("ECS world processes movement") {
+        EntityManager entity_manager;
+        CombatSystem combat_system;
+        MessageLog message_log;
+        Map map(20, 20);
+
+        // Make map walkable
+        for (int y = 0; y < 20; ++y) {
+            for (int x = 0; x < 20; ++x) {
+                map.setTile(x, y, TileType::FLOOR);
+            }
+        }
+
+        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        world.initialize(false);
+
+        // Create player
+        auto player_id = world.createPlayer(10, 10);
+        auto* player = world.getEntity(player_id);
+
+        // Get movement system
+        auto* movement_system = world.getMovementSystem();
+        REQUIRE(movement_system != nullptr);
+
+        // Move player
+        bool moved = movement_system->moveEntity(*player, 1, 0);
+        REQUIRE(moved == true);
+
+        // Check new position
+        auto* pos = player->getComponent<ecs::PositionComponent>();
+        REQUIRE(pos->position.x == 11);
+        REQUIRE(pos->position.y == 10);
+    }
+
+    SECTION("ECS world handles combat") {
+        EntityManager entity_manager;
+        MessageLog message_log;
+        CombatSystem combat_system(&message_log);
+        Map map(20, 20);
+
+        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        world.initialize(false);
+
+        // Create player and monster
+        auto player_id = world.createPlayer(10, 10);
+        auto monster_id = world.createMonster("goblin", 11, 10);
+
+        REQUIRE(player_id > 0);
+        REQUIRE(monster_id > 0);
+
+        auto* player = world.getEntity(player_id);
+        auto* monster = world.getEntity(monster_id);
+
+        REQUIRE(player != nullptr);
+        REQUIRE(monster != nullptr);
+
+        // Process attack
+        auto* combat_bridge = world.getCombatBridge();
+        REQUIRE(combat_bridge != nullptr);
+
+        auto result = combat_bridge->processComponentAttack(
+            std::shared_ptr<ecs::Entity>(player, [](ecs::Entity*){}),
+            std::shared_ptr<ecs::Entity>(monster, [](ecs::Entity*){})
+        );
+
+        // Should have attack message
+        REQUIRE(!result.attack_message.empty());
+    }
+
+    SECTION("ECS world syncs with legacy") {
+        EntityManager entity_manager;
+        CombatSystem combat_system;
+        MessageLog message_log;
+        Map map(20, 20);
+
+        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        world.initialize(false);
+
+        // Create player through ECS
+        auto player_id = world.createPlayer(5, 5);
+
+        // Should also create legacy player
+        auto legacy_player = entity_manager.getPlayer();
+        REQUIRE(legacy_player != nullptr);
+        REQUIRE(legacy_player->getPosition().x == 5);
+        REQUIRE(legacy_player->getPosition().y == 5);
+
+        // Move ECS player
+        auto* player = world.getEntity(player_id);
+        auto* pos = player->getComponent<ecs::PositionComponent>();
+        pos->moveTo(7, 7);
+
+        // Sync to legacy
+        world.syncToLegacy();
+
+        // Legacy should be updated
+        REQUIRE(legacy_player->getPosition().x == 7);
+        REQUIRE(legacy_player->getPosition().y == 7);
+    }
+
+    SECTION("GameManager with ECS mode processes updates") {
+        GameManager game(MapType::TEST_ROOM);
+        game.initializeECS(true);  // Migrate existing
+
+        // Update should work with ECS
+        game.update(0.016);  // 60 FPS
+
+        // Should have ECS world
+        auto* ecs_world = game.getECSWorld();
+        REQUIRE(ecs_world != nullptr);
+
+        // Should have entities
+        REQUIRE(ecs_world->getEntityCount() > 0);
+    }
+}

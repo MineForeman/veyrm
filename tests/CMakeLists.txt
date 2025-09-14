@@ -33,59 +33,21 @@ add_executable(veyrm_tests
     test_entity_memory_safety.cpp
     test_ecs.cpp
     test_ecs_factory.cpp
+    test_ecs_systems.cpp
+    test_ecs_bridges.cpp
+    test_ecs_integration.cpp
 )
 
 # Link with Catch2 and other dependencies
 target_link_libraries(veyrm_tests
     PRIVATE
         Catch2::Catch2WithMain
-        nlohmann_json::nlohmann_json
-        ftxui::screen
-        ftxui::dom
-        ftxui::component
-        ryml::ryml
+        veyrm_core
 )
 
 # Include directories for tests
 target_include_directories(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-)
-
-# Add source files needed for testing
-target_sources(veyrm_tests PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/map.cpp
-    ${CMAKE_SOURCE_DIR}/src/entity.cpp
-    ${CMAKE_SOURCE_DIR}/src/player.cpp
-    ${CMAKE_SOURCE_DIR}/src/entity_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/point.cpp
-    ${CMAKE_SOURCE_DIR}/src/color_scheme.cpp
-    ${CMAKE_SOURCE_DIR}/src/map_generator.cpp
-    ${CMAKE_SOURCE_DIR}/src/map_validator.cpp
-    ${CMAKE_SOURCE_DIR}/src/turn_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/input_handler.cpp
-    ${CMAKE_SOURCE_DIR}/src/message_log.cpp
-    ${CMAKE_SOURCE_DIR}/src/game_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/wall_connector.cpp
-    ${CMAKE_SOURCE_DIR}/src/frame_stats.cpp
-    ${CMAKE_SOURCE_DIR}/src/room.cpp
-    ${CMAKE_SOURCE_DIR}/src/fov.cpp
-    ${CMAKE_SOURCE_DIR}/src/map_memory.cpp
-    ${CMAKE_SOURCE_DIR}/src/status_bar.cpp
-    ${CMAKE_SOURCE_DIR}/src/layout_system.cpp
-    ${CMAKE_SOURCE_DIR}/src/monster.cpp
-    ${CMAKE_SOURCE_DIR}/src/monster_factory.cpp
-    ${CMAKE_SOURCE_DIR}/src/config.cpp
-    ${CMAKE_SOURCE_DIR}/src/spawn_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/monster_ai.cpp
-    ${CMAKE_SOURCE_DIR}/src/pathfinding.cpp
-    ${CMAKE_SOURCE_DIR}/src/combat_system.cpp
-    ${CMAKE_SOURCE_DIR}/src/log.cpp
-    ${CMAKE_SOURCE_DIR}/src/item.cpp
-    ${CMAKE_SOURCE_DIR}/src/item_factory.cpp
-    ${CMAKE_SOURCE_DIR}/src/item_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/inventory.cpp
-    ${CMAKE_SOURCE_DIR}/src/game_serializer.cpp
-    ${CMAKE_SOURCE_DIR}/src/ecs/entity.cpp
 )
 
 # Add compile definitions for tests

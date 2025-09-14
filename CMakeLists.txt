@@ -126,10 +126,9 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # ========================================
-# Main executable
+# Core library (everything except main)
 # ========================================
-add_executable(veyrm
-    src/main.cpp
+add_library(veyrm_core STATIC
     src/game_screen.cpp
     src/game_manager.cpp
     src/input_handler.cpp
@@ -168,16 +167,36 @@ add_executable(veyrm
     src/inventory_renderer.cpp
     src/game_serializer.cpp
     src/save_load_screen.cpp
+    src/ecs/entity.cpp
+    src/ecs/movement_system.cpp
+    src/ecs/render_system.cpp
+    src/ecs/entity_manager_bridge.cpp
+    src/ecs/combat_system_bridge.cpp
+    src/ecs/renderer_bridge.cpp
+    src/ecs/game_world.cpp
+    src/ecs/combat_system.cpp
+    src/ecs/ai_system.cpp
 )
 
-# Link libraries
-target_link_libraries(veyrm 
-    PRIVATE 
+# Link libraries to core
+target_link_libraries(veyrm_core
+    PUBLIC
         ftxui::screen
         ftxui::dom
         ftxui::component
         nlohmann_json::nlohmann_json
         ryml::ryml
+)
+
+# ========================================
+# Main executable
+# ========================================
+add_executable(veyrm src/main.cpp)
+
+# Link libraries
+target_link_libraries(veyrm
+    PRIVATE
+        veyrm_core
 )
 
 # Set executable output directory
@@ -190,6 +209,21 @@ set_target_properties(veyrm PROPERTIES
 # ========================================
 enable_testing()
 add_subdirectory(tests)
+
+# ========================================
+# ECS Demo Program (optional)
+# ========================================
+if(EXISTS ${CMAKE_SOURCE_DIR}/test_ecs_demo.cpp)
+    add_executable(test_ecs_demo test_ecs_demo.cpp)
+    target_link_libraries(test_ecs_demo
+        PRIVATE
+            veyrm_core
+    )
+    # Set executable output directory
+    set_target_properties(test_ecs_demo PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endif()
 
 # ========================================
 # Installation rules
