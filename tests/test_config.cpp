@@ -191,12 +191,18 @@ TEST_CASE("Config System", "[config]") {
     SECTION("Data directory paths") {
         // Test default data directory
         REQUIRE(config.getDataDir() == "data");
-        REQUIRE(config.getDataFilePath("monsters.json") == "data/monsters.json");
-        
+
+        // Build expected path using filesystem to get platform-specific separators
+        std::filesystem::path expected_path = std::filesystem::path("data") / "monsters.json";
+        REQUIRE(config.getDataFilePath("monsters.json") == expected_path.string());
+
         // Test setting custom data directory
         config.setDataDir("custom/data");
         REQUIRE(config.getDataDir() == "custom/data");
-        REQUIRE(config.getDataFilePath("items.json") == "custom/data/items.json");
+
+        // Build expected path for custom directory
+        std::filesystem::path custom_expected = std::filesystem::path("custom") / "data" / "items.json";
+        REQUIRE(config.getDataFilePath("items.json") == custom_expected.string());
         
         // Reset to default
         config.setDataDir("data");
