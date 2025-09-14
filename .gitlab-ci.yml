@@ -44,11 +44,12 @@ cache:
       - CHANGELOG.md
     expire_in: 1 week
 
-# Build job for Linux
+# Build job for Linux (native runner)
 build:linux:
   extends: .build_template
   tags:
     - linux
+  allow_failure: true  # Make optional if no native Linux runner
   only:
     - main
     - develop
@@ -198,7 +199,7 @@ build:docker:
   stage: build
   image: ubuntu:24.04
   tags:
-    - docker
+    - docker  # Runner must have "docker" tag
   variables:
     DEBIAN_FRONTEND: noninteractive
   before_script:
@@ -232,7 +233,7 @@ test:docker:
   image: ubuntu:24.04
   needs: ["build:docker"]
   tags:
-    - docker
+    - docker  # Runner must have "docker" tag
   script:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
