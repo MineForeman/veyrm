@@ -242,7 +242,12 @@ private:
     std::unique_ptr<ItemManager> item_manager;
     std::unique_ptr<GameSerializer> serializer;
     std::vector<std::vector<bool>> current_fov;
-    Room* current_room = nullptr;  // Track which room the player is currently in
+
+    // Room tracking - using observer pointer since Map owns the rooms
+    // This is safe because rooms lifetime is tied to Map lifetime
+    // and Map is owned by this GameManager
+    const Room* current_room = nullptr;  // Observer pointer to current room
+
     bool debug_mode = false;
     int current_depth = 1;  // Track dungeon depth for spawning
 
@@ -259,6 +264,10 @@ public:
     void setCurrentMapType(MapType type) { current_map_type = type; }
     unsigned int getCurrentMapSeed() const { return current_map_seed; }
     void setCurrentMapSeed(unsigned int seed) { current_map_seed = seed; }
+
+    // Room tracking
+    const Room* getCurrentRoom() const { return current_room; }
+    void setCurrentRoom(const Room* room) { current_room = room; }
 
     // Save/Load UI
     bool getSaveMenuMode() const { return save_menu_mode; }

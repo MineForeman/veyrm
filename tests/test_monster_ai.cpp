@@ -57,7 +57,7 @@ TEST_CASE("MonsterAI Basic Functionality", "[monster_ai]") {
 
     SECTION("AI data initialization") {
         ai.updateMonsterAI(monster, player, *map);
-        REQUIRE(monster.getUserData() != nullptr);
+        REQUIRE(monster.hasAIData() == true);
     }
 
     SECTION("Can see player in line of sight") {
@@ -143,7 +143,7 @@ TEST_CASE("Room Assignment", "[monster_ai]") {
 
     SECTION("Monster can be assigned to room") {
         ai.assignRoomToMonster(monster, &test_room);
-        REQUIRE(monster.getUserData() != nullptr);
+        REQUIRE(monster.hasAIData() == true);
     }
 
     SECTION("Monster wanders within room when idle") {

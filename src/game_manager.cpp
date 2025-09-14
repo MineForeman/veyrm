@@ -238,10 +238,10 @@ void GameManager::updateFOV() {
     FOV::calculate(*map, playerPos, Config::getInstance().getFOVRadius(), current_fov);
     
     // Check if player entered a new room
-    Room* new_room = map->getRoomAt(playerPos);
+    const Room* new_room = map->getRoomAt(playerPos);
     if (new_room != current_room) {
         // Player entered a different room (or left a room)
-        Room* old_room = current_room;
+        const Room* old_room = current_room;
         current_room = new_room;
         
         // If entering a lit room, reveal it
