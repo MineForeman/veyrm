@@ -292,17 +292,19 @@ std::vector<Point> MonsterAI::getValidMoves(const Point& pos, const Map& map) {
 }
 
 MonsterAI::AIData* MonsterAI::getAIData(Monster& monster) {
-    void* data = monster.getUserData();
+    // Use new type-safe interface
+    AIData* data = monster.getAIData();
     if (!data) {
         ensureAIData(monster);
-        data = monster.getUserData();
+        data = monster.getAIData();
     }
-    return static_cast<AIData*>(data);
+    return data;
 }
 
 void MonsterAI::ensureAIData(Monster& monster) {
-    if (!monster.getUserData()) {
-        ai_data_pool.push_back(std::make_unique<AIData>());
-        monster.setUserData(ai_data_pool.back().get());
+    if (!monster.hasAIData()) {
+        // Create and transfer ownership to the entity
+        auto ai_data = std::make_shared<AIData>();
+        monster.setAIData(std::move(ai_data));
     }
 }

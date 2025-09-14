@@ -42,26 +42,31 @@ class Room;
  * @see Pathfinding
  * @see Config monster settings
  */
+// AIData struct for monster AI state
+enum class AIState {
+    IDLE,
+    ALERT,
+    HOSTILE,
+    FLEEING,
+    RETURNING
+};
+
+struct MonsterAIData {
+    AIState current_state = AIState::IDLE;
+    Point home_room_center = Point(-1, -1);
+    Room* assigned_room = nullptr;
+    Point last_player_pos = Point(-1, -1);
+    int turns_since_player_seen = 0;
+    int idle_move_counter = 0;
+    std::vector<Point> current_path;
+    size_t path_index = 0;
+};
+
 class MonsterAI {
 public:
-    enum class AIState {
-        IDLE,
-        ALERT,
-        HOSTILE,
-        FLEEING,
-        RETURNING
-    };
-
-    struct AIData {
-        AIState current_state = AIState::IDLE;
-        Point home_room_center = Point(-1, -1);
-        Room* assigned_room = nullptr;
-        Point last_player_pos = Point(-1, -1);
-        int turns_since_player_seen = 0;
-        int idle_move_counter = 0;
-        std::vector<Point> current_path;
-        size_t path_index = 0;
-    };
+    // Type aliases for compatibility
+    using AIState = ::AIState;
+    using AIData = MonsterAIData;
 
     MonsterAI();
     ~MonsterAI();
@@ -92,5 +97,5 @@ private:
     AIData* getAIData(Monster& monster);
     void ensureAIData(Monster& monster);
 
-    std::vector<std::unique_ptr<AIData>> ai_data_pool;
+    // No longer need pool - AI data is owned by entities
 };

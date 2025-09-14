@@ -9,11 +9,13 @@
 
 #include <string>
 #include <memory>
+#include <variant>
 #include "point.h"
 #include "color_scheme.h"
 
 // Forward declarations
 class Map;
+struct MonsterAIData;
 
 /**
  * @enum EntityType
@@ -90,18 +92,32 @@ public:
     bool isVisible() const { return is_visible; }
 
     /**
-     * @brief Get user data pointer (for AI and other systems)
-     * @return Opaque pointer to user data
-     * @note Used by AI system to store behavior-specific data
+     * @brief Get AI data pointer if entity has AI
+     * @return Pointer to AI data or nullptr if not a monster
+     * @note Type-safe access to AI-specific data
      */
-    void* getUserData() const { return user_data; }
+    MonsterAIData* getAIData();
+    const MonsterAIData* getAIData() const;
 
     /**
-     * @brief Set user data pointer
-     * @param data Pointer to user-defined data
-     * @warning Caller is responsible for memory management
+     * @brief Set AI data for this entity
+     * @param data Unique pointer to AI data (ownership transferred)
+     * @note Only valid for monster entities
      */
-    void setUserData(void* data) { user_data = data; }
+    void setAIData(std::shared_ptr<MonsterAIData> data);
+
+    /**
+     * @brief Check if entity has AI data
+     * @return true if entity has AI data attached
+     */
+    bool hasAIData() const;
+
+    // Legacy compatibility - deprecated
+    [[deprecated("Use getAIData() for type-safe access")]]
+    void* getUserData() const;
+
+    [[deprecated("Use setAIData() for type-safe access")]]
+    void setUserData(void* data);
 
     /**
      * @brief Get attack bonus for combat calculations
@@ -154,7 +170,12 @@ public:
 
 private:
     bool is_visible = true;
-    void* user_data = nullptr;
+
+    // Type-safe AI data storage using std::variant
+    // std::monostate represents "no data" state
+    // Using shared_ptr to avoid incomplete type issues
+    using AIDataStorage = std::variant<std::monostate, std::shared_ptr<MonsterAIData>>;
+    AIDataStorage ai_data_storage;
     
 public:
     
