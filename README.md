@@ -144,23 +144,29 @@ veyrm/
 │   ├── game_manager.cpp
 │   ├── map_generator.cpp
 │   └── ...
-├── DOC/           # Documentation
-│   ├── PHASES/    # Development phases
-│   ├── WORLD/     # Game world lore
-│   └── MVP/       # MVP specifications
+├── docs/          # Documentation
+│   ├── getting-started/  # Quick start guides
+│   ├── guides/           # How-to guides
+│   ├── reference/        # API & command reference
+│   └── project/          # Project information
 ├── tests/         # Unit tests
-├── data/          # Game data (future)
+├── data/          # Game data (monsters, items)
 └── build.sh       # Build helper script
 ```
 
 ## 📚 Documentation
 
-- **[Implementation Plan](DOC/IMPLEMENTATION_PLAN.md)** - Development roadmap and phase tracking
-- **[Test Documentation](DOC/TESTS.md)** - Comprehensive test suite overview
-- **[Build Script Guide](DOC/BUILD_SCRIPT.md)** - Using the build.sh script
-- **[Phase Documentation](DOC/PHASES/)** - Detailed phase specifications
-- **[World Lore](DOC/WORLD/)** - Game world and setting
-- **[Technical Spec](DOC/SPEC.md)** - Technical specifications
+### Quick Links
+- **[Getting Started](docs/getting-started/README.md)** - Installation and first game
+- **[Player Guide](docs/guides/player/README.md)** - Gameplay mechanics and strategies
+- **[Developer Guide](docs/guides/developer/README.md)** - Contributing to Veyrm
+- **[Project Status](docs/project/status.md)** - Current development state
+- **[API Reference](docs/reference/api/README.md)** - Code documentation
+### Additional Resources
+- **[Build Commands](docs/reference/commands/build-script.md)** - Build.sh command reference
+- **[Architecture](docs/guides/developer/architecture.md)** - System architecture
+- **[World Design](docs/design/world/README.md)** - Game lore and setting
+- **[Changelog](docs/project/changelog.md)** - Version history
 
 ## 🛠️ Development
 

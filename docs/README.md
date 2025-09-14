@@ -38,8 +38,10 @@ docs/
 ├── development/       # Development docs
 │   ├── roadmap/      # Project roadmap
 │   ├── standards/    # Coding standards
-│   └── performance/  # Performance docs
+│   ├── performance/  # Performance docs
+│   └── refactoring/  # Refactoring documentation
 ├── project/          # Project information
+│   └── notes.md      # User's project notes
 └── archive/          # Historical docs
 ```
 
