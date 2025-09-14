@@ -1,0 +1,27 @@
+services:
+  gitlab-runner:
+    image: gitlab-runner-windows:latest
+    container_name: gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - C:\Users\neil\repos\gitlab-runner\config:C:\etc\gitlab-runner
+      # REMOVED the problematic Docker pipe volume mount
+      # The docker-windows executor doesn't need this mount
+    environment:
+      - RUNNER_EXECUTOR=docker-windows
+      - CI_SERVER_URL=http://horse.local:8929
+      # Add this to help with path conversion
+      - COMPOSE_CONVERT_WINDOWS_PATHS=1
+    extra_hosts:
+      - "horse.local:192.168.1.5"
+    networks:
+      - gitlab-runner-network
+
+volumes:
+  gitlab-runner-config:
+    name: gitlab-runner-config
+    external: true
+
+networks:
+  gitlab-runner-network:
+    driver: nat
