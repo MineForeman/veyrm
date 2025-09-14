@@ -1,5 +1,0 @@
-<map id="Inventory" name="Inventory">
-<area shape="rect" id="Node000001" title="Manages player&#39;s item collection with slots and stacking." alt="" coords="14,79,89,105"/>
-<area shape="rect" id="Node000002" href="$class_i_serializable.html" title="Interface for objects that can be serialized to/from JSON." alt="" coords="5,5,98,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="54,46,54,79,49,79,49,46"/>
-</map>

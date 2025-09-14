@@ -1,5 +1,0 @@
-<map id="Pathfinding" name="Pathfinding">
-<area shape="rect" id="Node000001" title="Static utilities for pathfinding and spatial analysis." alt="" coords="5,122,92,148"/>
-<area shape="rect" id="Node000002" href="$struct_point.html" title="2D coordinate point with utility functions" alt="" coords="23,5,74,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,47,51,122,46,122,46,47"/>
-</map>

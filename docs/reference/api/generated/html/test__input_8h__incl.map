@@ -1,9 +1,0 @@
-<map id="include/test_input.h" name="include/test_input.h">
-<area shape="rect" id="Node000001" title="Testing utilities for automated input simulation." alt="" coords="44,5,178,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,59,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,34,58,70,55,66,96,30"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="82,79,139,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="113,31,113,63,108,63,108,31"/>
-<area shape="rect" id="Node000004" title=" " alt="" coords="163,79,338,105"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="136,29,215,69,212,74,133,34"/>
-</map>

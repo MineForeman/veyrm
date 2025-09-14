@@ -1,9 +1,0 @@
-<map id="include/game_loop.h" name="include/game_loop.h">
-<area shape="rect" id="Node000001" title="Main game loop with fixed timestep." alt="" coords="49,5,190,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,66,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,34,63,71,60,67,104,30"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="89,79,150,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="122,31,122,63,117,63,117,31"/>
-<area shape="rect" id="Node000004" title=" " alt="" coords="174,79,252,105"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="137,29,187,67,184,72,134,34"/>
-</map>

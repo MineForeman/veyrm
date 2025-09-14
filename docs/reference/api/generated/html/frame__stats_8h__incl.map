@@ -1,7 +1,0 @@
-<map id="include/frame_stats.h" name="include/frame_stats.h">
-<area shape="rect" id="Node000001" title="Frame rate and performance statistics tracking." alt="" coords="5,5,152,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="13,79,66,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="74,32,56,66,51,64,70,30"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="90,79,147,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="87,30,107,64,102,67,83,33"/>
-</map>

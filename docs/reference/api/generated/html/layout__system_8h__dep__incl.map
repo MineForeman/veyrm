@@ -1,7 +1,0 @@
-<map id="include/layout_system.h" name="include/layout_system.h">
-<area shape="rect" id="Node000001" title="Responsive UI layout management system." alt="" coords="84,5,246,31"/>
-<area shape="rect" id="Node000002" href="$game__screen_8cpp.html" title=" " alt="" coords="5,79,152,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,43,95,81,91,77,137,39"/>
-<area shape="rect" id="Node000003" href="$layout__system_8cpp.html" title=" " alt="" coords="175,79,328,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,39,239,77,236,81,190,43"/>
-</map>

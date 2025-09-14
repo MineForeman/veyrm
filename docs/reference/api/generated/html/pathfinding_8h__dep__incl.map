@@ -1,7 +1,0 @@
-<map id="include/pathfinding.h" name="include/pathfinding.h">
-<area shape="rect" id="Node000001" title="A* pathfinding and line&#45;of&#45;sight algorithms." alt="" coords="79,5,219,31"/>
-<area shape="rect" id="Node000002" href="$monster__ai_8cpp.html" title=" " alt="" coords="5,79,138,105"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,44,86,81,83,77,123,40"/>
-<area shape="rect" id="Node000003" href="$pathfinding_8cpp.html" title=" " alt="" coords="162,79,293,105"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,40,216,77,213,81,171,43"/>
-</map>

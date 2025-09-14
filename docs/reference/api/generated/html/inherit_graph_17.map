@@ -1,7 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$class_i_serializable.html" title="Interface for objects that can be serialized to/from JSON." alt="" coords="5,31,98,56"/>
-<area shape="rect" id="Node000001" href="$class_inventory.html" title="Manages player&#39;s item collection with slots and stacking." alt="" coords="146,5,221,31"/>
-<area shape="poly" id="edge3_Node000000_Node000001" title=" " alt="" coords="112,29,145,23,146,28,113,34"/>
-<area shape="rect" id="Node000002" href="$class_item.html" title="Base class for all items in the game." alt="" coords="160,55,207,80"/>
-<area shape="poly" id="edge4_Node000000_Node000002" title=" " alt="" coords="113,52,160,61,159,66,112,57"/>
-</map>
