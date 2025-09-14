@@ -891,7 +891,7 @@ std::vector<std::pair<int, int>> MapGenerator::getSequentialConnections(const st
     std::vector<std::pair<int, int>> connections;
     
     for (size_t i = 1; i < rooms.size(); i++) {
-        connections.push_back({i - 1, i});
+        connections.push_back({static_cast<int>(i - 1), static_cast<int>(i)});
     }
     
     return connections;
