@@ -1,309 +1,56 @@
-# GitLab CI configuration for Veyrm
-# Based on GitHub Actions workflow
-
-image: ubuntu:24.04
+# Simplified GitLab CI configuration
+# This version focuses on what actually works with your runners
 
 stages:
-  - check
   - build
   - test
-  - release
 
-# Quick check to verify runners are working
-check:runners:
-  stage: check
-  tags:
-    - shared  # Both runners have this tag
-  script:
-    - echo "Runner is working!"
-    - echo "CI_RUNNER_ID: $CI_RUNNER_ID"
-    - echo "CI_RUNNER_DESCRIPTION: $CI_RUNNER_DESCRIPTION"
-    - echo "CI_RUNNER_TAGS: $CI_RUNNER_TAGS"
-  only:
-    - main
-    - develop
-    - merge_requests
+# Default image for jobs that don't specify one
+default:
+  image: ubuntu:24.04
 
+# Variables available to all jobs
 variables:
-  CMAKE_BUILD_TYPE: "Release"
-  GIT_SUBMODULE_STRATEGY: recursive
   DEBIAN_FRONTEND: noninteractive
+  CMAKE_BUILD_TYPE: Release
 
-# Cache dependencies between builds
-cache:
-  key: "$CI_COMMIT_REF_SLUG"
-  paths:
-    - build/_deps/
-
-# Template for common build steps
-.build_template:
+# Linux build using Docker executor
+build:linux:
   stage: build
+  tags:
+    - linux
   before_script:
-    # Install dependencies (Ubuntu 24.04 has CMake 3.28+)
     - apt-get update -qq
-    - apt-get install -y -qq cmake build-essential git
+    - apt-get install -y cmake build-essential git
   script:
     - cmake --version
-    - gcc --version
     - mkdir -p build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
-    - cmake --build . --config ${CMAKE_BUILD_TYPE} -j
-    - echo "Build completed successfully"
+    - cmake --build . -j
     - ls -la bin/
   artifacts:
-    name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
     paths:
       - build/bin/
       - data/
-      - README.md
-      - CHANGELOG.md
     expire_in: 1 week
 
-# Build job for Linux (native runner)
-build:linux:
-  extends: .build_template
-  tags:
-    - linux
-  allow_failure: true  # Make optional if no native Linux runner
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# Test job for Linux
+# Test the Linux build
 test:linux:
   stage: test
+  tags:
+    - linux
   needs: ["build:linux"]
-  tags:
-    - linux
-  script:
-    # Run unit tests (must be from project root for data paths)
-    - ./build/bin/veyrm_tests
-    # Test that game executable runs
-    - timeout 10s ./build/bin/veyrm --help || true
-    # Run game with automated input test
-    - echo -e "\njjjq" | timeout 10s ./build/bin/veyrm || true
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# Documentation generation (only on main)
-docs:generate:
-  stage: build
-  tags:
-    - linux
-  before_script:
-    - apt-get update -qq
-    - apt-get install -y -qq doxygen graphviz
-  script:
-    - doxygen Doxyfile
-  artifacts:
-    paths:
-      - docs/reference/api/generated/
-    expire_in: 1 week
-  only:
-    - main
-
-# Release job - creates packages for tagged releases
-release:linux:
-  stage: release
-  needs: ["build:linux"]
-  tags:
-    - linux
-  script:
-    # Create release package directory
-    - mkdir -p release/veyrm
-    - cp build/bin/veyrm release/veyrm/
-    - cp -r data release/veyrm/
-    - cp README.md release/veyrm/
-    - cp CHANGELOG.md release/veyrm/
-    - cp LICENSE release/veyrm/ || true
-    # Create tarball
-    - cd release
-    - tar -czf veyrm-linux-x64.tar.gz veyrm
-    - echo "Release package created - veyrm-linux-x64.tar.gz"
-    - ls -lh veyrm-linux-x64.tar.gz
-    # Create checksums
-    - sha256sum veyrm-linux-x64.tar.gz > veyrm-linux-x64.tar.gz.sha256
-    - echo "SHA256 checksum:"
-    - cat veyrm-linux-x64.tar.gz.sha256
-  artifacts:
-    name: "veyrm-${CI_COMMIT_TAG}-linux-x64"
-    paths:
-      - release/veyrm-linux-x64.tar.gz
-      - release/veyrm-linux-x64.tar.gz.sha256
-    expire_in: never
-  only:
-    - tags
-
-# Create GitLab release with artifacts
-create_gitlab_release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs:
-    - job: "release:linux"
-      artifacts: true
-    - job: "release:windows"
-      artifacts: true
-      optional: true  # Windows runner might not always be available
-  tags:
-    - linux
-  script:
-    - echo "Creating GitLab release for ${CI_COMMIT_TAG}"
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Veyrm ${CI_COMMIT_TAG}"
-    description: |
-      ## Release ${CI_COMMIT_TAG}
-
-      ### Downloads
-      - Linux x64: `veyrm-linux-x64.tar.gz`
-      - Windows x64: `veyrm-windows-x64.zip` (if available)
-
-      ### Installation
-
-      **Linux:**
-      ```bash
-      tar -xzf veyrm-linux-x64.tar.gz
-      cd veyrm
-      ./veyrm
-      ```
-
-      **Windows:**
-      ```powershell
-      # Extract the zip file
-      # Run veyrm.exe
-      ```
-
-      See CHANGELOG.md for details.
-    assets:
-      links:
-        - name: "veyrm-linux-x64.tar.gz"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/release/veyrm-linux-x64.tar.gz?job=release:linux"
-        - name: "veyrm-windows-x64.zip"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/release/veyrm-windows-x64.zip?job=release:windows"
-  only:
-    - tags
-
-# Windows build (uses Windows runner)
-build:windows:
-  stage: build
-  tags:
-    - windows  # Your Windows runner has "windows" tag
-  allow_failure: true  # Allow failure while we debug Windows setup
-  script:
-    - Write-Host "Checking Windows environment..."
-    - Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-    - cmake --version 2>$null || Write-Host "CMake not found - needs to be installed"
-    - Write-Host "Please install Visual Studio Build Tools and CMake on the Windows runner"
-  artifacts:
-    name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-windows"
-    paths:
-      - build/bin/
-      - data/
-      - README.md
-      - CHANGELOG.md
-    expire_in: 1 week
-    when: on_success
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# Docker-based build (uses Linux Docker runner)
-build:docker:
-  stage: build
-  image: ubuntu:24.04
-  tags:
-    - linux  # Your Docker runner has "linux" tag
-  variables:
-    DEBIAN_FRONTEND: noninteractive
-  before_script:
-    - apt-get update -qq
-    - apt-get install -y -qq cmake build-essential git
-  script:
-    - cmake --version
-    - gcc --version
-    - mkdir -p build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - cmake --build . --config Release -j
-    - echo "Build completed successfully"
-    - ls -la bin/
-  artifacts:
-    name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-docker"
-    paths:
-      - build/bin/
-      - data/
-      - README.md
-      - CHANGELOG.md
-    expire_in: 1 week
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# Test job for Docker build
-test:docker:
-  stage: test
-  image: ubuntu:24.04
-  needs: ["build:docker"]
-  tags:
-    - linux  # Your Docker runner has "linux" tag
   script:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
-  only:
-    - main
-    - develop
-    - merge_requests
 
-test:windows:
-  stage: test
-  needs: ["build:windows"]
+# Windows build (native runner)
+build:windows:
+  stage: build
   tags:
     - windows
+  script:
+    - echo "Windows build"
+    - cmake --version || echo "CMake not installed"
   allow_failure: true
-  script:
-    # Run unit tests if they exist
-    - if (Test-Path "./build/bin/Release/veyrm_tests.exe") { ./build/bin/Release/veyrm_tests.exe } else { echo "Tests not found" }
-    # Test that game executable runs
-    - if (Test-Path "./build/bin/Release/veyrm.exe") { ./build/bin/Release/veyrm.exe --help } else { echo "Game executable not found" }
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# Release job for Windows
-release:windows:
-  stage: release
-  needs: ["build:windows"]
-  tags:
-    - windows
-  script:
-    # Create release package directory
-    - if (Test-Path release) { Remove-Item -Recurse -Force release }
-    - mkdir release\veyrm
-    - Copy-Item build\bin\Release\veyrm.exe release\veyrm\
-    - Copy-Item -Recurse data release\veyrm\
-    - Copy-Item README.md release\veyrm\
-    - Copy-Item CHANGELOG.md release\veyrm\
-    # Create zip archive
-    - Compress-Archive -Path release\veyrm -DestinationPath release\veyrm-windows-x64.zip
-    - echo "Release package created - veyrm-windows-x64.zip"
-    - dir release\
-    # Create checksum
-    - $hash = Get-FileHash release\veyrm-windows-x64.zip -Algorithm SHA256
-    - "$($hash.Hash)  veyrm-windows-x64.zip" | Out-File -FilePath release\veyrm-windows-x64.zip.sha256
-    - echo "SHA256 checksum:"
-    - Get-Content release\veyrm-windows-x64.zip.sha256
-  artifacts:
-    name: "veyrm-${CI_COMMIT_TAG}-windows-x64"
-    paths:
-      - release/veyrm-windows-x64.zip
-      - release/veyrm-windows-x64.zip.sha256
-    expire_in: never
-  only:
-    - tags
