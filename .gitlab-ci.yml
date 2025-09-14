@@ -4,9 +4,25 @@
 image: ubuntu:24.04
 
 stages:
+  - check
   - build
   - test
   - release
+
+# Quick check to verify runners are working
+check:runners:
+  stage: check
+  tags:
+    - shared  # Both runners have this tag
+  script:
+    - echo "Runner is working!"
+    - echo "CI_RUNNER_ID: $CI_RUNNER_ID"
+    - echo "CI_RUNNER_DESCRIPTION: $CI_RUNNER_DESCRIPTION"
+    - echo "CI_RUNNER_TAGS: $CI_RUNNER_TAGS"
+  only:
+    - main
+    - develop
+    - merge_requests
 
 variables:
   CMAKE_BUILD_TYPE: "Release"
@@ -171,15 +187,17 @@ create_gitlab_release:
   only:
     - tags
 
-# Windows build - skip if no Windows runner available
+# Windows build (uses Windows runner)
 build:windows:
   stage: build
   tags:
-    - windows
+    - windows  # Your Windows runner has "windows" tag
   allow_failure: true  # Allow failure while we debug Windows setup
   script:
-    - echo "Windows build placeholder - requires proper Windows runner with build tools"
-    - echo "Skipping Windows build for now"
+    - Write-Host "Checking Windows environment..."
+    - Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+    - cmake --version 2>$null || Write-Host "CMake not found - needs to be installed"
+    - Write-Host "Please install Visual Studio Build Tools and CMake on the Windows runner"
   artifacts:
     name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-windows"
     paths:
@@ -194,12 +212,12 @@ build:windows:
     - develop
     - merge_requests
 
-# Docker-based build (works on any Docker runner)
+# Docker-based build (uses Linux Docker runner)
 build:docker:
   stage: build
   image: ubuntu:24.04
   tags:
-    - docker  # Runner must have "docker" tag
+    - linux  # Your Docker runner has "linux" tag
   variables:
     DEBIAN_FRONTEND: noninteractive
   before_script:
@@ -233,7 +251,7 @@ test:docker:
   image: ubuntu:24.04
   needs: ["build:docker"]
   tags:
-    - docker  # Runner must have "docker" tag
+    - linux  # Your Docker runner has "linux" tag
   script:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
