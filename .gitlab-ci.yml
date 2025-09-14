@@ -170,29 +170,15 @@ create_gitlab_release:
   only:
     - tags
 
-# Windows build
+# Windows build - skip if no Windows runner available
 build:windows:
   stage: build
   tags:
     - windows
   allow_failure: true  # Allow failure while we debug Windows setup
   script:
-    - |
-      Write-Host "Starting Windows build..."
-      Write-Host "Checking for build tools..."
-      cmake --version
-      Write-Host "Creating build directory..."
-      if (Test-Path build) { Remove-Item -Recurse -Force build }
-      New-Item -ItemType Directory -Force -Path build
-      Set-Location build
-      Write-Host "Configuring CMake..."
-      cmake -DCMAKE_BUILD_TYPE=Release ..
-      if ($LASTEXITCODE -ne 0) { Write-Host "CMake configuration failed"; exit 1 }
-      Write-Host "Building project..."
-      cmake --build . --config Release -j
-      if ($LASTEXITCODE -ne 0) { Write-Host "Build failed"; exit 1 }
-      Write-Host "Build completed successfully"
-      Get-ChildItem -Path bin\Release -ErrorAction SilentlyContinue
+    - echo "Windows build placeholder - requires proper Windows runner with build tools"
+    - echo "Skipping Windows build for now"
   artifacts:
     name: "veyrm-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}-windows"
     paths:
@@ -207,18 +193,20 @@ build:windows:
     - develop
     - merge_requests
 
-# Alternative: Linux build with Docker
+# Docker-based build (works on any Docker runner)
 build:docker:
   stage: build
   image: ubuntu:24.04
   tags:
     - docker
-    - linux
+  variables:
+    DEBIAN_FRONTEND: noninteractive
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq cmake build-essential git
   script:
     - cmake --version
+    - gcc --version
     - mkdir -p build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -233,6 +221,21 @@ build:docker:
       - README.md
       - CHANGELOG.md
     expire_in: 1 week
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Test job for Docker build
+test:docker:
+  stage: test
+  image: ubuntu:24.04
+  needs: ["build:docker"]
+  tags:
+    - docker
+  script:
+    - ./build/bin/veyrm_tests
+    - ./build/bin/veyrm --help
   only:
     - main
     - develop
