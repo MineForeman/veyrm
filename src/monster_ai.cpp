@@ -73,7 +73,7 @@ Point MonsterAI::getNextMove(Monster& monster, const Player& player, const Map& 
     return next_pos;
 }
 
-void MonsterAI::assignRoomToMonster(Monster& monster, Room* room) {
+void MonsterAI::assignRoomToMonster(Monster& monster, const Room* room) {
     ensureAIData(monster);
     AIData* data = getAIData(monster);
 

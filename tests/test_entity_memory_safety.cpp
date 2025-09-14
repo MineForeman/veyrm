@@ -88,27 +88,20 @@ TEST_CASE("Entity memory safety with AI data", "[entity][memory]") {
         // const_ai->current_state = AIState::IDLE;
     }
 
-    SECTION("Legacy getUserData compatibility") {
+    SECTION("No legacy methods available") {
         Monster monster(10, 10, "skeleton");
 
-        // Legacy interface should return nullptr initially
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-        REQUIRE(monster.getUserData() == nullptr);
-        #pragma GCC diagnostic pop
+        // Only type-safe interface is available
+        REQUIRE(monster.hasAIData() == false);
 
-        // Add AI data through new interface
+        // Add AI data through type-safe interface
         auto ai_data = std::make_shared<MonsterAIData>();
         monster.setAIData(ai_data);
 
-        // Legacy interface should return raw pointer
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-        void* legacy_ptr = monster.getUserData();
-        #pragma GCC diagnostic pop
-
-        REQUIRE(legacy_ptr != nullptr);
-        REQUIRE(legacy_ptr == ai_data.get());
+        // Access through type-safe interface only
+        REQUIRE(monster.hasAIData() == true);
+        REQUIRE(monster.getAIData() != nullptr);
+        REQUIRE(monster.getAIData() == ai_data.get());
     }
 
     SECTION("MonsterAI integration") {

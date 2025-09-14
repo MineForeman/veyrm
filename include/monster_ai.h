@@ -54,7 +54,7 @@ enum class AIState {
 struct MonsterAIData {
     AIState current_state = AIState::IDLE;
     Point home_room_center = Point(-1, -1);
-    Room* assigned_room = nullptr;
+    const Room* assigned_room = nullptr;  // Observer pointer - Map owns rooms
     Point last_player_pos = Point(-1, -1);
     int turns_since_player_seen = 0;
     int idle_move_counter = 0;
@@ -74,7 +74,7 @@ public:
     void updateMonsterAI(Monster& monster, const Player& player, const Map& map);
     Point getNextMove(Monster& monster, const Player& player, const Map& map);
 
-    void assignRoomToMonster(Monster& monster, Room* room);
+    void assignRoomToMonster(Monster& monster, const Room* room);
     bool canSeePlayer(const Monster& monster, const Player& player, const Map& map);
 
     static const int DEFAULT_VISION_RANGE = 8;

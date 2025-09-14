@@ -112,13 +112,6 @@ public:
      */
     bool hasAIData() const;
 
-    // Legacy compatibility - deprecated
-    [[deprecated("Use getAIData() for type-safe access")]]
-    void* getUserData() const;
-
-    [[deprecated("Use setAIData() for type-safe access")]]
-    void setUserData(void* data);
-
     /**
      * @brief Get attack bonus for combat calculations
      * @return Attack bonus value
