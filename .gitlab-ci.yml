@@ -5,10 +5,6 @@ stages:
   - build
   - test
 
-# Default image for jobs that don't specify one
-default:
-  image: ubuntu:24.04
-
 # Variables available to all jobs
 variables:
   DEBIAN_FRONTEND: noninteractive
@@ -17,6 +13,7 @@ variables:
 # Linux build using Docker executor
 build:linux:
   stage: build
+  image: ubuntu:24.04  # Specify image only for Linux
   tags:
     - linux
   before_script:
@@ -38,6 +35,7 @@ build:linux:
 # Test the Linux build
 test:linux:
   stage: test
+  image: ubuntu:24.04  # Specify image only for Linux
   tags:
     - linux
   needs: ["build:linux"]
@@ -45,39 +43,80 @@ test:linux:
     - ./build/bin/veyrm_tests
     - ./build/bin/veyrm --help
 
-# Windows build (native runner with shell executor)
+# Windows build (native runner with PowerShell)
 build:windows:
   stage: build
   tags:
     - windows  # Native Windows runner
   script:
     # Check build environment
-    - echo "Windows native build starting"
-    - cmake --version || echo "CMake not installed"
-    - where cl 2>nul || echo "MSVC not found, trying MinGW..."
-    - where gcc 2>nul || echo "GCC not found"
+    - Write-Host "Windows native build starting"
+    - |
+      try {
+        cmake --version
+      } catch {
+        Write-Host "CMake not installed"
+      }
+    - |
+      try {
+        where.exe cl
+      } catch {
+        Write-Host "MSVC not found, trying MinGW..."
+      }
+    - |
+      try {
+        where.exe gcc
+      } catch {
+        Write-Host "GCC not found"
+      }
     # Create build directory
-    - if not exist build mkdir build
-    - cd build
+    - |
+      if (-not (Test-Path build)) {
+        New-Item -ItemType Directory -Path build
+      }
+    - Set-Location build
     # Try to build with available compiler
-    - cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .. || cmake -G "Visual Studio 17 2022" -A x64 ..
+    - |
+      try {
+        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+      } catch {
+        try {
+          cmake -G "Visual Studio 17 2022" -A x64 ..
+        } catch {
+          Write-Host "Failed to configure CMake"
+          exit 1
+        }
+      }
     - cmake --build . --config Release -j
-    - dir bin\Release 2>nul || dir bin 2>nul
+    - Get-ChildItem -Path . -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue
   artifacts:
     paths:
       - build/bin/
     expire_in: 1 week
   allow_failure: true  # Allow failure until build tools are confirmed
 
-# Windows test (native runner)
+# Windows test (native runner with PowerShell)
 test:windows:
   stage: test
   tags:
     - windows
   needs: ["build:windows"]
   script:
-    - echo "Testing Windows build"
-    - if exist build\bin\Release\veyrm_tests.exe (build\bin\Release\veyrm_tests.exe) else (echo "Tests not found in Release")
-    - if exist build\bin\veyrm_tests.exe (build\bin\veyrm_tests.exe) else (echo "Tests not found in bin")
-    - if exist build\bin\Release\veyrm.exe (build\bin\Release\veyrm.exe --help) else (echo "Game not found")
+    - Write-Host "Testing Windows build"
+    - |
+      if (Test-Path "build\bin\Release\veyrm_tests.exe") {
+        & "build\bin\Release\veyrm_tests.exe"
+      } elseif (Test-Path "build\bin\veyrm_tests.exe") {
+        & "build\bin\veyrm_tests.exe"
+      } else {
+        Write-Host "Tests not found"
+      }
+    - |
+      if (Test-Path "build\bin\Release\veyrm.exe") {
+        & "build\bin\Release\veyrm.exe" --help
+      } elseif (Test-Path "build\bin\veyrm.exe") {
+        & "build\bin\veyrm.exe" --help
+      } else {
+        Write-Host "Game executable not found"
+      }
   allow_failure: true
