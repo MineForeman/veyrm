@@ -2,6 +2,8 @@
 #include "../include/entity.h"
 #include "../include/monster.h"
 #include "../include/monster_ai.h"
+#include "../include/player.h"
+#include "../include/map.h"
 #include <memory>
 
 TEST_CASE("Entity memory safety with AI data", "[entity][memory]") {
@@ -111,13 +113,17 @@ TEST_CASE("Entity memory safety with AI data", "[entity][memory]") {
 
     SECTION("MonsterAI integration") {
         Monster monster(10, 10, "dragon");
+        Player player(5, 5);
+
+        // Create a simple test map
+        Map test_map(20, 20);
         MonsterAI ai_system;
 
         // AI system should create AI data automatically
         REQUIRE(monster.hasAIData() == false);
 
-        // Simulate AI system assigning data
-        ai_system.ensureAIData(monster);
+        // updateMonsterAI will call ensureAIData internally
+        ai_system.updateMonsterAI(monster, player, test_map);
 
         REQUIRE(monster.hasAIData() == true);
         REQUIRE(monster.getAIData() != nullptr);

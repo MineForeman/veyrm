@@ -30,6 +30,7 @@ add_executable(veyrm_tests
     test_combat_system.cpp
     test_item.cpp
     test_inventory.cpp
+    test_entity_memory_safety.cpp
 )
 
 # Link with Catch2 and other dependencies
