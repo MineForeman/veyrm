@@ -1,3 +1,10 @@
+/**
+ * @file inventory_renderer.h
+ * @brief Inventory UI rendering component
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <ftxui/dom/elements.hpp>

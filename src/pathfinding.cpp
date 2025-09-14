@@ -98,7 +98,7 @@ bool Pathfinding::hasLineOfSight(const Point& from, const Point& to, const Map& 
 float Pathfinding::getDistance(const Point& a, const Point& b) {
     int dx = a.x - b.x;
     int dy = a.y - b.y;
-    return std::sqrt(dx * dx + dy * dy);
+    return static_cast<float>(std::sqrt(dx * dx + dy * dy));
 }
 
 float Pathfinding::heuristic(const Point& a, const Point& b) {

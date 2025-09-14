@@ -1,3 +1,10 @@
+/**
+ * @file map.h
+ * @brief Tile-based map system for Veyrm
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "tile.h"
@@ -6,18 +13,68 @@
 #include <vector>
 #include <map>
 
+/**
+ * @class Map
+ * @brief Manages the tile-based game map
+ *
+ * The Map class represents the game world as a 2D grid of tiles.
+ * It handles tile storage, visibility tracking, exploration state,
+ * and provides methods for querying tile properties.
+ *
+ * @note Uses classic Angband dimensions (198x66) by default
+ * @see TileType
+ * @see MapGenerator
+ * @see FOV
+ */
 class Map {
 public:
-    static constexpr int DEFAULT_WIDTH = 198;  // Classic Angband width
-    static constexpr int DEFAULT_HEIGHT = 66;   // Classic Angband height
-    
+    /// Default map width (classic Angband dimension)
+    static constexpr int DEFAULT_WIDTH = 198;
+    /// Default map height (classic Angband dimension)
+    static constexpr int DEFAULT_HEIGHT = 66;
+
+    /**
+     * @brief Construct a new Map
+     * @param width Map width in tiles (default: 198)
+     * @param height Map height in tiles (default: 66)
+     */
     Map(int width = DEFAULT_WIDTH, int height = DEFAULT_HEIGHT);
+
+    /// Default destructor
     ~Map() = default;
-    
+
     // Tile access
+
+    /**
+     * @brief Get the tile type at a position
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @return TileType at the position, or WALL if out of bounds
+     */
     TileType getTile(int x, int y) const;
+
+    /**
+     * @brief Get the tile type at a position
+     * @param pos Position to query
+     * @return TileType at the position, or WALL if out of bounds
+     */
     TileType getTile(const Point& pos) const;
+
+    /**
+     * @brief Set the tile type at a position
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param type New tile type
+     * @warning Does nothing if position is out of bounds
+     */
     void setTile(int x, int y, TileType type);
+
+    /**
+     * @brief Set the tile type at a position
+     * @param pos Position to modify
+     * @param type New tile type
+     * @warning Does nothing if position is out of bounds
+     */
     void setTile(const Point& pos, TileType type);
     
     // Properties

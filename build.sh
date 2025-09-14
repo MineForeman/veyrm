@@ -356,6 +356,154 @@ EOF
     fi
 }
 
+# Function to create a release
+create_release() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Release Creator${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Get current version from config.yml
+    CURRENT_VERSION=$(grep "^version:" "${PROJECT_ROOT}/config.yml" | sed 's/version: *"\(.*\)"/\1/')
+
+    if [ -z "$CURRENT_VERSION" ]; then
+        echo -e "${RED}Error: Could not determine current version from config.yml${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}Current version: v$CURRENT_VERSION${NC}"
+
+    # Parse version components
+    IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+    # Determine new version based on argument
+    case "${1:-ask}" in
+        major)
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_VERSION="$NEW_MAJOR.0.0"
+            ;;
+        minor)
+            NEW_MINOR=$((MINOR + 1))
+            NEW_VERSION="$MAJOR.$NEW_MINOR.0"
+            ;;
+        patch)
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+            ;;
+        custom)
+            read -p "Enter new version (without 'v' prefix): " NEW_VERSION
+            # Validate version format
+            if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+                echo -e "${RED}Error: Invalid version format. Use X.Y.Z or X.Y.Z-suffix${NC}"
+                exit 1
+            fi
+            ;;
+        ask|*)
+            echo
+            echo "Select version bump type:"
+            echo "  1) Patch (${MAJOR}.${MINOR}.${PATCH} -> ${MAJOR}.${MINOR}.$((PATCH + 1)))"
+            echo "  2) Minor (${MAJOR}.${MINOR}.${PATCH} -> ${MAJOR}.$((MINOR + 1)).0)"
+            echo "  3) Major (${MAJOR}.${MINOR}.${PATCH} -> $((MAJOR + 1)).0.0)"
+            echo "  4) Custom version"
+            echo "  0) Cancel"
+            echo
+            read -p "Enter choice: " choice
+
+            case "$choice" in
+                1)
+                    NEW_PATCH=$((PATCH + 1))
+                    NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+                    ;;
+                2)
+                    NEW_MINOR=$((MINOR + 1))
+                    NEW_VERSION="$MAJOR.$NEW_MINOR.0"
+                    ;;
+                3)
+                    NEW_MAJOR=$((MAJOR + 1))
+                    NEW_VERSION="$NEW_MAJOR.0.0"
+                    ;;
+                4)
+                    read -p "Enter new version (without 'v' prefix): " NEW_VERSION
+                    if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+                        echo -e "${RED}Error: Invalid version format. Use X.Y.Z or X.Y.Z-suffix${NC}"
+                        exit 1
+                    fi
+                    ;;
+                0|*)
+                    echo "Release cancelled."
+                    exit 0
+                    ;;
+            esac
+            ;;
+    esac
+
+    echo
+    echo -e "${YELLOW}New version will be: v$NEW_VERSION${NC}"
+    read -p "Continue? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+
+    echo
+    echo -e "${YELLOW}Updating version in all files...${NC}"
+
+    # Update version in config.yml
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/version: \"$CURRENT_VERSION\"/version: \"$NEW_VERSION\"/" "${PROJECT_ROOT}/config.yml"
+    else
+        sed -i "s/version: \"$CURRENT_VERSION\"/version: \"$NEW_VERSION\"/" "${PROJECT_ROOT}/config.yml"
+    fi
+
+    # Update version in CMakeLists.txt
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/VERSION $CURRENT_VERSION/VERSION $NEW_VERSION/" "${PROJECT_ROOT}/CMakeLists.txt"
+    else
+        sed -i "s/VERSION $CURRENT_VERSION/VERSION $NEW_VERSION/" "${PROJECT_ROOT}/CMakeLists.txt"
+    fi
+
+    # Check if there are uncommitted changes
+    if [ -n "$(git status --porcelain)" ]; then
+        echo -e "${YELLOW}Committing version update...${NC}"
+        git add config.yml CMakeLists.txt
+        git commit -m "Release v$NEW_VERSION
+
+- Updated version in config.yml
+- Updated version in CMakeLists.txt"
+    fi
+
+    # Create and push tag
+    echo -e "${YELLOW}Creating tag v$NEW_VERSION...${NC}"
+
+    # Prompt for release notes
+    echo
+    echo "Enter release notes (press Ctrl+D when done):"
+    echo "-------------------------------------------"
+    RELEASE_NOTES=$(cat)
+
+    if [ -z "$RELEASE_NOTES" ]; then
+        RELEASE_NOTES="Release v$NEW_VERSION"
+    fi
+
+    git tag -a "v$NEW_VERSION" -m "$RELEASE_NOTES"
+
+    echo
+    echo -e "${GREEN}✓ Version updated to $NEW_VERSION${NC}"
+    echo -e "${GREEN}✓ Tag v$NEW_VERSION created${NC}"
+    echo
+    echo "To trigger the GitHub release workflow, push with:"
+    echo -e "${YELLOW}  git push && git push --tags${NC}"
+    echo
+    echo "Or to abort without releasing:"
+    echo -e "${YELLOW}  git tag -d v$NEW_VERSION${NC}"
+    echo -e "${YELLOW}  git reset --hard HEAD~1${NC}"
+    echo
+    echo -e "${CYAN}The GitHub Actions workflow will automatically:${NC}"
+    echo "  • Build Linux and Windows binaries"
+    echo "  • Create a GitHub release with the binaries"
+    echo "  • Extract release notes from CHANGELOG.md"
+}
+
 # Function to create Gource visualization video
 gource_video() {
     # Parse arguments
@@ -627,6 +775,7 @@ show_menu() {
     echo -e "${BLUE}11)${NC} Clear Logs"
     echo -e "${BLUE}12)${NC} Create Gource Video"
     echo -e "${BLUE}13)${NC} Generate Class Diagrams"
+    echo -e "${BLUE}14)${NC} Create Release"
     echo -e "${BLUE}0)${NC} Exit"
     echo
 }
@@ -648,6 +797,8 @@ show_help() {
     echo "  clearlog               Clear all log files"
     echo "  gource [--clean]       Create Gource video (--clean deletes old videos)"
     echo "  diagram                Generate class diagrams with Doxygen"
+    echo "  docs                   Generate API documentation with Doxygen"
+    echo "  release [type]         Create a release (patch|minor|major|custom)"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -743,6 +894,24 @@ main() {
         diagram)
             class_diagram
             ;;
+        docs)
+            print_header
+            echo -e "${YELLOW}Generating Doxygen documentation...${NC}"
+            if command -v doxygen &> /dev/null; then
+                doxygen Doxyfile
+                echo -e "${GREEN}Documentation generated in docs/reference/api/generated/${NC}"
+                echo -e "${CYAN}Open docs/reference/api/generated/html/index.html to view${NC}"
+            else
+                echo -e "${RED}Error: Doxygen not installed${NC}"
+                echo -e "Install with: brew install doxygen graphviz (macOS)"
+                echo -e "         or: sudo apt-get install doxygen graphviz (Linux)"
+                exit 1
+            fi
+            ;;
+        release)
+            print_header
+            create_release "${2}"
+            ;;
         help|--help|-h)
             show_help
             ;;
@@ -800,6 +969,9 @@ main() {
                         ;;
                     13)
                         class_diagram
+                        ;;
+                    14)
+                        create_release
                         ;;
                     0)
                         echo -e "${GREEN}Goodbye!${NC}"

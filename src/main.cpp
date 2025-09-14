@@ -92,7 +92,7 @@ bool runSystemChecks() {
     
     // Check C++ version
     std::cout << "  [";
-    if (__cplusplus >= 202302L) {
+    if constexpr (__cplusplus >= 202302L) {
         std::cout << "✓";
     } else {
         std::cout << "✗";
@@ -617,7 +617,7 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
  */
 int main(int argc, char* argv[]) {
     // Create log directory
-    system("mkdir -p logs");
+    [[maybe_unused]] int result = system("mkdir -p logs");
 
     // Initialize logging first
     Log::init("logs/veyrm_debug.log", Log::DEBUG);

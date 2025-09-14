@@ -152,6 +152,6 @@ The game starts in Ring 1: Woundworks of the Spiral Vaults. The world documentat
 
 ## Special Files
 
-### VIBE.md - User Notes
+### notes.md - User Notes
 
-**IMPORTANT:** `DOC/VIBE.md` contains the user's personal notes and should NOT be edited by Claude. This file should be checked into git when changes are made, but Claude should never modify its contents. It serves as the user's scratchpad and working notes for the project.
+**IMPORTANT:** `docs/project/notes.md` contains the user's personal notes and should NOT be edited by Claude. This file should be checked into git when changes are made, but Claude should never modify its contents. It serves as the user's scratchpad and working notes for the project.

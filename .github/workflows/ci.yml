@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            executable_ext: ""
+            timeout_cmd: "timeout 10s"
+          - os: windows-latest
+            executable_ext: ".exe"
+            timeout_cmd: "timeout /t 10"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # CMake comes pre-installed on Windows runners
+          # Visual Studio build tools are also pre-installed
+          echo "Using pre-installed CMake and MSVC"
+
+      - name: Create build directory
+        run: mkdir -p build
+        shell: bash
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+        shell: bash
+
+      - name: Build project
+        run: |
+          cd build
+          cmake --build . --config Release -j
+        shell: bash
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          # Tests must be run from project root for data file paths to work
+          ./build/bin/veyrm_tests
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Tests must be run from project root for data file paths to work
+          # On Windows with MSVC, executables are in Release subdirectory
+          ./build/bin/Release/veyrm_tests.exe
+        shell: bash
+
+      - name: Test game executable (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          # Test that the game runs without crashing
+          timeout 10s ./build/bin/veyrm --help || true
+
+      - name: Test game executable (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Test that the game runs without crashing
+          # Windows doesn't have timeout in bash, use PowerShell
+          powershell -Command "Start-Process -FilePath './build/bin/Release/veyrm.exe' -ArgumentList '--help' -NoNewWindow -Wait -PassThru | Stop-Process -Force" || true

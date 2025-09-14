@@ -1,3 +1,10 @@
+/**
+ * @file input_handler.h
+ * @brief Input processing and action mapping system
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <ftxui/component/event.hpp>

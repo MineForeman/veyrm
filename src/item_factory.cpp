@@ -138,7 +138,7 @@ std::string ItemFactory::getRandomItemForDepth(int depth) const {
 
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, valid_items.size() - 1);
+    std::uniform_int_distribution<size_t> dis(0, valid_items.size() - 1);
 
     return valid_items[dis(gen)];
 }

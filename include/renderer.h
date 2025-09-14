@@ -1,3 +1,10 @@
+/**
+ * @file renderer.h
+ * @brief Map and entity rendering system
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "point.h"
@@ -10,24 +17,53 @@
 class Map;
 class GameManager;
 
+/**
+ * @enum RenderLayer
+ * @brief Rendering layer priorities for proper visual stacking
+ */
 enum class RenderLayer {
-    TERRAIN = 0,
-    ITEMS = 1,
-    CREATURES = 2,
-    PLAYER = 3,
-    EFFECTS = 4,
-    UI = 5
+    TERRAIN = 0,    ///< Map tiles (floors, walls, doors)
+    ITEMS = 1,      ///< Items on the ground
+    CREATURES = 2,  ///< Monsters and NPCs
+    PLAYER = 3,     ///< Player character (always on top of creatures)
+    EFFECTS = 4,    ///< Visual effects and particles
+    UI = 5          ///< UI overlays and cursors
 };
 
+/**
+ * @struct RenderEntity
+ * @brief Data for rendering a single entity with layering
+ */
 struct RenderEntity {
-    Point position;
-    std::string glyph;
-    ftxui::Color foreground;
-    ftxui::Color background;
-    RenderLayer layer;
-    int priority = 0;
+    Point position;             ///< World position
+    std::string glyph;          ///< Display character(s)
+    ftxui::Color foreground;    ///< Foreground color
+    ftxui::Color background;    ///< Background color
+    RenderLayer layer;          ///< Rendering layer
+    int priority = 0;           ///< Priority within layer (higher = on top)
 };
 
+/**
+ * @class MapRenderer
+ * @brief Handles rendering of the game map and entities
+ *
+ * The MapRenderer manages the visual representation of the game world,
+ * including terrain, entities, items, and effects. It supports viewport
+ * management for large maps, layered rendering for proper visual stacking,
+ * and various rendering options for debugging and visualization.
+ *
+ * Features:
+ * - Viewport-based rendering for large maps
+ * - Multi-layer rendering system
+ * - Player-centered view with smooth scrolling
+ * - Debug visualization options
+ * - Coordinate transformation utilities
+ * - Tile highlighting for cursor feedback
+ *
+ * @see Map
+ * @see GameManager
+ * @see ColorScheme
+ */
 class MapRenderer {
 public:
     MapRenderer(int viewport_width = 80, int viewport_height = 24);

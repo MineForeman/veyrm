@@ -166,4 +166,7 @@ temp/
 # *.tar
 # *.tar.gz
 # *.rar
-# *.7z
+# *.7zdocs/reference/api/generated/
+
+# Doxygen generated documentation
+docs/reference/api/generated/

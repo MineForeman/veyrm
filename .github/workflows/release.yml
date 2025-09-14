@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: veyrm-linux-x64
+            binary_name: veyrm
+            archive_format: tar.gz
+          - os: windows-latest
+            artifact_name: veyrm-windows-x64
+            binary_name: veyrm.exe
+            archive_format: zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake (Release mode)
+        run: |
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release -j
+
+      - name: Prepare release package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p release/veyrm
+          cp build/bin/${{ matrix.binary_name }} release/veyrm/
+          cp -r data release/veyrm/
+          cp README.md release/veyrm/
+          cp CHANGELOG.md release/veyrm/
+          cd release
+          tar -czf ${{ matrix.artifact_name }}.tar.gz veyrm
+
+      - name: Prepare release package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release/veyrm
+          Copy-Item build/bin/Release/${{ matrix.binary_name }} release/veyrm/
+          Copy-Item -Recurse data release/veyrm/
+          Copy-Item README.md release/veyrm/
+          Copy-Item CHANGELOG.md release/veyrm/
+          Compress-Archive -Path release/veyrm -DestinationPath release/${{ matrix.artifact_name }}.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            release/${{ matrix.artifact_name }}.tar.gz
+            release/${{ matrix.artifact_name }}.zip
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION_PATTERN="^## \[?${VERSION#v}\]?"
+          NEXT_VERSION_PATTERN="^## \[?[0-9]+\.[0-9]+\.[0-9]+\]?"
+
+          # Create a temporary file for release notes
+          echo "# Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+
+          # Extract content between this version and the next
+          awk "/$VERSION_PATTERN/{flag=1; next} /$NEXT_VERSION_PATTERN/{if(flag) exit} flag" CHANGELOG.md >> release_notes.md || true
+
+          # If no specific version notes found, use recent changes
+          if [ ! -s release_notes.md ] || [ $(wc -l < release_notes.md) -le 2 ]; then
+            echo "# Release $VERSION" > release_notes.md
+            echo "" >> release_notes.md
+            echo "## Recent Changes" >> release_notes.md
+            echo "" >> release_notes.md
+            # Get the last 20 lines of meaningful content from CHANGELOG
+            grep -E "^- |^### |^## " CHANGELOG.md | head -20 >> release_notes.md || echo "See CHANGELOG.md for details." >> release_notes.md
+          fi
+
+          echo "Release notes:"
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: Veyrm ${{ steps.version.outputs.VERSION }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') || contains(steps.version.outputs.VERSION, 'rc') }}
+          files: |
+            artifacts/veyrm-linux-x64/*.tar.gz
+            artifacts/veyrm-windows-x64/*.zip
+
+      - name: Upload release assets summary
+        run: |
+          echo "## Release ${{ steps.version.outputs.VERSION }} created successfully! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Assets:" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Linux build: veyrm-linux-x64.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Windows build: veyrm-windows-x64.zip" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release URL:" >> $GITHUB_STEP_SUMMARY
+          echo "https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY

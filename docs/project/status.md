@@ -1,10 +1,10 @@
 # Veyrm - Current State Documentation
 
-## Last Updated: 2025-01-14
+## Last Updated: 2025-09-14
 
 ## Project Status
 
-Veyrm is a modern roguelike game in active development, currently at Phase 10.1 (Item Entity System) completion. The game features procedural dungeon generation, monster AI, a complete d20-based combat system, and now a fully functional item system with collectibles and treasure.
+**Veyrm has reached MVP status (v1.0.0-MVP)!** The game is now feature-complete with all core systems implemented, tested, and documented. It features procedural dungeon generation, monster AI, a complete d20-based combat system, full inventory management, item system with collectibles and treasure, and a comprehensive save/load system.
 
 ## Completed Phases
 
@@ -32,7 +32,7 @@ Veyrm is a modern roguelike game in active development, currently at Phase 10.1 
 - **9.2 Bump Combat**: Player melee attacks
 - **9.3 Death Handling**: Complete death states
 
-### Phase 10: Item System (Partial) ✅
+### Phase 10: Item System ✅
 - **10.1 Item Entity**: Complete item foundation system
   - Data-driven item definitions (items.json)
   - Item spawning and management
@@ -40,15 +40,31 @@ Veyrm is a modern roguelike game in active development, currently at Phase 10.1 
   - Gold collection system
   - 12 initial item types
 
+### Phase 11: Inventory System ✅
+- **11.1 Storage System**: 26-slot inventory with stacking
+- **11.2 Inventory UI**: Full UI with navigation and actions
+- **11.3 Item Usage**: Use, drop, and examine functionality
+
+### Phase 12: Save/Load System ✅
+- **12.1 Persistence**: Complete save/load implementation
+  - 9 save slots with visual management
+  - Seed-based map regeneration (98.6% smaller files)
+  - Separate S and L keybindings
+  - JSON-based save format
+
 ## Current Capabilities
 
 ### Gameplay Features
 - Explore procedurally generated dungeons
 - Fight monsters using tactical bump combat
 - Gain experience from defeating enemies
-- **NEW: Collect items and treasure**
-- **NEW: Pick up items with 'g' key**
-- **NEW: Accumulate gold currency**
+- Collect items and treasure
+- Pick up items with 'g' key
+- Manage 26-slot inventory
+- Use items for effects (healing potions)
+- Drop and examine items
+- Accumulate gold currency
+- Save/Load with 9 slots
 - Navigate with 8-directional movement
 - Save and load game progress
 - View message log of events
@@ -60,7 +76,7 @@ Veyrm is a modern roguelike game in active development, currently at Phase 10.1 
 - Data-driven content (monsters.json, **items.json**)
 - Fullscreen terminal UI with FTXUI
 - Cross-platform support (macOS, Linux, Windows)
-- Extensive unit test coverage (**130 tests, all passing**)
+- Extensive unit test coverage (**135 tests, all passing**)
 - Interactive door system with open/close mechanics
 - **Item factory pattern for data-driven items**
 - **Item manager for world item lifecycle**
@@ -115,17 +131,23 @@ veyrm/
 └── CMakeLists.txt   # Build configuration
 ```
 
-## Recent Changes (v0.10.1 - Item Entity System)
+## Recent Changes (v1.0.0-MVP - Complete Game)
 
-### Item System Implementation
-- **Complete Item Foundation** - Full item entity system
-  - Item, ItemFactory, and ItemManager classes
-  - 12 initial item types with properties
-  - JSON-based data-driven item definitions
-  - Item spawning during map generation
-  - Item pickup system with 'g' key
-  - Gold collection and wealth tracking
-  - Comprehensive unit tests (49 assertions)
+### MVP Completion
+- **Save/Load System** - Complete persistence
+  - 9 save slots with management UI
+  - Seed-based map regeneration
+  - 98.6% smaller save files (7-8KB)
+  - Entity preservation during load
+- **Inventory System** - Full inventory management
+  - 26-slot storage with stacking
+  - Complete UI with navigation
+  - Use, drop, examine actions
+  - Integration with items and combat
+- **Item System** - Complete item framework
+  - 12 item types with effects
+  - Healing potions functional
+  - Gold collection system
 
 ### Previous Update (v0.9.5 - Visualization Tools)
 - **Gource Video Generation** - Animated repository history visualization
@@ -164,22 +186,31 @@ veyrm/
 - Fixed procedural dungeon stairs placement
 - Resolved map validation issues with doors
 
-## Next Steps (Phase 10: Item System)
+## MVP Complete!
 
-### 10.1 Item Entity
-- Create Item class
-- Add item types (potions, scrolls)
-- Load items from JSON
+The game has reached MVP status with all planned core features implemented:
+- ✅ Map generation and rendering
+- ✅ Player movement and FOV
+- ✅ Monster AI and spawning
+- ✅ Combat system
+- ✅ Item system
+- ✅ Inventory management
+- ✅ Save/Load system
+- ✅ Full UI with message log and status
 
-### 10.2 Inventory
-- Add inventory to player
-- Implement pickup/drop
-- Create inventory UI
+## Future Development
 
-### 10.3 Item Usage
-- Implement item effects
-- Add use command
-- Test item interactions
+### Immediate Priorities
+- Bug fixes and optimization
+- Code refactoring
+- Documentation updates
+
+### Future Features
+- Multiple dungeon levels (stairs)
+- Character progression
+- More monsters and items
+- Magic system
+- Quests and NPCs
 
 ## Known Issues
 
@@ -187,9 +218,9 @@ veyrm/
 2. **Bugs**: No critical bugs remaining
 3. **Limitations**:
    - No ranged combat
-   - No item system yet
+   - No character progression yet
    - No magic/abilities
-   - Single dungeon level only
+   - Single dungeon level only (stairs not functional)
 
 ## Development Commands
 
@@ -243,17 +274,21 @@ This is an active development project. All code changes should:
 
 ## Version
 
-Current Version: 0.9.5 (Visualization Tools)
+**Current Version: 1.0.0-MVP (Minimum Viable Product)**
 
-- Gource video generation for repository history
-- Class diagram generator with UML-style output
-- Documentation of 12 additional visualization options
-- All outputs to gitignored tmp/ directory
+🎉 **MVP COMPLETE!** 🎉
 
-Previous: 0.9.4 (Post-Phase 9 Enhancements)
+- Complete roguelike gameplay loop
+- All core systems implemented
+- 135 tests with 100% pass rate
+- Full documentation
+- Ready for future expansion
 
-- Enhanced logging system with category separation
-- Door system implementation
-- Test suite fixes (all 126 tests passing)
-
-Next Version: 0.10.1 (Phase 10.1: Item Entity)
+### Key MVP Features:
+- Procedural dungeon generation
+- Turn-based gameplay
+- Monster AI with multiple behaviors
+- Combat system with d20 mechanics
+- Item and inventory systems
+- Save/Load with 9 slots
+- Complete terminal UI

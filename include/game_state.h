@@ -1,18 +1,29 @@
+/**
+ * @file game_state.h
+ * @brief Core game state management and coordination
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <memory>
 #include <vector>
 #include "map_generator.h"
 
+/**
+ * @enum GameState
+ * @brief Possible game states for the main loop
+ */
 enum class GameState {
-    MENU,
-    PLAYING,
-    PAUSED,
-    INVENTORY,
-    HELP,
-    SAVE_LOAD,  // Save/Load menu
-    DEATH,
-    QUIT
+    MENU,       ///< Main menu screen
+    PLAYING,    ///< Active gameplay
+    PAUSED,     ///< Game paused
+    INVENTORY,  ///< Inventory management screen
+    HELP,       ///< Help/controls screen
+    SAVE_LOAD,  ///< Save/Load menu
+    DEATH,      ///< Player death screen
+    QUIT        ///< Exit game
 };
 
 enum class ActionSpeed;
@@ -32,15 +43,56 @@ class CombatSystem;
 class ItemManager;
 class GameSerializer;
 
+/**
+ * @class GameManager
+ * @brief Central game state and system coordinator
+ *
+ * The GameManager is the central hub that coordinates all game systems
+ * including entities, map, combat, AI, input, and rendering. It manages
+ * the overall game state, handles save/load functionality, and provides
+ * access to all major subsystems.
+ *
+ * @see GameLoop
+ * @see EntityManager
+ * @see Map
+ * @see TurnManager
+ */
 class GameManager {
 public:
+    /**
+     * @brief Construct GameManager with initial map type
+     * @param initial_map Type of map to generate on start
+     */
     GameManager(MapType initial_map = MapType::TEST_DUNGEON);
+
+    /// Destructor
     ~GameManager();
     
     // State management
+
+    /**
+     * @brief Get current game state
+     * @return Current GameState enum value
+     */
     GameState getState() const { return current_state; }
+
+    /**
+     * @brief Change game state
+     * @param state New game state
+     * @note Stores previous state for return
+     */
     void setState(GameState state);
+
+    /**
+     * @brief Get previous game state
+     * @return Previous GameState value
+     */
     GameState getPreviousState() const { return previous_state; }
+
+    /**
+     * @brief Return to previous game state
+     * @note Used for backing out of menus
+     */
     void returnToPreviousState();
     
     // Component access
@@ -59,12 +111,36 @@ public:
     void setCurrentDepth(int depth) { current_depth = depth; }
     
     // Game loop integration
+
+    /**
+     * @brief Update game state
+     * @param deltaTime Time since last update (seconds)
+     */
     void update(double deltaTime);
+
+    /**
+     * @brief Process player input
+     */
     void processInput();
-    
+
     // Debug mode
+
+    /**
+     * @brief Check if debug mode is enabled
+     * @return true if in debug mode
+     */
     bool isDebugMode() const { return debug_mode; }
+
+    /**
+     * @brief Enable/disable debug mode
+     * @param enabled Debug mode state
+     */
     void setDebugMode(bool enabled) { debug_mode = enabled; }
+
+    /**
+     * @brief Enable frame statistics
+     * @deprecated Frame stats are always enabled
+     */
     void enableFrameStats() { /* Frame stats are always enabled if available */ }
     
     // Spawn management
@@ -77,15 +153,44 @@ public:
     int player_y = 10;       // DEPRECATED
     
     // Game flow
+
+    /**
+     * @brief Process player action with speed cost
+     * @param speed Speed cost of the action
+     */
     void processPlayerAction(ActionSpeed speed);
+
+    /**
+     * @brief Check if game is still running
+     * @return true if not in QUIT state
+     */
     bool isGameRunning() const { return current_state != GameState::QUIT; }
-    
+
     // Map initialization
+
+    /**
+     * @brief Initialize/regenerate the map
+     * @param type Type of map to generate
+     */
     void initializeMap(MapType type = MapType::TEST_DUNGEON);
-    
+
     // FOV and visibility
+
+    /**
+     * @brief Update field of view from player position
+     */
     void updateFOV();
+
+    /**
+     * @brief Get map memory system
+     * @return Pointer to MapMemory
+     */
     MapMemory* getMapMemory() { return map_memory.get(); }
+
+    /**
+     * @brief Get current FOV grid
+     * @return 2D visibility grid
+     */
     const std::vector<std::vector<bool>>& getCurrentFOV() const { return current_fov; }
 
     // Monster AI
@@ -100,8 +205,25 @@ public:
     const ItemManager* getItemManager() const { return item_manager.get(); }
 
     // Save/Load system
+
+    /**
+     * @brief Save game to slot
+     * @param slot Save slot number (0-9)
+     * @return true if save succeeded
+     */
     bool saveGame(int slot);
+
+    /**
+     * @brief Load game from slot
+     * @param slot Save slot number (0-9)
+     * @return true if load succeeded
+     */
     bool loadGame(int slot);
+
+    /**
+     * @brief Get game serializer
+     * @return Pointer to GameSerializer
+     */
     GameSerializer* getSerializer() { return serializer.get(); }
 
 private:

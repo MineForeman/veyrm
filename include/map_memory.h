@@ -1,3 +1,10 @@
+/**
+ * @file map_memory.h
+ * @brief FOV memory system for explored areas
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #ifndef MAP_MEMORY_H
 #define MAP_MEMORY_H
 

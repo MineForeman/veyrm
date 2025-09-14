@@ -1,3 +1,10 @@
+/**
+ * @file monster_ai.h
+ * @brief AI behavior system for monsters
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "point.h"
@@ -9,6 +16,32 @@ class Player;
 class Monster;
 class Room;
 
+/**
+ * @class MonsterAI
+ * @brief Manages AI behavior for all monsters in the game
+ *
+ * The MonsterAI class implements a state-based AI system that controls
+ * monster behavior including idle wandering, player detection, combat
+ * pursuit, fleeing, and returning to assigned areas. Each monster
+ * maintains individual AI state and memory for intelligent behavior.
+ *
+ * AI States:
+ * - IDLE: Random wandering within assigned room
+ * - ALERT: Player detected, moving to investigate
+ * - HOSTILE: Actively pursuing and attacking player
+ * - FLEEING: Retreating from combat when injured
+ * - RETURNING: Moving back to assigned room after losing player
+ *
+ * Features:
+ * - Room-based territorial behavior
+ * - Line-of-sight detection with memory
+ * - Pathfinding integration for smart movement
+ * - Configurable vision and aggression ranges
+ *
+ * @see Monster
+ * @see Pathfinding
+ * @see Config monster settings
+ */
 class MonsterAI {
 public:
     enum class AIState {

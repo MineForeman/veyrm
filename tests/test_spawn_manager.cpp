@@ -43,7 +43,7 @@ TEST_CASE("SpawnManager: Basic functionality", "[spawn]") {
         for (const auto& point : spawn_points) {
             int dx = point.x - player->x;
             int dy = point.y - player->y;
-            float dist = std::sqrt(dx*dx + dy*dy);
+            float dist = static_cast<float>(std::sqrt(dx*dx + dy*dy));
             REQUIRE(dist >= min_dist);
         }
     }
@@ -90,7 +90,7 @@ TEST_CASE("SpawnManager: Basic functionality", "[spawn]") {
             // Check distance from player
             int dx = monster->x - player->x;
             int dy = monster->y - player->y;
-            float dist = std::sqrt(dx*dx + dy*dy);
+            float dist = static_cast<float>(std::sqrt(dx*dx + dy*dy));
             REQUIRE(dist >= Config::getInstance().getMinSpawnDistance());
         }
     }
@@ -113,7 +113,7 @@ TEST_CASE("SpawnManager: Dynamic spawning", "[spawn]") {
     spawn_manager.setSpawnRate(10);  // Fast spawn rate for testing
     
     SECTION("Spawn timer") {
-        int initial_count = entity_manager.getMonsters().size();
+        int initial_count = static_cast<int>(entity_manager.getMonsters().size());
         
         // Update multiple times
         for (int i = 0; i < 15; i++) {
@@ -121,7 +121,7 @@ TEST_CASE("SpawnManager: Dynamic spawning", "[spawn]") {
         }
         
         // Should have spawned at least one monster
-        int new_count = entity_manager.getMonsters().size();
+        int new_count = static_cast<int>(entity_manager.getMonsters().size());
         REQUIRE(new_count > initial_count);
     }
     

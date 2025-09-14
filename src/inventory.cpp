@@ -164,7 +164,7 @@ std::vector<Item*> Inventory::getAllItems() const {
 
 int Inventory::findEmptySlot() const {
     if (items.size() < static_cast<size_t>(capacity)) {
-        return items.size();
+        return static_cast<int>(items.size());
     }
     return -1;
 }
@@ -233,7 +233,7 @@ bool Inventory::deserialize(const json& data) {
         }
 
         return true;
-    } catch (const std::exception& e) {
+    } catch (const std::exception&) {
         return false;
     }
 }

@@ -96,13 +96,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(
         /W4
-        /WX
+        /WX  # Treat warnings as errors
         $<$<CONFIG:Debug>:/Od>
         $<$<CONFIG:Debug>:/RTC1>
         $<$<CONFIG:Release>:/O2>
     )
     # UTF-8 support for MSVC
     add_compile_options(/utf-8)
+
+    # Only suppress warnings for deprecated C functions
+    # We'll use the secure versions in code
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)  # Allow use of standard C functions like getenv
 endif()
 
 # Platform-specific definitions

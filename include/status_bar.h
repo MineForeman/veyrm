@@ -1,3 +1,10 @@
+/**
+ * @file status_bar.h
+ * @brief Player status display UI component
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <ftxui/dom/elements.hpp>
