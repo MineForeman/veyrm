@@ -38,6 +38,8 @@
     #include <fcntl.h>
 #endif
 
+#include <filesystem>
+
 // Version information
 constexpr const char* VEYRM_VERSION = "0.0.2";
 constexpr const char* VEYRM_BUILD_DATE = __DATE__;
@@ -50,11 +52,22 @@ void initializePlatform() {
     // Enable UTF-8 support on Windows
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
-    _setmode(_fileno(stdout), _O_U8TEXT);
-#endif
-    
-    // Set locale for proper Unicode handling
+    // Don't use _O_U8TEXT as it causes issues with FTXUI
+    // _setmode(_fileno(stdout), _O_U8TEXT);
+
+    // Enable virtual terminal processing for better terminal support
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    if (hOut != INVALID_HANDLE_VALUE) {
+        if (GetConsoleMode(hOut, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+    }
+#else
+    // Set locale for proper Unicode handling on Unix systems
     std::locale::global(std::locale(""));
+#endif
 }
 
 /**
@@ -616,8 +629,8 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
  * Main entry point
  */
 int main(int argc, char* argv[]) {
-    // Create log directory
-    [[maybe_unused]] int result = system("mkdir -p logs");
+    // Create log directory using std::filesystem (cross-platform)
+    std::filesystem::create_directories("logs");
 
     // Initialize logging first
     Log::init("logs/veyrm_debug.log", Log::DEBUG);
