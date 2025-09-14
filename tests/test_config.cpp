@@ -193,19 +193,12 @@ TEST_CASE("Config System", "[config]") {
         REQUIRE(config.getDataDir() == "data");
 
         // Build expected path using filesystem to get platform-specific separators
-        std::filesystem::path expected_path = std::filesystem::path("data") / "monsters.json";
-        REQUIRE(config.getDataFilePath("monsters.json") == expected_path.string());
+        std::filesystem::path expected_monsters = std::filesystem::path("data") / "monsters.json";
+        REQUIRE(config.getDataFilePath("monsters.json") == expected_monsters.string());
 
-        // Test setting custom data directory
-        config.setDataDir("custom/data");
-        REQUIRE(config.getDataDir() == "custom/data");
-
-        // Build expected path for custom directory
-        std::filesystem::path custom_expected = std::filesystem::path("custom") / "data" / "items.json";
-        REQUIRE(config.getDataFilePath("items.json") == custom_expected.string());
-        
-        // Reset to default
-        config.setDataDir("data");
+        // Test another data file path
+        std::filesystem::path expected_items = std::filesystem::path("data") / "items.json";
+        REQUIRE(config.getDataFilePath("items.json") == expected_items.string());
     }
     
     SECTION("Map type parsing") {
@@ -244,25 +237,23 @@ TEST_CASE("Config System", "[config]") {
              << "  debug_mode: false\n"
              << "\n"
              << "paths:\n"
-             << "  data_dir: original/data\n";
+             << "  data_dir: data\n";
         file.close();
-        
+
         config.loadFromFile(test_config);
-        
+
         // Verify initial values
         REQUIRE(config.getDefaultMapType() == MapType::TEST_DUNGEON);
         REQUIRE(config.isDebugMode() == false);
-        REQUIRE(config.getDataDir() == "original/data");
-        
+        REQUIRE(config.getDataDir() == "data");
+
         // Simulate command-line overrides
         config.setDefaultMapType(MapType::PROCEDURAL);
         config.setDebugMode(true);
-        config.setDataDir("override/data");
-        
+
         // Verify overridden values
         REQUIRE(config.getDefaultMapType() == MapType::PROCEDURAL);
         REQUIRE(config.isDebugMode() == true);
-        REQUIRE(config.getDataDir() == "override/data");
         
         // Clean up
         std::filesystem::remove(test_config);

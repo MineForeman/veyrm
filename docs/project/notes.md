@@ -168,7 +168,13 @@ Document was must be done.
 
 Multiplayer
 
-Server authritive
+- Split the server and clinent into separate binaries.
+- Start the server an then start the client.
+- All traffic between the server and client must be done over the network, later they wont even be on the same machiene.
+- Must be server authritive.
+- As much as the "heavy lifting" as possable be done by the client.
+
+
 
 Ranged attacks
 Spell system
