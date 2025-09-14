@@ -31,6 +31,7 @@ add_executable(veyrm_tests
     test_item.cpp
     test_inventory.cpp
     test_entity_memory_safety.cpp
+    test_ecs.cpp
 )
 
 # Link with Catch2 and other dependencies
@@ -83,6 +84,7 @@ target_sources(veyrm_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/item_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/inventory.cpp
     ${CMAKE_SOURCE_DIR}/src/game_serializer.cpp
+    ${CMAKE_SOURCE_DIR}/src/ecs/entity.cpp
 )
 
 # Add compile definitions for tests
