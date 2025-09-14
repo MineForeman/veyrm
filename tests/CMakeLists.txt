@@ -32,6 +32,7 @@ add_executable(veyrm_tests
     test_inventory.cpp
     test_entity_memory_safety.cpp
     test_ecs.cpp
+    test_ecs_factory.cpp
 )
 
 # Link with Catch2 and other dependencies
