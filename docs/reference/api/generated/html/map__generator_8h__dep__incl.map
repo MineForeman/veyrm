@@ -1,0 +1,51 @@
+<map id="include/map_generator.h" name="include/map_generator.h">
+<area shape="rect" id="Node000001" title="Procedural map generation system for Veyrm." alt="" coords="661,5,823,31"/>
+<area shape="rect" id="Node000002" href="$config_8h.html" title="Game configuration management system." alt="" coords="535,79,647,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="704,40,618,81,616,76,702,36"/>
+<area shape="rect" id="Node000004" href="$game__manager_8cpp.html" title=" " alt="" coords="757,153,913,178"/>
+<area shape="poly" id="edge26_Node000001_Node000004" title=" " alt="" coords="760,43,830,151,825,154,755,45"/>
+<area shape="rect" id="Node000005" href="$main_8cpp.html" title=" " alt="" coords="1028,226,1125,252"/>
+<area shape="poly" id="edge27_Node000001_Node000005" title=" " alt="" coords="645,28,443,45,328,58,216,74,120,95,48,119,24,132,11,146,9,161,18,176,32,183,62,189,161,200,459,217,789,229,1028,234,1028,240,789,234,459,223,161,205,61,194,31,188,15,180,4,162,7,144,21,128,45,114,118,90,216,69,327,53,443,39,645,23"/>
+<area shape="rect" id="Node000006" href="$map__generator_8cpp.html" title=" " alt="" coords="29,153,183,178"/>
+<area shape="poly" id="edge28_Node000001_Node000006" title=" " alt="" coords="675,38,160,155,159,149,673,32"/>
+<area shape="rect" id="Node000010" href="$game__state_8h.html" title="Core game state management and coordination." alt="" coords="1200,79,1345,105"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="839,30,1200,78,1199,83,838,35"/>
+<area shape="rect" id="Node000020" href="$map__validator_8cpp.html" title=" " alt="" coords="1369,79,1517,105"/>
+<area shape="poly" id="edge29_Node000001_Node000020" title=" " alt="" coords="839,25,1075,47,1358,76,1369,78,1368,83,1358,82,1075,52,839,30"/>
+<area shape="rect" id="Node000003" href="$config_8cpp.html" title=" " alt="" coords="392,153,495,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,114,470,154,467,150,551,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="648,107,794,150,793,155,646,112"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="572,118,555,149,554,163,560,176,583,188,628,199,759,215,907,227,1028,233,1028,239,907,232,758,221,627,204,581,193,556,180,549,164,550,147,568,115"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="520,106,183,156,182,150,519,101"/>
+<area shape="rect" id="Node000007" href="$monster__factory_8cpp.html" title=" " alt="" coords="207,153,367,178"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="525,111,340,155,338,149,524,106"/>
+<area shape="rect" id="Node000008" href="$player_8cpp.html" title=" " alt="" coords="937,153,1040,178"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="663,103,926,150,937,152,936,157,925,155,662,108"/>
+<area shape="rect" id="Node000009" href="$spawn__manager_8cpp.html" title=" " alt="" coords="570,153,732,178"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="613,115,643,150,639,154,609,118"/>
+<area shape="poly" id="edge17_Node000010_Node000004" title=" " alt="" coords="1185,110,911,155,910,149,1184,105"/>
+<area shape="poly" id="edge19_Node000010_Node000005" title=" " alt="" coords="1186,109,1142,127,1122,139,1104,154,1092,171,1085,191,1079,226,1074,225,1080,189,1088,169,1100,151,1118,135,1139,122,1184,104"/>
+<area shape="poly" id="edge20_Node000010_Node000008" title=" " alt="" coords="1210,111,1038,155,1036,149,1209,106"/>
+<area shape="poly" id="edge23_Node000010_Node000009" title=" " alt="" coords="1185,105,745,155,733,157,732,151,744,150,1184,100"/>
+<area shape="rect" id="Node000011" href="$game__screen_8h.html" title="Main game screen UI component." alt="" coords="1756,153,1912,178"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1361,103,1745,150,1756,151,1756,157,1744,155,1361,108"/>
+<area shape="rect" id="Node000013" href="$save__load__screen_8h.html" title="Save/load game screen UI component." alt="" coords="1936,153,2118,178"/>
+<area shape="poly" id="edge13_Node000010_Node000013" title=" " alt="" coords="1361,102,1643,127,1923,150,1936,151,1936,157,1923,155,1643,133,1361,108"/>
+<area shape="rect" id="Node000014" href="$save__load__screen_8cpp.html" title=" " alt="" coords="2005,226,2178,252"/>
+<area shape="poly" id="edge22_Node000010_Node000014" title=" " alt="" coords="1361,102,1530,104,1775,106,1897,110,2005,118,2087,131,2115,140,2132,151,2138,160,2140,171,2134,192,2121,212,2106,228,2102,224,2116,208,2129,190,2134,171,2133,162,2128,155,2112,145,2086,136,2005,123,1897,116,1775,111,1530,109,1361,107"/>
+<area shape="rect" id="Node000015" href="$game__loop_8cpp.html" title=" " alt="" coords="2192,153,2324,178"/>
+<area shape="poly" id="edge16_Node000010_Node000015" title=" " alt="" coords="1361,102,1590,119,1769,126,1947,133,2174,150,2192,152,2192,157,2174,155,1947,138,1768,131,1590,125,1361,108"/>
+<area shape="rect" id="Node000016" href="$game__serializer_8cpp.html" title=" " alt="" coords="1113,153,1272,178"/>
+<area shape="poly" id="edge18_Node000010_Node000016" title=" " alt="" coords="1250,117,1208,154,1204,150,1246,113"/>
+<area shape="rect" id="Node000017" href="$renderer_8cpp.html" title=" " alt="" coords="1295,153,1410,178"/>
+<area shape="poly" id="edge21_Node000010_Node000017" title=" " alt="" coords="1299,113,1341,150,1337,154,1296,117"/>
+<area shape="rect" id="Node000018" href="$status__bar_8cpp.html" title=" " alt="" coords="1434,153,1562,178"/>
+<area shape="poly" id="edge24_Node000010_Node000018" title=" " alt="" coords="1326,107,1460,150,1459,155,1324,112"/>
+<area shape="rect" id="Node000019" href="$turn__manager_8cpp.html" title=" " alt="" coords="1586,153,1732,178"/>
+<area shape="poly" id="edge25_Node000010_Node000019" title=" " alt="" coords="1354,105,1594,149,1593,155,1353,111"/>
+<area shape="poly" id="edge12_Node000011_Node000005" title=" " alt="" coords="1741,181,1384,216,1125,237,1125,231,1384,210,1741,176"/>
+<area shape="rect" id="Node000012" href="$game__screen_8cpp.html" title=" " alt="" coords="1761,226,1907,252"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1837,194,1837,226,1831,226,1831,194"/>
+<area shape="poly" id="edge14_Node000013_Node000005" title=" " alt="" coords="1921,181,1454,217,1125,238,1125,232,1454,212,1921,176"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="2050,188,2082,224,2078,228,2046,191"/>
+</map>

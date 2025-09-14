@@ -1,3 +1,10 @@
+/**
+ * @file entity.h
+ * @brief Base entity class for all game objects
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <string>
@@ -8,62 +15,141 @@
 // Forward declarations
 class Map;
 
-// Entity types for creation
+/**
+ * @enum EntityType
+ * @brief Types of entities that can be created in the game
+ */
 enum class EntityType {
-    PLAYER,
-    MONSTER,
-    ITEM
+    PLAYER,   ///< Player character entity
+    MONSTER,  ///< Monster/enemy entity
+    ITEM      ///< Item entity (potions, equipment, etc.)
 };
 
-// Base class for all game entities
+/**
+ * @class Entity
+ * @brief Base class for all game entities (player, monsters, items)
+ *
+ * The Entity class provides core functionality for all game objects that
+ * exist in the world. It handles position, rendering, movement, combat
+ * interfaces, and basic properties. Derived classes (Player, Monster, Item)
+ * extend this functionality for specific entity behaviors.
+ *
+ * @see Player
+ * @see Monster
+ * @see Item
+ * @see EntityManager
+ */
 class Entity {
 public:
-    // Constructor
+    /**
+     * @brief Construct a new Entity
+     * @param x Initial X coordinate
+     * @param y Initial Y coordinate
+     * @param glyph Character representation for rendering
+     * @param color Display color
+     * @param name Entity name for messages and UI
+     */
     Entity(int x, int y, const std::string& glyph, ftxui::Color color, const std::string& name);
+
+    /// Virtual destructor for proper cleanup of derived classes
     virtual ~Entity() = default;
-    
+
     // Position
-    int x, y;
-    
-    // Previous position (for animation/undo)
-    int prev_x, prev_y;
-    
+    int x, y;                    ///< Current position in the world
+    int prev_x, prev_y;          ///< Previous position (for animation/undo)
+
     // Rendering
-    std::string glyph;
-    ftxui::Color color;
-    
+    std::string glyph;           ///< Character(s) displayed for this entity
+    ftxui::Color color;          ///< Color used when rendering
+
     // Properties
-    std::string name;
-    bool blocks_movement = false;
-    bool blocks_sight = false;
-    
+    std::string name;            ///< Display name of the entity
+    bool blocks_movement = false;///< Whether this entity blocks movement
+    bool blocks_sight = false;   ///< Whether this entity blocks line of sight
+
     // Component flags
-    bool is_player = false;
-    bool is_monster = false;
-    bool is_item = false;
-    bool is_blocking = false;
-    
+    bool is_player = false;      ///< True if this is the player entity
+    bool is_monster = false;     ///< True if this is a monster entity
+    bool is_item = false;        ///< True if this is an item entity
+    bool is_blocking = false;    ///< True if this blocks other entities
+
     // Stats (used by Player and Monster)
-    int hp = 1;
-    int max_hp = 1;
+    int hp = 1;                  ///< Current hit points
+    int max_hp = 1;              ///< Maximum hit points
     
-    // Visibility
+    /**
+     * @brief Set visibility state
+     * @param visible Whether the entity should be visible
+     */
     void setVisible(bool visible) { is_visible = visible; }
+
+    /**
+     * @brief Check if entity is visible
+     * @return true if visible, false otherwise
+     */
     bool isVisible() const { return is_visible; }
 
-    // User data for AI and other systems
+    /**
+     * @brief Get user data pointer (for AI and other systems)
+     * @return Opaque pointer to user data
+     * @note Used by AI system to store behavior-specific data
+     */
     void* getUserData() const { return user_data; }
+
+    /**
+     * @brief Set user data pointer
+     * @param data Pointer to user-defined data
+     * @warning Caller is responsible for memory management
+     */
     void setUserData(void* data) { user_data = data; }
 
-    // Combat interface - override in subclasses
+    /**
+     * @brief Get attack bonus for combat calculations
+     * @return Attack bonus value
+     * @note Override in derived classes for custom bonuses
+     */
     virtual int getAttackBonus() const;
+
+    /**
+     * @brief Get defense bonus for combat calculations
+     * @return Defense bonus value
+     * @note Override in derived classes for custom bonuses
+     */
     virtual int getDefenseBonus() const;
+
+    /**
+     * @brief Get base damage dealt in combat
+     * @return Base damage value
+     * @note Override in derived classes for custom damage
+     */
     virtual int getBaseDamage() const;
+
+    /**
+     * @brief Get name for combat messages
+     * @return String to use in combat messages
+     */
     virtual std::string getCombatName() const;
 
-    // Combat events (for future extensibility)
+    /**
+     * @brief Called when this entity attacks another
+     * @param target The entity being attacked
+     * @note Override for special attack effects
+     */
     virtual void onAttack([[maybe_unused]] Entity& target) {}
+
+    /**
+     * @brief Called when this entity is hit in combat
+     * @param attacker The attacking entity
+     * @param damage Amount of damage received
+     * @note Override for special defense effects
+     */
     virtual void onHit([[maybe_unused]] Entity& attacker, [[maybe_unused]] int damage) {}
+
+    /**
+     * @brief Called when an attack against this entity misses
+     * @param attacker The attacking entity
+     * @note Override for dodge/miss effects
+     */
     virtual void onMiss([[maybe_unused]] Entity& attacker) {}
 
 private:
@@ -72,30 +158,100 @@ private:
     
 public:
     
-    // Movement
+    /**
+     * @brief Move entity by relative offset
+     * @param dx X-axis movement delta
+     * @param dy Y-axis movement delta
+     */
     virtual void move(int dx, int dy);
+
+    /**
+     * @brief Move entity to absolute position
+     * @param new_x Target X coordinate
+     * @param new_y Target Y coordinate
+     */
     virtual void moveTo(int new_x, int new_y);
-    
-    // Updates
+
+    /**
+     * @brief Update entity state
+     * @param delta_time Time elapsed since last update (seconds)
+     * @note Override for animated or time-based behaviors
+     */
     virtual void update(double delta_time);
-    
-    // Utilities
+
+    /**
+     * @brief Get current position as Point
+     * @return Current position
+     */
     Point getPosition() const { return Point(x, y); }
+
+    /**
+     * @brief Check if entity is at specific coordinates
+     * @param check_x X coordinate to check
+     * @param check_y Y coordinate to check
+     * @return true if at the specified position
+     */
     bool isAt(int check_x, int check_y) const { return x == check_x && y == check_y; }
+
+    /**
+     * @brief Calculate distance to another entity
+     * @param other Target entity
+     * @return Euclidean distance
+     */
     double distanceTo(const Entity& other) const;
+
+    /**
+     * @brief Calculate distance to coordinates
+     * @param target_x Target X coordinate
+     * @param target_y Target Y coordinate
+     * @return Euclidean distance
+     */
     double distanceTo(int target_x, int target_y) const;
-    
-    // Interaction
+
+    /**
+     * @brief Called when another entity interacts with this one
+     * @param other The interacting entity
+     * @note Override for pickup, dialogue, etc.
+     */
     virtual void onInteract([[maybe_unused]] Entity& other) {}
+
+    /**
+     * @brief Called when entity dies
+     * @note Override for death effects, drops, etc.
+     */
     virtual void onDeath() {}
+
+    /**
+     * @brief Check if entity can move to position
+     * @param map Current map
+     * @param new_x Target X coordinate
+     * @param new_y Target Y coordinate
+     * @return true if movement is valid
+     */
     virtual bool canMoveTo(const Map& map, int new_x, int new_y) const;
-    
-    // Type identification
+
+    /**
+     * @brief Get entity type
+     * @return EntityType enum value
+     */
     virtual EntityType getType() const { return EntityType::ITEM; }
+
+    /**
+     * @brief Check if entity blocks movement
+     * @return true if blocks movement
+     */
     virtual bool isBlocking() const { return blocks_movement; }
+
+    /**
+     * @brief Check if entity can take actions
+     * @return true if entity can act (player/monster)
+     */
     virtual bool canAct() const { return false; }
     
 protected:
-    // Save previous position before moving
+    /**
+     * @brief Save current position as previous position
+     * @note Called before movement for undo/animation support
+     */
     void savePreviousPosition();
 };

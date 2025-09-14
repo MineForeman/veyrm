@@ -1,3 +1,10 @@
+/**
+ * @file game_serializer.h
+ * @brief Game state serialization and save/load system
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <string>
@@ -18,6 +25,27 @@ class EntityManager;
 class ItemManager;
 class MessageLog;
 
+/**
+ * @class GameSerializer
+ * @brief Handles saving and loading of complete game state
+ *
+ * The GameSerializer manages all aspects of game persistence, including
+ * manual saves, auto-saves, save file management, and version compatibility.
+ * It serializes all game components to JSON format and provides utilities
+ * for save file organization and validation.
+ *
+ * Features:
+ * - Manual save to numbered slots (1-9)
+ * - Auto-save with rotation (-1, -2, -3)
+ * - Save file browsing and management
+ * - Version compatibility checking
+ * - Complete game state serialization
+ * - Error handling and validation
+ *
+ * @see ISerializable
+ * @see SaveInfo
+ * @see SaveLoadScreen
+ */
 class GameSerializer {
 public:
     explicit GameSerializer(GameManager* game_manager);

@@ -1,0 +1,7 @@
+<map id="Entity" name="Entity">
+<area shape="rect" id="Node000001" title="Base class for all game entities (player, monsters, items)" alt="" coords="56,5,111,31"/>
+<area shape="rect" id="Node000002" href="$class_monster.html" title="Represents hostile creatures in the game." alt="" coords="5,79,74,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="70,46,49,80,45,77,66,43"/>
+<area shape="rect" id="Node000003" href="$class_player.html" title="Represents the player character." alt="" coords="98,79,157,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="101,43,122,77,118,80,97,46"/>
+</map>

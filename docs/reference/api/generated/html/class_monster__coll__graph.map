@@ -1,0 +1,7 @@
+<map id="Monster" name="Monster">
+<area shape="rect" id="Node000001" title="Represents hostile creatures in the game." alt="" coords="38,102,106,128"/>
+<area shape="rect" id="Node000002" href="$class_entity.html" title="Base class for all game entities (player, monsters, items)" alt="" coords="5,5,61,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="46,44,69,100,64,102,41,46"/>
+<area shape="rect" id="Node000003" href="$struct_point.html" title="2D coordinate point with utility functions" alt="" coords="85,5,136,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="102,46,79,102,74,100,97,44"/>
+</map>

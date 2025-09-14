@@ -1,3 +1,10 @@
+/**
+ * @file save_load_screen.h
+ * @brief Save/load game screen UI component
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <ftxui/component/component.hpp>

@@ -1,0 +1,5 @@
+<map id="RenderEntity" name="RenderEntity">
+<area shape="rect" id="Node000001" title="Data for rendering a single entity with layering." alt="" coords="5,102,103,128"/>
+<area shape="rect" id="Node000002" href="$struct_point.html" title="2D coordinate point with utility functions" alt="" coords="28,5,80,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="57,46,57,101,51,101,51,46"/>
+</map>

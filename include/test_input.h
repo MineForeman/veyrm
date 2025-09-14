@@ -1,9 +1,27 @@
+/**
+ * @file test_input.h
+ * @brief Testing utilities for automated input simulation
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <string>
 #include <queue>
 #include <ftxui/component/event.hpp>
 
+/**
+ * @class TestInput
+ * @brief Provides automated input simulation for testing
+ *
+ * The TestInput class enables automated testing of game functionality
+ * by simulating keyboard input sequences. This supports both unit
+ * testing and integration testing of game mechanics.
+ *
+ * @see build.sh keys command
+ * @see InputHandler
+ */
 class TestInput {
 public:
     TestInput();

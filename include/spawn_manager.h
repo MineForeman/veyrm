@@ -1,3 +1,10 @@
+/**
+ * @file spawn_manager.h
+ * @brief Entity spawning system for procedural content
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "point.h"

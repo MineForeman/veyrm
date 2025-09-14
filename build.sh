@@ -648,6 +648,7 @@ show_help() {
     echo "  clearlog               Clear all log files"
     echo "  gource [--clean]       Create Gource video (--clean deletes old videos)"
     echo "  diagram                Generate class diagrams with Doxygen"
+    echo "  docs                   Generate API documentation with Doxygen"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -742,6 +743,20 @@ main() {
             ;;
         diagram)
             class_diagram
+            ;;
+        docs)
+            print_header
+            echo -e "${YELLOW}Generating Doxygen documentation...${NC}"
+            if command -v doxygen &> /dev/null; then
+                doxygen Doxyfile
+                echo -e "${GREEN}Documentation generated in docs/reference/api/generated/${NC}"
+                echo -e "${CYAN}Open docs/reference/api/generated/html/index.html to view${NC}"
+            else
+                echo -e "${RED}Error: Doxygen not installed${NC}"
+                echo -e "Install with: brew install doxygen graphviz (macOS)"
+                echo -e "         or: sudo apt-get install doxygen graphviz (Linux)"
+                exit 1
+            fi
             ;;
         help|--help|-h)
             show_help

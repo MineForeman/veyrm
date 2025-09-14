@@ -1,0 +1,7 @@
+<map id="MonsterAI::AIData" name="MonsterAI::AIData">
+<area shape="rect" id="Node000001" title=" " alt="" coords="40,122,171,148"/>
+<area shape="rect" id="Node000002" href="$struct_point.html" title="2D coordinate point with utility functions" alt="" coords="5,5,57,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="27,46,26,72,34,97,47,110,63,120,60,124,43,114,30,100,21,73,22,46"/>
+<area shape="rect" id="Node000003" href="$class_room.html" title="Represents a rectangular room in the dungeon." alt="" coords="152,5,208,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,46,168,73,153,100,128,124,124,120,149,97,163,71,172,45"/>
+</map>

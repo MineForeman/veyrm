@@ -1,0 +1,47 @@
+<map id="include/entity_manager.h" name="include/entity_manager.h">
+<area shape="rect" id="Node000001" title="Entity lifecycle and management system." alt="" coords="325,5,490,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="438,300,507,326"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="452,29,517,53,593,93,630,119,663,150,689,185,708,225,712,240,708,254,522,302,521,297,704,250,707,240,703,227,685,188,659,153,626,123,590,98,515,58,450,34"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="279,300,336,326"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="356,34,282,58,196,96,153,122,113,152,77,187,48,228,26,262,12,279,9,280,17,277,46,273,94,272,166,278,264,297,263,302,165,283,94,277,46,278,18,282,4,283,7,275,21,258,44,225,73,184,109,148,150,118,193,92,280,53,354,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="873,79,947,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="491,26,659,47,854,76,858,77,857,82,853,82,658,52,490,31"/>
+<area shape="rect" id="Node000005" href="$entity_8h.html" title="Base entity class for all game objects." alt="" coords="283,153,345,178"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="399,33,364,80,329,140,325,138,360,78,395,30"/>
+<area shape="rect" id="Node000011" href="$player_8h.html" title="Player character class." alt="" coords="374,79,440,105"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="410,31,410,63,405,63,405,31"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="329,177,450,287,446,291,325,181"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="361,300,414,326"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="316,178,317,212,328,251,342,271,360,288,356,292,338,274,323,253,312,213,311,179"/>
+<area shape="rect" id="Node000007" href="$point_8h.html" title="2D coordinate and direction utilities" alt="" coords="196,226,256,252"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="301,181,254,219,251,214,297,177"/>
+<area shape="rect" id="Node000009" href="$color__scheme_8h.html" title="Color scheme and theming system for Veyrm." alt="" coords="59,226,172,252"/>
+<area shape="poly" id="edge10_Node000005_Node000009" title=" " alt="" coords="283,181,164,223,162,218,281,176"/>
+<area shape="poly" id="edge8_Node000007_Node000003" title=" " alt="" coords="241,251,284,288,280,292,238,255"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="197,300,255,326"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="229,252,229,284,223,284,223,252"/>
+<area shape="poly" id="edge12_Node000009_Node000006" title=" " alt="" coords="166,250,346,297,345,302,164,255"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="28,300,173,326"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="115,253,109,285,103,284,110,252"/>
+<area shape="poly" id="edge29_Node000011_Node000002" title=" " alt="" coords="413,104,467,284,462,286,408,106"/>
+<area shape="poly" id="edge28_Node000011_Node000003" title=" " alt="" coords="404,106,321,287,317,285,399,104"/>
+<area shape="poly" id="edge14_Node000011_Node000005" title=" " alt="" coords="393,107,343,145,340,141,390,103"/>
+<area shape="rect" id="Node000012" href="$inventory_8h.html" title="Player inventory management system." alt="" coords="556,153,640,178"/>
+<area shape="poly" id="edge15_Node000011_Node000012" title=" " alt="" coords="440,103,552,144,550,149,439,108"/>
+<area shape="poly" id="edge17_Node000012_Node000002" title=" " alt="" coords="598,179,589,214,580,235,568,254,543,277,516,295,513,290,540,273,564,250,575,232,584,213,593,178"/>
+<area shape="poly" id="edge16_Node000012_Node000003" title=" " alt="" coords="575,181,346,295,344,290,572,177"/>
+<area shape="poly" id="edge18_Node000012_Node000006" title=" " alt="" coords="591,180,560,216,517,254,473,280,429,299,427,294,470,275,514,250,556,212,587,177"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="635,374,766,399"/>
+<area shape="poly" id="edge19_Node000012_Node000013" title=" " alt="" coords="641,175,687,194,710,208,730,224,752,248,767,271,772,297,764,327,751,348,733,366,730,362,747,345,759,325,766,297,762,273,748,251,727,228,707,212,685,199,639,180"/>
+<area shape="rect" id="Node000014" href="$item_8h.html" title="Item base class for all game items." alt="" coords="636,226,693,252"/>
+<area shape="poly" id="edge20_Node000012_Node000014" title=" " alt="" coords="611,177,645,213,641,217,607,180"/>
+<area shape="rect" id="Node000016" href="$serializable_8h.html" title="Serialization interface and save game data structures." alt="" coords="652,300,749,326"/>
+<area shape="poly" id="edge27_Node000012_Node000016" title=" " alt="" coords="641,176,678,194,695,208,708,225,714,240,716,256,712,285,707,285,711,256,709,241,704,228,691,212,675,199,639,181"/>
+<area shape="poly" id="edge23_Node000014_Node000002" title=" " alt="" coords="636,254,520,297,518,292,634,249"/>
+<area shape="poly" id="edge21_Node000014_Node000006" title=" " alt="" coords="636,250,430,302,428,297,635,245"/>
+<area shape="poly" id="edge24_Node000014_Node000013" title=" " alt="" coords="659,254,643,287,640,306,643,325,655,345,672,362,668,366,651,348,638,327,634,306,638,285,654,251"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="531,300,577,326"/>
+<area shape="poly" id="edge22_Node000014_Node000015" title=" " alt="" coords="647,255,587,294,584,289,644,250"/>
+<area shape="poly" id="edge25_Node000014_Node000016" title=" " alt="" coords="673,251,690,285,685,287,668,253"/>
+<area shape="poly" id="edge26_Node000016_Node000013" title=" " alt="" coords="703,326,703,358,698,358,698,326"/>
+</map>

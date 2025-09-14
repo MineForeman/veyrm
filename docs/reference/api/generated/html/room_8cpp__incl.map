@@ -1,0 +1,14 @@
+<map id="src/room.cpp" name="src/room.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="64,5,161,31"/>
+<area shape="rect" id="Node000002" href="$room_8h.html" title="Room structure for dungeon map generation." alt="" coords="37,79,98,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,33,85,67,81,64,103,30"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="122,79,196,105"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="123,30,145,64,141,67,118,33"/>
+<area shape="rect" id="Node000003" href="$point_8h.html" title="2D coordinate and direction utilities" alt="" coords="72,153,132,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="75,104,92,137,87,140,71,106"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,226,63,252"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="67,106,43,212,38,210,62,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="93,180,58,217,54,213,89,177"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="87,226,144,252"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="107,178,113,210,108,211,102,179"/>
+</map>

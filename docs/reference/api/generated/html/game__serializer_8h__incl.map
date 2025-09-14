@@ -1,0 +1,18 @@
+<map id="include/game_serializer.h" name="include/game_serializer.h">
+<area shape="rect" id="Node000001" title="Game state serialization and save/load system." alt="" coords="214,5,381,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,59,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="250,34,74,81,73,76,249,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="83,79,141,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,34,156,76,154,71,265,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="164,79,233,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="282,34,229,72,226,68,279,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="257,79,338,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="300,31,300,63,295,63,295,31"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="362,79,422,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="315,29,366,67,362,72,312,34"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="438,153,568,178"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="340,29,388,48,436,77,467,107,490,138,486,141,463,110,433,81,385,53,338,34"/>
+<area shape="rect" id="Node000008" href="$serializable_8h.html" title="Serialization interface and save game data structures." alt="" coords="498,79,595,105"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="340,29,491,72,489,77,339,34"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="542,106,520,141,516,138,537,103"/>
+</map>

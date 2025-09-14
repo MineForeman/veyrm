@@ -1,10 +1,18 @@
+/**
+ * @file layout_system.h
+ * @brief Responsive UI layout management system
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
 /**
- * LayoutSystem manages the responsive layout of the game UI
+ * @class LayoutSystem
+ * @brief LayoutSystem manages the responsive layout of the game UI
  * 
  * The layout consists of three main panels:
  * - Map Panel: Main game view (left side)

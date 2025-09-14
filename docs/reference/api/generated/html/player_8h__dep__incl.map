@@ -1,0 +1,32 @@
+<map id="include/player.h" name="include/player.h">
+<area shape="rect" id="Node000001" title="Player character class." alt="" coords="760,5,871,31"/>
+<area shape="rect" id="Node000002" href="$entity__manager_8h.html" title="Entity lifecycle and management system." alt="" coords="506,79,672,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="763,39,628,81,627,76,762,34"/>
+<area shape="rect" id="Node000004" href="$game__manager_8cpp.html" title=" " alt="" coords="5,153,162,178"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="745,30,591,51,411,82,252,119,125,155,123,150,250,114,410,76,590,45,744,25"/>
+<area shape="rect" id="Node000005" href="$game__screen_8cpp.html" title=" " alt="" coords="186,153,333,178"/>
+<area shape="poly" id="edge11_Node000001_Node000005" title=" " alt="" coords="745,32,627,52,495,82,380,119,289,155,287,150,378,114,493,76,626,46,744,27"/>
+<area shape="rect" id="Node000006" href="$game__serializer_8cpp.html" title=" " alt="" coords="676,153,835,178"/>
+<area shape="poly" id="edge12_Node000001_Node000006" title=" " alt="" coords="797,44,774,80,763,119,759,152,753,152,758,118,769,78,792,42"/>
+<area shape="rect" id="Node000007" href="$player_8cpp.html" title=" " alt="" coords="859,153,961,178"/>
+<area shape="poly" id="edge15_Node000001_Node000007" title=" " alt="" coords="815,46,815,75,825,103,836,118,850,131,881,150,879,154,847,135,832,122,820,106,810,76,809,47"/>
+<area shape="rect" id="Node000009" href="$spawn__manager_8cpp.html" title=" " alt="" coords="985,153,1147,178"/>
+<area shape="poly" id="edge16_Node000001_Node000009" title=" " alt="" coords="828,44,844,75,869,103,896,120,925,133,985,151,984,156,923,138,893,124,866,107,840,78,823,47"/>
+<area shape="rect" id="Node000010" href="$combat__system_8cpp.html" title=" " alt="" coords="879,79,1040,105"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="855,36,936,76,934,81,852,41"/>
+<area shape="rect" id="Node000011" href="$inventory__renderer_8cpp.html" title=" " alt="" coords="1064,79,1239,105"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="887,32,1095,76,1093,81,886,37"/>
+<area shape="rect" id="Node000012" href="$monster__ai_8cpp.html" title=" " alt="" coords="1263,79,1395,105"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="887,26,1251,76,1263,78,1262,83,1250,82,886,32"/>
+<area shape="rect" id="Node000013" href="$status__bar_8cpp.html" title=" " alt="" coords="1419,79,1548,105"/>
+<area shape="poly" id="edge17_Node000001_Node000013" title=" " alt="" coords="887,23,1119,44,1408,76,1419,78,1419,83,1407,82,1118,50,887,28"/>
+<area shape="rect" id="Node000003" href="$entity__manager_8cpp.html" title=" " alt="" coords="496,153,652,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="586,120,579,153,574,152,581,119"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="491,110,163,156,162,150,491,104"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="518,111,316,155,315,149,517,106"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="632,109,728,150,726,155,630,114"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="659,106,859,150,858,155,658,111"/>
+<area shape="rect" id="Node000008" href="$renderer_8cpp.html" title=" " alt="" coords="357,153,471,178"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="546,113,445,155,443,150,544,108"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="686,105,985,149,984,155,685,110"/>
+</map>

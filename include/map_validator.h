@@ -1,3 +1,10 @@
+/**
+ * @file map_validator.h
+ * @brief Map validation and connectivity analysis
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "point.h"

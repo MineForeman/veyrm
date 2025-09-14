@@ -1,3 +1,10 @@
+/**
+ * @file item_manager.h
+ * @brief Global item management system
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #ifndef ITEM_MANAGER_H
 #define ITEM_MANAGER_H
 

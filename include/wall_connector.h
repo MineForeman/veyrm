@@ -1,3 +1,10 @@
+/**
+ * @file wall_connector.h
+ * @brief Wall connectivity analysis for smart wall rendering
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include "point.h"

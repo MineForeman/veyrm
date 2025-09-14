@@ -1,3 +1,10 @@
+/**
+ * @file monster_factory.h
+ * @brief Factory for creating monsters from JSON templates
+ * @author Veyrm Team
+ * @date 2025
+ */
+
 #pragma once
 
 #include <memory>

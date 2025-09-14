@@ -1,0 +1,19 @@
+<map id="include/item_manager.h" name="include/item_manager.h">
+<area shape="rect" id="Node000001" title="Global item management system." alt="" coords="22,5,180,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,63,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,33,58,69,54,66,88,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="42,153,111,178"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="101,32,84,138,79,137,96,31"/>
+<area shape="rect" id="Node000004" href="$item_8h.html" title="Item base class for all game items." alt="" coords="184,79,241,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="121,29,182,68,179,73,118,34"/>
+<area shape="poly" id="edge6_Node000004_Node000003" title=" " alt="" coords="191,108,114,147,112,143,188,103"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="135,153,189,178"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="206,106,181,141,177,138,202,103"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="212,153,258,178"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="219,104,229,137,224,138,214,106"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="273,226,403,252"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="227,103,272,151,322,212,318,216,268,154,223,107"/>
+<area shape="rect" id="Node000008" href="$serializable_8h.html" title="Serialization interface and save game data structures." alt="" coords="333,153,431,178"/>
+<area shape="poly" id="edge8_Node000004_Node000008" title=" " alt="" coords="242,103,340,144,338,149,240,108"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="377,180,356,214,351,211,372,177"/>
+</map>
