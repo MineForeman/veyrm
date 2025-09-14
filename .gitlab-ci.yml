@@ -1,0 +1,137 @@
+# GitLab CI configuration for Veyrm
+# Based on GitHub Actions workflow
+
+stages:
+  - build
+  - test
+  - release
+
+variables:
+  CMAKE_BUILD_TYPE: "Release"
+  GIT_SUBMODULE_STRATEGY: recursive
+
+# Cache dependencies between builds
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - build/_deps/
+
+# Template for common build steps
+.build_template:
+  stage: build
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq cmake build-essential git
+  script:
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
+    - cmake --build . --config ${CMAKE_BUILD_TYPE} -j
+  artifacts:
+    paths:
+      - build/bin/
+    expire_in: 1 hour
+
+# Build job for Linux
+build:linux:
+  extends: .build_template
+  tags:
+    - linux
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Test job for Linux
+test:linux:
+  stage: test
+  needs: ["build:linux"]
+  tags:
+    - linux
+  script:
+    # Run unit tests (must be from project root for data paths)
+    - ./build/bin/veyrm_tests
+    # Test that game executable runs
+    - timeout 10s ./build/bin/veyrm --help || true
+    # Run game with automated input test
+    - echo -e "\njjjq" | timeout 10s ./build/bin/veyrm || true
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Documentation generation (only on main)
+docs:generate:
+  stage: build
+  tags:
+    - linux
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq doxygen graphviz
+  script:
+    - doxygen Doxyfile
+  artifacts:
+    paths:
+      - docs/reference/api/generated/
+    expire_in: 1 week
+  only:
+    - main
+
+# Release job - creates packages for tagged releases
+release:linux:
+  stage: release
+  needs: ["build:linux"]
+  tags:
+    - linux
+  script:
+    # Create release package
+    - mkdir -p release/veyrm
+    - cp build/bin/veyrm release/veyrm/
+    - cp -r data release/veyrm/
+    - cp README.md release/veyrm/
+    - cp CHANGELOG.md release/veyrm/
+    - cd release
+    - tar -czf veyrm-linux-x64.tar.gz veyrm
+    - echo "Release package created - veyrm-linux-x64.tar.gz"
+  artifacts:
+    name: "veyrm-${CI_COMMIT_TAG}-linux-x64"
+    paths:
+      - release/veyrm-linux-x64.tar.gz
+    expire_in: never
+  only:
+    - tags
+
+# Optional: Windows build (if you add Windows runners later)
+# Uncomment and adjust when Windows runners are available
+# build:windows:
+#   stage: build
+#   tags:
+#     - windows
+#   before_script:
+#     - echo "Using pre-installed CMake and MSVC"
+#   script:
+#     - mkdir build
+#     - cd build
+#     - cmake -DCMAKE_BUILD_TYPE=Release ..
+#     - cmake --build . --config Release -j
+#   artifacts:
+#     paths:
+#       - build/bin/Release/
+#     expire_in: 1 hour
+#   only:
+#     - main
+#     - develop
+#     - merge_requests
+
+# test:windows:
+#   stage: test
+#   needs: ["build:windows"]
+#   tags:
+#     - windows
+#   script:
+#     - ./build/bin/Release/veyrm_tests.exe
+#     - powershell -Command "Start-Process -FilePath './build/bin/Release/veyrm.exe' -ArgumentList '--help' -NoNewWindow -Wait -PassThru | Stop-Process -Force"
+#   only:
+#     - main
+#     - develop
+#     - merge_requests
