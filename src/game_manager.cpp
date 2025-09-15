@@ -115,21 +115,22 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Create player entity at spawn point
-    std::shared_ptr<Player> player;
     if (use_ecs && ecs_world) {
-        // Create player using ECS
+        // Create player using ECS only
         [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
-        // Get legacy player for compatibility
-        player = entity_manager->getPlayer();
+
+        // Skip legacy spawning when using ECS
+        // ECS handles all entity creation and spawning
     } else {
         // Create player using legacy system
-        player = entity_manager->createPlayer(spawn.x, spawn.y);
+        std::shared_ptr<Player> player = entity_manager->createPlayer(spawn.x, spawn.y);
+
+        // Spawn initial monsters after player placement (legacy only)
+        spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
     }
-    
-    // Spawn initial monsters after player placement
-    spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
-    
+
     // Update deprecated variables for compatibility
+    auto player = getPlayer();
     if (player) {
         player_x = player->x;
         player_y = player->y;
@@ -223,13 +224,16 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
         return;
     }
 
-    // Update ECS if enabled
+    // Update ECS if enabled (PRIMARY)
     if (use_ecs && ecs_world) {
         ecs_world->update(deltaTime);
         ecs_world->removeDeadEntities();
+
+        // ECS is now authoritative - skip legacy updates
+        return;
     }
 
-    // Update all entities (legacy or synced)
+    // Only update legacy entities if ECS is disabled
     if (entity_manager) {
         entity_manager->updateAll(deltaTime);
     }
@@ -341,6 +345,14 @@ void GameManager::updateFOV() {
 }
 
 void GameManager::updateMonsters() {
+    // Use ECS for monster updates if enabled
+    if (use_ecs && ecs_world) {
+        // ECS handles monster updates in its update() call
+        // No need for separate monster updates
+        return;
+    }
+
+    // Legacy path only if ECS is disabled
     if (!entity_manager || !monster_ai) {
         return;
     }
