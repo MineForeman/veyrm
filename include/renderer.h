@@ -102,7 +102,7 @@ private:
     ftxui::Element renderTerrain(const Map& map);
     ftxui::Element renderTerrainWithPlayer(const Map& map, const GameManager& game);
     ftxui::Element renderItems(const GameManager& game);
-    ftxui::Element renderEntities(const GameManager& game);
+    // renderEntities removed - using ECS RenderSystem integration
     ftxui::Element renderPlayer(const GameManager& game);
     ftxui::Element renderEffects();
     

@@ -13,9 +13,7 @@
 #include <string>
 
 #include "system_manager.h"
-#include "entity_manager_bridge.h"
-#include "combat_system_bridge.h"
-#include "renderer_bridge.h"
+// Bridge classes removed - no longer needed in full ECS mode
 #include "../game_state.h"
 
 // Forward declarations at global scope
@@ -166,11 +164,7 @@ public:
      */
     RenderSystem* getRenderSystem();
 
-    /**
-     * @brief Get entity manager bridge
-     * @return Entity manager bridge
-     */
-    EntityManagerBridge* getEntityBridge() { return entity_bridge.get(); }
+    // Entity bridge removed - no longer needed in full ECS mode
 
     /**
      * @brief Get native combat system
@@ -184,11 +178,7 @@ public:
      */
     AISystem* getAISystem() { return native_ai_system; }
 
-    /**
-     * @brief Get renderer bridge
-     * @return Renderer bridge
-     */
-    RendererBridge* getRendererBridge() { return renderer_bridge.get(); }
+    // Renderer bridge removed - no longer needed in full ECS mode
 
     /**
      * @brief Check if position is blocked
@@ -228,8 +218,7 @@ public:
 
 private:
     World world;                                          ///< ECS world container
-    std::unique_ptr<EntityManagerBridge> entity_bridge;  ///< Entity manager bridge (for legacy compat)
-    std::unique_ptr<RendererBridge> renderer_bridge;     ///< Renderer bridge
+    // Bridge members removed - no longer needed in full ECS mode
 
     // Native ECS systems
     CombatSystem* native_combat_system = nullptr;        ///< Native ECS combat system

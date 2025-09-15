@@ -34,7 +34,6 @@ add_executable(veyrm_tests
     test_ecs.cpp
     test_ecs_factory.cpp
     test_ecs_systems.cpp
-    test_ecs_bridges.cpp
     test_ecs_integration.cpp
     test_data_loader.cpp
 )

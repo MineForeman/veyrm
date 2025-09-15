@@ -51,9 +51,7 @@ GameWorld::GameWorld(::EntityManager* entities, ::CombatSystem* /*combat*/,
 GameWorld::~GameWorld() = default;
 
 void GameWorld::initialize(bool migrate_existing) {
-    // Create bridge objects for legacy compatibility
-    entity_bridge = std::make_unique<EntityManagerBridge>(legacy_entities);
-    renderer_bridge = std::make_unique<RendererBridge>(entity_bridge.get());
+    // Bridge objects removed - no longer needed in full ECS mode
 
     // Initialize all ECS systems
     initializeSystems();
@@ -132,10 +130,9 @@ void GameWorld::migrateExistingEntities() {
         }
 
         if (ecs_entity) {
-            // Add to world and sync with bridge
-            Entity& added = world.addEntity(std::move(ecs_entity));
-            entity_bridge->syncEntity(legacy_entity,
-                std::shared_ptr<Entity>(&added, [](Entity*){}));
+            // Add to world
+            world.addEntity(std::move(ecs_entity));
+            // Legacy sync removed - no longer needed
         }
     }
 }
@@ -164,16 +161,9 @@ EntityID GameWorld::createPlayer(int x, int y) {
     EntityID id = player_entity->getID();
 
     // Add to world
-    Entity& added = world.addEntity(std::move(player_entity));
+    world.addEntity(std::move(player_entity));
 
-    // Create legacy player if needed for compatibility
-    if (legacy_entities) {
-        auto legacy_player = legacy_entities->createPlayer(x, y);
-        if (legacy_player) {
-            entity_bridge->syncEntity(legacy_player,
-                std::shared_ptr<Entity>(&added, [](Entity*){}));
-        }
-    }
+    // Legacy player creation removed - full ECS mode
 
     // Track player ID
     player_id = id;
@@ -192,16 +182,9 @@ EntityID GameWorld::createMonster(const std::string& type, int x, int y) {
     EntityID id = monster_entity->getID();
 
     // Add to world
-    Entity& added = world.addEntity(std::move(monster_entity));
+    world.addEntity(std::move(monster_entity));
 
-    // Create legacy monster if needed
-    if (legacy_entities) {
-        auto legacy_monster = legacy_entities->createMonster(type, x, y);
-        if (legacy_monster) {
-            entity_bridge->syncEntity(legacy_monster,
-                std::shared_ptr<Entity>(&added, [](Entity*){}));
-        }
-    }
+    // Legacy monster creation removed - full ECS mode
 
     return id;
 }
@@ -232,10 +215,7 @@ bool GameWorld::removeEntity(EntityID id) {
         return false;
     }
 
-    // Remove from bridges if present
-    if (entity_bridge) {
-        entity_bridge->removeEntity(id);
-    }
+    // Bridge removal code removed - no longer needed
 
     return world.removeEntity(id);
 }
@@ -363,24 +343,11 @@ void GameWorld::updateFOV(const std::vector<std::vector<bool>>& fov) {
 }
 
 void GameWorld::syncToLegacy() {
-    if (!entity_bridge) return;
-
-    // Sync all ECS entities back to legacy system
-    for (const auto& entity : world.getEntities()) {
-        entity_bridge->syncToLegacy(entity.get());
-    }
+    // Legacy sync removed - no longer needed in full ECS mode
 }
 
 void GameWorld::syncFromLegacy() {
-    if (!entity_bridge) return;
-
-    // Sync legacy entities to ECS
-    if (legacy_entities) {
-        auto all_entities = legacy_entities->getAllEntities();
-        for (const auto& legacy_entity : all_entities) {
-            entity_bridge->syncFromLegacy(legacy_entity);
-        }
-    }
+    // Legacy sync removed - no longer needed in full ECS mode
 }
 
 MovementSystem* GameWorld::getMovementSystem() {

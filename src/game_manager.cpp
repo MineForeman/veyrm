@@ -18,6 +18,8 @@
 #include "monster.h"
 #include "combat_system.h"
 #include "log.h"
+#include "ecs/position_component.h"
+#include "ecs/health_component.h"
 #include "item_manager.h"
 #include "item_factory.h"
 #include "game_serializer.h"
@@ -116,12 +118,10 @@ void GameManager::initializeMap(MapType type) {
     
     // Create player entity at spawn point
     if (use_ecs && ecs_world) {
-        // Create player using ECS
+        // Create player using ECS only
         [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
 
-        // Also create legacy player for rendering compatibility
-        // This will be synced by the bridge but not directly updated
-        std::shared_ptr<Player> legacy_player = entity_manager->createPlayer(spawn.x, spawn.y);
+        // No legacy player needed in full ECS mode
 
         // Skip legacy monster spawning when using ECS
         // ECS handles monster creation and spawning
@@ -226,9 +226,13 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
     turn_manager->executePlayerAction(speed);
     
     // After player acts, check for dynamic spawning
-    Player* player = getPlayer();
-    if (player && spawn_manager) {
-        spawn_manager->update(*map, *entity_manager, player, current_depth);
+    if (use_ecs) {
+        // ECS mode - skip legacy spawning, ECS handles it
+    } else {
+        Player* player = getPlayer();
+        if (player && spawn_manager) {
+            spawn_manager->update(*map, *entity_manager, player, current_depth);
+        }
     }
 }
 
@@ -294,13 +298,21 @@ void GameManager::processInput() {
 }
 
 void GameManager::updateFOV() {
-    if (!entity_manager || !map) return;
-    
-    Player* player = getPlayer();
-    if (!player) return;
-    
+    if (!map) return;
+
+    Point playerPos;
+
+    if (use_ecs && ecs_world) {
+        // Use ECS player position
+        playerPos = Point(player_x, player_y);  // These are synced from ECS
+    } else {
+        // Legacy mode
+        Player* player = getPlayer();
+        if (!player) return;
+        playerPos = Point(player->x, player->y);
+    }
+
     // Calculate FOV from player position
-    Point playerPos(player->x, player->y);
     FOV::calculate(*map, playerPos, Config::getInstance().getFOVRadius(), current_fov);
     
     // Check if player entered a new room

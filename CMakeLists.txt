@@ -170,9 +170,7 @@ add_library(veyrm_core STATIC
     src/ecs/entity.cpp
     src/ecs/movement_system.cpp
     src/ecs/render_system.cpp
-    src/ecs/entity_manager_bridge.cpp
-    src/ecs/combat_system_bridge.cpp
-    src/ecs/renderer_bridge.cpp
+    # Bridge classes removed - no longer needed in full ECS mode
     src/ecs/game_world.cpp
     src/ecs/combat_system.cpp
     src/ecs/ai_system.cpp

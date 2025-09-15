@@ -5,6 +5,8 @@
 #include "entity_manager.h"
 #include "item_manager.h"
 #include "item.h"
+#include "ecs/game_world.h"
+#include "ecs/render_system.h"
 #include <ftxui/dom/elements.hpp>
 #include <algorithm>
 
@@ -80,11 +82,15 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
     std::vector<Element> rows;
     Point player_screen = mapToScreen(game.player_x, game.player_y);
     
-    // Get visible entities for rendering
-    auto entity_manager = game.getEntityManager();
-    std::vector<std::shared_ptr<Entity>> visible_entities;
-    if (entity_manager) {
-        visible_entities = entity_manager->getVisibleEntities();
+    // Get entities from ECS RenderSystem
+    std::vector<std::vector<std::string>> ecs_entity_grid;
+    auto* ecs_world = const_cast<ecs::GameWorld*>(game.getECSWorld());
+    if (ecs_world) {
+        ecs::RenderSystem* render_system = ecs_world->getRenderSystem();
+        if (render_system) {
+            ecs_entity_grid = render_system->renderToGrid(viewport_width, viewport_height,
+                                                         viewport_offset.x, viewport_offset.y);
+        }
     }
 
     // Get items for rendering
@@ -108,16 +114,17 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                 continue;
             }
             
-            // Check for visible entities at this position
+            // Check for ECS entities at this position
             bool entity_rendered = false;
-            if (map.isVisible(map_pos.x, map_pos.y)) {
-                for (const auto& entity : visible_entities) {
-                    if (entity && !entity->is_player && entity->x == map_pos.x && entity->y == map_pos.y) {
-                        // Render the entity
-                        row_elements.push_back(text(entity->glyph) | color(entity->color) | bold);
-                        entity_rendered = true;
-                        break;
-                    }
+            if (map.isVisible(map_pos.x, map_pos.y) && !ecs_entity_grid.empty()) {
+                if (screen_y < (int)ecs_entity_grid.size() &&
+                    screen_x < (int)ecs_entity_grid[screen_y].size() &&
+                    ecs_entity_grid[screen_y][screen_x] != " ") {
+
+                    const std::string& entity_glyph = ecs_entity_grid[screen_y][screen_x];
+                    // Use default color for ECS entities for now
+                    row_elements.push_back(text(entity_glyph) | color(Color::White) | bold);
+                    entity_rendered = true;
                 }
             }
 
@@ -218,56 +225,7 @@ Element MapRenderer::renderTerrain([[maybe_unused]] const Map& map) {
     return text("");
 }
 
-Element MapRenderer::renderEntities(const GameManager& game) {
-    // Get only visible entities from entity manager
-    auto entity_manager = game.getEntityManager();
-    if (!entity_manager) {
-        return text("");
-    }
-    
-    auto visible_entities = entity_manager->getVisibleEntities();
-    if (visible_entities.empty()) {
-        return text("");
-    }
-    
-    // Create grid for entities
-    std::vector<std::vector<char>> entity_grid(viewport_height, 
-                                               std::vector<char>(viewport_width, ' '));
-    std::vector<std::vector<Color>> entity_colors(viewport_height,
-                                                  std::vector<Color>(viewport_width, Color::White));
-    
-    // Place visible entities on grid
-    for (const auto& entity : visible_entities) {
-        if (entity && !entity->is_player && isInViewport(entity->x, entity->y)) {
-            Point screen_pos = mapToScreen(entity->x, entity->y);
-            if (screen_pos.x >= 0 && screen_pos.x < viewport_width &&
-                screen_pos.y >= 0 && screen_pos.y < viewport_height) {
-                // For now, just use first character of glyph
-                if (!entity->glyph.empty()) {
-                    entity_grid[screen_pos.y][screen_pos.x] = entity->glyph[0];
-                }
-                entity_colors[screen_pos.y][screen_pos.x] = entity->color;
-            }
-        }
-    }
-    
-    // Build render elements
-    std::vector<Element> rows;
-    for (int y = 0; y < viewport_height; y++) {
-        std::vector<Element> row_elements;
-        for (int x = 0; x < viewport_width; x++) {
-            if (entity_grid[y][x] != ' ') {
-                row_elements.push_back(text(std::string(1, entity_grid[y][x])) | 
-                                      color(entity_colors[y][x]));
-            } else {
-                row_elements.push_back(text(" "));
-            }
-        }
-        rows.push_back(hbox(row_elements));
-    }
-    
-    return vbox(rows);
-}
+// renderEntities method removed - now using ECS RenderSystem integration
 
 Element MapRenderer::renderPlayer(const GameManager& game) {
     // Check if player is in viewport
