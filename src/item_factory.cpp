@@ -50,30 +50,78 @@ void ItemFactory::parseItemFromJson(const nlohmann::json& item_json) {
     // Required fields
     tmpl.id = item_json["id"];
     tmpl.name = item_json["name"];
-    tmpl.description = item_json["description"];
-    tmpl.type = Item::stringToType(item_json["type"]);
-    tmpl.symbol = item_json["symbol"].get<std::string>()[0];
-    tmpl.color = item_json["color"];
-    tmpl.value = item_json["value"];
-    tmpl.weight = item_json["weight"];
+    tmpl.description = item_json.value("description", "");
 
-    // Optional fields
-    tmpl.stackable = item_json.value("stackable", false);
-    tmpl.max_stack = item_json.value("max_stack", 1);
+    // Handle both old and new JSON formats
+    if (item_json.contains("components")) {
+        // New component-based format
+        const auto& components = item_json["components"];
 
-    // Depth range
-    if (item_json.contains("depth_range") && item_json["depth_range"].is_array()) {
-        tmpl.min_depth = item_json["depth_range"][0];
-        tmpl.max_depth = item_json["depth_range"][1];
+        // Get basic properties
+        tmpl.type = Item::stringToType(item_json.value("type", "misc"));
+
+        std::string glyph_str = item_json.value("glyph", "*");
+        tmpl.symbol = glyph_str.empty() ? '*' : glyph_str[0];
+
+        tmpl.color = item_json.value("color", "white");
+
+        // Item component properties
+        if (components.contains("item")) {
+            const auto& item_comp = components["item"];
+            tmpl.value = item_comp.value("value", 0);
+            tmpl.weight = item_comp.value("weight", 1.0f);
+            tmpl.stackable = item_comp.value("stackable", false);
+            tmpl.max_stack = item_comp.value("max_stack", 1);
+
+            // Add component properties to the properties map
+            for (const auto& [key, value] : item_comp.items()) {
+                if (key != "value" && key != "weight" && key != "stackable" && key != "max_stack") {
+                    tmpl.properties[key] = value;
+                }
+            }
+        } else {
+            tmpl.value = 0;
+            tmpl.weight = 1.0f;
+            tmpl.stackable = false;
+            tmpl.max_stack = 1;
+        }
+
+        // Spawn data for depth range
+        if (item_json.contains("spawn")) {
+            const auto& spawn = item_json["spawn"];
+            tmpl.min_depth = spawn.value("min_depth", 1);
+            tmpl.max_depth = spawn.value("max_depth", 100);
+        } else {
+            tmpl.min_depth = 1;
+            tmpl.max_depth = 100;
+        }
     } else {
-        tmpl.min_depth = 1;
-        tmpl.max_depth = 100;
-    }
+        // Old direct format
+        tmpl.type = Item::stringToType(item_json["type"]);
 
-    // Properties
-    if (item_json.contains("properties")) {
-        for (const auto& [key, value] : item_json["properties"].items()) {
-            tmpl.properties[key] = value;
+        std::string symbol_str = item_json["symbol"].get<std::string>();
+        tmpl.symbol = symbol_str.empty() ? '*' : symbol_str[0];
+
+        tmpl.color = item_json["color"];
+        tmpl.value = item_json["value"];
+        tmpl.weight = item_json["weight"];
+        tmpl.stackable = item_json.value("stackable", false);
+        tmpl.max_stack = item_json.value("max_stack", 1);
+
+        // Depth range
+        if (item_json.contains("depth_range") && item_json["depth_range"].is_array()) {
+            tmpl.min_depth = item_json["depth_range"][0];
+            tmpl.max_depth = item_json["depth_range"][1];
+        } else {
+            tmpl.min_depth = 1;
+            tmpl.max_depth = 100;
+        }
+
+        // Properties
+        if (item_json.contains("properties")) {
+            for (const auto& [key, value] : item_json["properties"].items()) {
+                tmpl.properties[key] = value;
+            }
         }
     }
 

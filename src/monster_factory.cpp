@@ -43,16 +43,56 @@ bool MonsterFactory::loadFromJson(const json& data) {
         
         for (const auto& monster_data : data["monsters"]) {
             MonsterTemplate tmpl;
-            
+
             // Required fields
             tmpl.id = monster_data["id"];
             tmpl.name = monster_data["name"];
-            tmpl.glyph = monster_data["glyph"];
-            tmpl.hp = monster_data["hp"];
-            tmpl.attack = monster_data["attack"];
-            tmpl.defense = monster_data["defense"];
-            tmpl.speed = monster_data["speed"];
-            tmpl.xp_value = monster_data["xp_value"];
+
+            // Handle both old and new JSON formats
+            if (monster_data.contains("components")) {
+                // New component-based format
+                const auto& components = monster_data["components"];
+
+                // Get glyph
+                std::string glyph_str = monster_data["glyph"];
+                tmpl.glyph = glyph_str.empty() ? '?' : glyph_str[0];
+
+                // Health component
+                if (components.contains("health")) {
+                    tmpl.hp = components["health"]["max_hp"];
+                } else {
+                    tmpl.hp = 10; // default
+                }
+
+                // Combat component
+                if (components.contains("combat")) {
+                    const auto& combat = components["combat"];
+                    tmpl.attack = combat.value("attack_bonus", 0);
+                    tmpl.defense = combat.value("defense_bonus", 0);
+                } else {
+                    tmpl.attack = 0;
+                    tmpl.defense = 0;
+                }
+
+                // Stats component for speed
+                if (components.contains("stats")) {
+                    int dexterity = components["stats"].value("dexterity", 10);
+                    tmpl.speed = 100 + (dexterity - 10) * 5;
+                } else {
+                    tmpl.speed = 100;
+                }
+
+                tmpl.xp_value = monster_data.value("xp_value", 10);
+            } else {
+                // Old direct format
+                std::string glyph_str = monster_data["glyph"];
+                tmpl.glyph = glyph_str.empty() ? '?' : glyph_str[0];
+                tmpl.hp = monster_data["hp"];
+                tmpl.attack = monster_data["attack"];
+                tmpl.defense = monster_data["defense"];
+                tmpl.speed = monster_data["speed"];
+                tmpl.xp_value = monster_data["xp_value"];
+            }
             
             // Optional fields
             if (monster_data.contains("description")) {
