@@ -113,6 +113,8 @@ bool GameScreen::handleDoorInteraction() {
 }
 
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
+    LOG_DEBUG("handlePlayerMovement called: dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ", dir=" + direction);
+
     // Use ECS movement if ECS mode is enabled
     if (game_manager->isECSMode()) {
         auto ecs_world = game_manager->getECSWorld();
@@ -128,11 +130,9 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
                     // Update the game manager's deprecated position variables
                     game_manager->player_x = pos->position.x;
                     game_manager->player_y = pos->position.y;
-                    LOG_DEBUG("ECS player position: (" + std::to_string(pos->position.x) +
+                    LOG_DEBUG("ECS player moved to: (" + std::to_string(pos->position.x) +
                              ", " + std::to_string(pos->position.y) + ")");
                 }
-            } else {
-                LOG_ERROR("No player entity found in ECS!");
             }
 
             game_manager->processPlayerAction(speed);

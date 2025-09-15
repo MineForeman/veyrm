@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <deque>
+#include <iostream>
 #include "../../include/ecs/game_world.h"
 #include "../../include/ecs/entity_factory.h"
 #include "../../include/ecs/entity_adapter.h"
@@ -210,14 +211,18 @@ ActionSpeed GameWorld::processPlayerAction([[maybe_unused]] int action, int dx, 
     // Get player entity
     Entity* player = getEntity(player_id);
     if (!player) {
+        std::cout << "[ECS GameWorld] No player entity found!" << std::endl;
         return ActionSpeed::INSTANT;
     }
 
     // Get movement system
     auto* movement = world.getSystem<MovementSystem>();
     if (!movement) {
+        std::cout << "[ECS GameWorld] No movement system found!" << std::endl;
         return ActionSpeed::INSTANT;
     }
+
+    std::cout << "[ECS GameWorld] Processing player action: dx=" << dx << ", dy=" << dy << std::endl;
 
     // Process movement
     if (dx != 0 || dy != 0) {
@@ -249,8 +254,12 @@ ActionSpeed GameWorld::processPlayerAction([[maybe_unused]] int action, int dx, 
         }
 
         // Regular movement
+        std::cout << "[ECS GameWorld] Attempting regular movement" << std::endl;
         if (movement->moveEntity(*player, dx, dy)) {
+            std::cout << "[ECS GameWorld] Movement successful!" << std::endl;
             return ActionSpeed::NORMAL;
+        } else {
+            std::cout << "[ECS GameWorld] Movement failed!" << std::endl;
         }
     }
 
