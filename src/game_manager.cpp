@@ -22,6 +22,7 @@
 #include "item_factory.h"
 #include "game_serializer.h"
 #include "ecs/game_world.h"
+#include "ecs/data_loader.h"
 #include <random>
 
 GameManager::GameManager(MapType initial_map) 
@@ -52,10 +53,18 @@ GameManager::GameManager(MapType initial_map)
     ItemFactory::getInstance().loadFromJson(
         Config::getInstance().getDataFilePath("items.json")
     );
-    
+
+    // Load ECS data
+    ecs::DataLoader::getInstance().loadAllData(
+        Config::getInstance().getDataDir()
+    );
+
     // Initialize map with MapGenerator
     initializeMap(initial_map);
-    
+
+    // Initialize ECS system
+    initializeECS(false);  // false = don't migrate existing entities yet
+
     // Don't set anything visible initially - FOV will handle visibility
 }
 
