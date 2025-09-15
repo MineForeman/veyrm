@@ -31,7 +31,7 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
     SECTION("ECS world creates entities") {
         // Create standalone components
         EntityManager entity_manager;
-        CombatSystem combat_system;
+        ::CombatSystem combat_system;
         MessageLog message_log;
         Map map(20, 20);
 
@@ -58,7 +58,7 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
 
     SECTION("ECS world processes movement") {
         EntityManager entity_manager;
-        CombatSystem combat_system;
+        ::CombatSystem combat_system;
         MessageLog message_log;
         Map map(20, 20);
 
@@ -93,7 +93,7 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
     SECTION("ECS world handles combat") {
         EntityManager entity_manager;
         MessageLog message_log;
-        CombatSystem combat_system(&message_log);
+        ::CombatSystem combat_system(&message_log);
         Map map(20, 20);
 
         ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
@@ -112,22 +112,39 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
         REQUIRE(player != nullptr);
         REQUIRE(monster != nullptr);
 
-        // Process attack
-        auto* combat_bridge = world.getCombatBridge();
-        REQUIRE(combat_bridge != nullptr);
+        // Process attack using native combat system
+        auto* ecs_combat = world.getCombatSystem();
+        REQUIRE(ecs_combat != nullptr);
 
-        auto result = combat_bridge->processComponentAttack(
-            std::shared_ptr<ecs::Entity>(player, [](ecs::Entity*){}),
-            std::shared_ptr<ecs::Entity>(monster, [](ecs::Entity*){})
-        );
+        // Queue attack
+        ecs_combat->queueAttack(player->getID(), monster->getID());
 
-        // Should have attack message
-        REQUIRE(!result.attack_message.empty());
+        // Process the attack
+        world.update(0.016); // One frame update
+
+        // Check that monster took damage
+        auto* monster_health = monster->getComponent<ecs::HealthComponent>();
+        REQUIRE(monster_health != nullptr);
+
+        // If this fails, print diagnostic info
+        if (monster_health->hp >= monster_health->max_hp) {
+            INFO("Monster HP: " << monster_health->hp << "/" << monster_health->max_hp);
+            INFO("Player has CombatComponent: " << player->hasComponent<ecs::CombatComponent>());
+            INFO("Monster has CombatComponent: " << monster->hasComponent<ecs::CombatComponent>());
+
+            // Let's try updating again in case it needs more time
+            world.update(0.016);
+
+            // Check again
+            REQUIRE(monster_health->hp < monster_health->max_hp);
+        } else {
+            REQUIRE(monster_health->hp < monster_health->max_hp);
+        }
     }
 
     SECTION("ECS world syncs with legacy") {
         EntityManager entity_manager;
-        CombatSystem combat_system;
+        ::CombatSystem combat_system;
         MessageLog message_log;
         Map map(20, 20);
 

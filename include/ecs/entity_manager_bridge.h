@@ -109,6 +109,24 @@ public:
      */
     void removeDeadEntitiesFromComponents();
 
+    /**
+     * @brief Remove entity by ID
+     * @param id Entity ID to remove
+     */
+    void removeEntity(EntityID id);
+
+    /**
+     * @brief Sync ECS state to legacy entity
+     * @param ecs_entity ECS entity to sync from
+     */
+    void syncToLegacy(ecs::Entity* ecs_entity);
+
+    /**
+     * @brief Sync legacy entity to ECS
+     * @param legacy_entity Legacy entity to sync from
+     */
+    void syncFromLegacy(std::shared_ptr<::Entity> legacy_entity);
+
 private:
     EntityManager* legacy_manager;  ///< The legacy entity manager
 

@@ -24,6 +24,7 @@ enum class ComponentType {
     COMBAT,       ///< Combat stats and abilities
     AI,           ///< AI behavior data
     INVENTORY,    ///< Item storage
+    INPUT,        ///< Input handling
     PHYSICS,      ///< Physical properties (blocking, etc)
     STATS,        ///< RPG statistics
     ITEM_DATA,    ///< Item-specific properties

@@ -10,7 +10,7 @@
 
 namespace ecs {
 
-CombatSystemBridge::CombatSystemBridge(CombatSystem* system, EntityManagerBridge* bridge)
+CombatSystemBridge::CombatSystemBridge(::CombatSystem* system, EntityManagerBridge* bridge)
     : legacy_system(system), entity_bridge(bridge) {
 }
 

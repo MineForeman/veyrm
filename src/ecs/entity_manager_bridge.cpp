@@ -208,4 +208,55 @@ void EntityManagerBridge::removeDeadEntitiesFromComponents() {
     }
 }
 
+void EntityManagerBridge::removeEntity(EntityID id) {
+    // Find entity with this ID and remove from mappings
+    for (auto it = legacy_to_ecs.begin(); it != legacy_to_ecs.end(); ++it) {
+        if (it->second && it->second->getID() == id) {
+            auto legacy = it->first;
+            auto ecs = it->second;
+
+            legacy_to_ecs.erase(it);
+            ecs_to_legacy.erase(ecs);
+
+            if (legacy_manager) {
+                legacy_manager->destroyEntity(legacy);
+            }
+            break;
+        }
+    }
+}
+
+void EntityManagerBridge::syncToLegacy(ecs::Entity* ecs_entity) {
+    if (!ecs_entity) return;
+
+    // Find corresponding legacy entity
+    for (const auto& [ecs_ptr, legacy_ptr] : ecs_to_legacy) {
+        if (ecs_ptr.get() == ecs_entity) {
+            // Update legacy entity from ECS components
+            EntityAdapter::syncToLegacy(*ecs_entity, *legacy_ptr);
+            break;
+        }
+    }
+}
+
+void EntityManagerBridge::syncFromLegacy(std::shared_ptr<::Entity> legacy_entity) {
+    if (!legacy_entity) return;
+
+    auto it = legacy_to_ecs.find(legacy_entity);
+    if (it != legacy_to_ecs.end() && it->second) {
+        // Update ECS entity from legacy entity
+        auto* pos = it->second->getComponent<PositionComponent>();
+        if (pos) {
+            pos->position.x = legacy_entity->x;
+            pos->position.y = legacy_entity->y;
+        }
+
+        auto* health = it->second->getComponent<HealthComponent>();
+        if (health) {
+            health->hp = legacy_entity->hp;
+            health->max_hp = legacy_entity->max_hp;
+        }
+    }
+}
+
 } // namespace ecs

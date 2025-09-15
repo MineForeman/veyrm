@@ -7,15 +7,16 @@
 
 #pragma once
 
+#include <memory>
+#include <random>
+#include <vector>
+#include <deque>
+
 #include "system.h"
 #include "entity.h"
 #include "position_component.h"
 #include "../map.h"
 #include "../message_log.h"
-#include <memory>
-#include <random>
-#include <vector>
-#include <deque>
 
 namespace ecs {
 
@@ -32,7 +33,9 @@ enum class AIBehavior {
     WANDERING,    ///< Moves randomly
     AGGRESSIVE,   ///< Seeks and attacks player
     DEFENSIVE,    ///< Attacks when threatened, retreats when hurt
-    PATROL        ///< Follows a patrol route
+    PATROL,       ///< Follows a patrol route
+    FLEEING,      ///< Running away from threats
+    SUPPORT       ///< Healing/helping allies
 };
 
 /**
@@ -49,6 +52,10 @@ public:
     bool has_seen_player = false;                  ///< Whether AI has spotted player
     int turns_since_player_seen = 0;               ///< Turns since last saw player
     Point last_player_position{-1, -1};            ///< Last known player position
+
+    // Patrol behavior
+    std::vector<Point> patrol_points;              ///< Points to patrol
+    size_t current_patrol_index = 0;               ///< Current patrol point index
 
     AIComponent() = default;
     AIComponent(const AIComponent&) = default;
@@ -150,6 +157,28 @@ private:
      */
     void handleDefensiveBehavior(std::shared_ptr<Entity> entity,
                                 std::shared_ptr<Entity> player);
+
+    /**
+     * @brief Handle patrol behavior
+     * @param entity AI entity
+     */
+    void handlePatrolBehavior(std::shared_ptr<Entity> entity);
+
+    /**
+     * @brief Handle fleeing behavior
+     * @param entity AI entity
+     * @param threat Threat to flee from
+     */
+    void handleFleeingBehavior(std::shared_ptr<Entity> entity,
+                               std::shared_ptr<Entity> threat);
+
+    /**
+     * @brief Handle support behavior (healing/helping allies)
+     * @param entity AI entity
+     * @param player Player entity
+     */
+    void handleSupportBehavior(std::shared_ptr<Entity> entity,
+                              std::shared_ptr<Entity> player);
 
     /**
      * @brief Check if entity can see target

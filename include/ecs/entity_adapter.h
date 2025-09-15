@@ -13,6 +13,12 @@
 #include "renderable_component.h"
 #include "health_component.h"
 #include "combat_component.h"
+#include "ai_component.h"
+#include "inventory_component.h"
+#include "stats_component.h"
+#include "experience_component.h"
+#include "loot_component.h"
+#include "item_component.h"
 #include "../entity.h"  // Old entity system
 #include "../player.h"
 #include "../monster.h"
@@ -102,6 +108,14 @@ public:
         combat.combat_name = "Player";
         combat.setDamageRange(1, 6);  // Player uses d6
 
+        // Add new components for full ECS support
+        entity->addComponent<InventoryComponent>();
+        entity->addComponent<StatsComponent>();
+        entity->addComponent<ExperienceComponent>();
+
+        // Tag as player
+        entity->addTag("player");
+
         return entity;
     }
 
@@ -130,6 +144,19 @@ public:
         int base_dmg = monster.getBaseDamage();
         combat.setDamageRange(std::max(1, base_dmg - 1), base_dmg + 2);
 
+        // Add AI component
+        auto& ai = entity->addComponent<AIComponent>();
+        ai.behavior = AIBehavior::AGGRESSIVE;
+
+        // Add loot component
+        auto& loot = entity->addComponent<LootComponent>();
+        loot.guaranteed_gold = 5;
+        loot.random_gold_max = 20;
+
+        // Tag as monster
+        entity->addTag("monster");
+        entity->addTag("hostile");
+
         return entity;
     }
 
@@ -147,8 +174,14 @@ public:
         std::string glyph(1, item.symbol);  // Convert char to string
         entity->addComponent<RenderableComponent>(glyph, ftxui::Color::White);
 
-        // Items don't usually have health or combat
-        // Item-specific data would go in an ItemComponent (future)
+        // Add ItemComponent with basic properties
+        auto& item_comp = entity->addComponent<ItemComponent>();
+        item_comp.name = "Item";  // Default name, Item doesn't have getName()
+        item_comp.item_type = ItemType::MISC;  // Default type
+        item_comp.value = 10;  // Default value
+
+        // Tag as item
+        entity->addTag("item");
 
         return entity;
     }
@@ -209,13 +242,8 @@ public:
      * @return true if entity has player-like components
      */
     static bool isPlayer(const ecs::Entity& entity) {
-        // Players have all components and specific combat name
-        if (auto* combat = entity.getComponent<CombatComponent>()) {
-            return combat->combat_name == "Player" &&
-                   entity.hasComponent<HealthComponent>() &&
-                   entity.hasComponent<PositionComponent>();
-        }
-        return false;
+        // Check for player tag first
+        return entity.hasTag("player");
     }
 
     /**
@@ -224,10 +252,8 @@ public:
      * @return true if entity has monster-like components
      */
     static bool isMonster(const ecs::Entity& entity) {
-        // Monsters have combat and health but aren't players
-        return entity.hasComponent<CombatComponent>() &&
-               entity.hasComponent<HealthComponent>() &&
-               !isPlayer(entity);
+        // Check for monster tag
+        return entity.hasTag("monster");
     }
 
     /**
@@ -236,11 +262,8 @@ public:
      * @return true if entity has item-like components
      */
     static bool isItem(const ecs::Entity& entity) {
-        // Items have position and rendering but no combat/health
-        return entity.hasComponent<PositionComponent>() &&
-               entity.hasComponent<RenderableComponent>() &&
-               !entity.hasComponent<CombatComponent>() &&
-               !entity.hasComponent<HealthComponent>();
+        // Check for item tag
+        return entity.hasTag("item");
     }
 };
 

@@ -131,7 +131,7 @@ TEST_CASE("EntityManagerBridge functionality", "[ecs][bridges]") {
 TEST_CASE("CombatSystemBridge functionality", "[ecs][bridges][combat]") {
     EntityManager legacy_manager;
     EntityManagerBridge entity_bridge(&legacy_manager);
-    CombatSystem legacy_combat;
+    ::CombatSystem legacy_combat;
     CombatSystemBridge combat_bridge(&legacy_combat, &entity_bridge);
 
     SECTION("Process component attack") {
@@ -143,7 +143,7 @@ TEST_CASE("CombatSystemBridge functionality", "[ecs][bridges][combat]") {
         auto result = combat_bridge.processComponentAttack(attacker, defender);
 
         // Attack should have been processed
-        REQUIRE(!result.attack_message.empty());
+        REQUIRE(!result.message.empty());
 
         if (result.hit) {
             REQUIRE(result.damage > 0);

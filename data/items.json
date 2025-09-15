@@ -1,206 +1,456 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "items": [
     {
       "id": "potion_minor",
       "name": "Minor Healing Potion",
-      "description": "A small vial of red liquid that restores health",
+      "description": "A small vial of red liquid",
       "type": "potion",
-      "symbol": "!",
+      "glyph": "!",
       "color": "red",
-      "value": 50,
-      "weight": 1,
-      "stackable": true,
-      "max_stack": 10,
-      "properties": {
-        "heal": 10,
-        "instant": 1
+      "components": {
+        "item": {
+          "value": 50,
+          "weight": 1,
+          "stackable": true,
+          "max_stack": 10,
+          "consumable": true,
+          "heal_amount": 10
+        }
       },
-      "depth_range": [1, 5]
+      "spawn": {
+        "weight": 1.0,
+        "min_depth": 1,
+        "max_depth": 10
+      },
+      "tags": ["consumable", "healing"]
     },
     {
       "id": "potion_major",
       "name": "Major Healing Potion",
       "description": "A large flask of glowing red liquid",
       "type": "potion",
-      "symbol": "!",
+      "glyph": "!",
       "color": "bright_red",
-      "value": 200,
-      "weight": 2,
-      "stackable": true,
-      "max_stack": 5,
-      "properties": {
-        "heal": 50,
-        "instant": 1
+      "components": {
+        "item": {
+          "value": 200,
+          "weight": 2,
+          "stackable": true,
+          "max_stack": 5,
+          "consumable": true,
+          "heal_amount": 50
+        }
       },
-      "depth_range": [3, 10]
+      "spawn": {
+        "weight": 0.3,
+        "min_depth": 3,
+        "max_depth": 20
+      },
+      "tags": ["consumable", "healing"]
     },
     {
       "id": "potion_full",
       "name": "Full Healing Potion",
       "description": "A crystal bottle filled with miraculous healing elixir",
       "type": "potion",
-      "symbol": "!",
+      "glyph": "!",
       "color": "magenta",
-      "value": 500,
-      "weight": 2,
-      "stackable": true,
-      "max_stack": 3,
-      "properties": {
-        "heal": 999,
-        "instant": 1
+      "components": {
+        "item": {
+          "value": 500,
+          "weight": 2,
+          "stackable": true,
+          "max_stack": 3,
+          "consumable": true,
+          "heal_amount": 999
+        }
       },
-      "depth_range": [5, 20]
+      "spawn": {
+        "weight": 0.1,
+        "min_depth": 5,
+        "max_depth": 30
+      },
+      "tags": ["consumable", "healing", "rare"]
+    },
+    {
+      "id": "dagger",
+      "name": "Dagger",
+      "description": "A simple iron dagger",
+      "type": "weapon",
+      "glyph": "/",
+      "color": "grey",
+      "components": {
+        "item": {
+          "value": 50,
+          "weight": 2,
+          "equippable": true,
+          "min_damage": 1,
+          "max_damage": 4,
+          "attack_bonus": 1,
+          "required_strength": 6
+        }
+      },
+      "spawn": {
+        "weight": 1.0,
+        "min_depth": 1,
+        "max_depth": 10
+      },
+      "tags": ["weapon", "melee", "light"]
+    },
+    {
+      "id": "sword",
+      "name": "Sword",
+      "description": "A well-balanced steel sword",
+      "type": "weapon",
+      "glyph": "/",
+      "color": "light_grey",
+      "components": {
+        "item": {
+          "value": 150,
+          "weight": 4,
+          "equippable": true,
+          "min_damage": 2,
+          "max_damage": 6,
+          "attack_bonus": 2,
+          "required_strength": 10
+        }
+      },
+      "spawn": {
+        "weight": 0.6,
+        "min_depth": 2,
+        "max_depth": 15
+      },
+      "tags": ["weapon", "melee", "one_handed"]
+    },
+    {
+      "id": "longsword",
+      "name": "Longsword",
+      "description": "A finely crafted longsword",
+      "type": "weapon",
+      "glyph": "/",
+      "color": "white",
+      "components": {
+        "item": {
+          "value": 300,
+          "weight": 5,
+          "equippable": true,
+          "min_damage": 3,
+          "max_damage": 8,
+          "attack_bonus": 3,
+          "required_strength": 12
+        }
+      },
+      "spawn": {
+        "weight": 0.3,
+        "min_depth": 4,
+        "max_depth": 20
+      },
+      "tags": ["weapon", "melee", "versatile"]
+    },
+    {
+      "id": "greatsword",
+      "name": "Greatsword",
+      "description": "A massive two-handed sword",
+      "type": "weapon",
+      "glyph": "/",
+      "color": "cyan",
+      "components": {
+        "item": {
+          "value": 500,
+          "weight": 8,
+          "equippable": true,
+          "min_damage": 4,
+          "max_damage": 10,
+          "attack_bonus": 2,
+          "two_handed": true,
+          "required_strength": 16
+        }
+      },
+      "spawn": {
+        "weight": 0.1,
+        "min_depth": 6,
+        "max_depth": 30
+      },
+      "tags": ["weapon", "melee", "two_handed", "heavy"]
+    },
+    {
+      "id": "leather_armor",
+      "name": "Leather Armor",
+      "description": "Light armor made from cured leather",
+      "type": "armor",
+      "glyph": "[",
+      "color": "brown",
+      "components": {
+        "item": {
+          "value": 100,
+          "weight": 10,
+          "equippable": true,
+          "defense_bonus": 2,
+          "required_strength": 8
+        }
+      },
+      "spawn": {
+        "weight": 0.8,
+        "min_depth": 1,
+        "max_depth": 10
+      },
+      "tags": ["armor", "light"]
+    },
+    {
+      "id": "chainmail",
+      "name": "Chainmail",
+      "description": "Interlocking metal rings provide good protection",
+      "type": "armor",
+      "glyph": "[",
+      "color": "grey",
+      "components": {
+        "item": {
+          "value": 250,
+          "weight": 20,
+          "equippable": true,
+          "defense_bonus": 4,
+          "required_strength": 12
+        }
+      },
+      "spawn": {
+        "weight": 0.4,
+        "min_depth": 3,
+        "max_depth": 15
+      },
+      "tags": ["armor", "medium"]
+    },
+    {
+      "id": "plate_armor",
+      "name": "Plate Armor",
+      "description": "Heavy plates of steel offer excellent protection",
+      "type": "armor",
+      "glyph": "[",
+      "color": "light_grey",
+      "components": {
+        "item": {
+          "value": 500,
+          "weight": 30,
+          "equippable": true,
+          "defense_bonus": 6,
+          "required_strength": 16
+        }
+      },
+      "spawn": {
+        "weight": 0.1,
+        "min_depth": 5,
+        "max_depth": 25
+      },
+      "tags": ["armor", "heavy"]
+    },
+    {
+      "id": "dragon_scale",
+      "name": "Dragon Scale Armor",
+      "description": "Armor crafted from dragon scales",
+      "type": "armor",
+      "glyph": "[",
+      "color": "red",
+      "components": {
+        "item": {
+          "value": 2000,
+          "weight": 15,
+          "equippable": true,
+          "defense_bonus": 8,
+          "required_strength": 14
+        }
+      },
+      "spawn": {
+        "weight": 0.01,
+        "min_depth": 10,
+        "max_depth": 100
+      },
+      "tags": ["armor", "legendary", "fire_resistant"]
     },
     {
       "id": "scroll_identify",
       "name": "Scroll of Identify",
-      "description": "A parchment inscribed with mystical runes",
+      "description": "Reveals the properties of items",
       "type": "scroll",
-      "symbol": "?",
-      "color": "white",
-      "value": 100,
-      "weight": 1,
-      "stackable": true,
-      "max_stack": 20,
-      "properties": {
-        "identify": 1,
-        "single_use": 1
+      "glyph": "?",
+      "color": "yellow",
+      "components": {
+        "item": {
+          "value": 30,
+          "weight": 1,
+          "stackable": true,
+          "max_stack": 20,
+          "consumable": true
+        }
       },
-      "depth_range": [1, 10]
+      "spawn": {
+        "weight": 1.0,
+        "min_depth": 1,
+        "max_depth": 20
+      },
+      "tags": ["consumable", "magic", "utility"]
     },
     {
       "id": "scroll_teleport",
       "name": "Scroll of Teleportation",
-      "description": "A scroll that warps space around the reader",
+      "description": "Instantly transports the reader to a random location",
       "type": "scroll",
-      "symbol": "?",
-      "color": "blue",
-      "value": 150,
-      "weight": 1,
-      "stackable": true,
-      "max_stack": 10,
-      "properties": {
-        "teleport": 1,
-        "single_use": 1
-      },
-      "depth_range": [2, 10]
-    },
-    {
-      "id": "scroll_magic_mapping",
-      "name": "Scroll of Magic Mapping",
-      "description": "Reveals the layout of the current floor",
-      "type": "scroll",
-      "symbol": "?",
+      "glyph": "?",
       "color": "cyan",
-      "value": 200,
-      "weight": 1,
-      "stackable": true,
-      "max_stack": 5,
-      "properties": {
-        "magic_mapping": 1,
-        "single_use": 1
+      "components": {
+        "item": {
+          "value": 100,
+          "weight": 1,
+          "stackable": true,
+          "max_stack": 10,
+          "consumable": true
+        }
       },
-      "depth_range": [1, 15]
+      "spawn": {
+        "weight": 0.5,
+        "min_depth": 2,
+        "max_depth": 30
+      },
+      "tags": ["consumable", "magic", "escape"]
     },
     {
-      "id": "gold_coins",
+      "id": "scroll_fireball",
+      "name": "Scroll of Fireball",
+      "description": "Launches a fiery projectile",
+      "type": "scroll",
+      "glyph": "?",
+      "color": "orange",
+      "components": {
+        "item": {
+          "value": 150,
+          "weight": 1,
+          "stackable": true,
+          "max_stack": 10,
+          "consumable": true,
+          "damage_amount": 20
+        }
+      },
+      "spawn": {
+        "weight": 0.3,
+        "min_depth": 3,
+        "max_depth": 20
+      },
+      "tags": ["consumable", "magic", "offensive"]
+    },
+    {
+      "id": "gold",
       "name": "Gold Coins",
-      "description": "A pile of shiny gold coins",
-      "type": "gold",
-      "symbol": "$",
+      "description": "Standard currency of the realm",
+      "type": "currency",
+      "glyph": "$",
       "color": "yellow",
-      "value": 1,
-      "weight": 0,
-      "stackable": true,
-      "max_stack": 9999,
-      "properties": {
-        "amount": 10
+      "components": {
+        "item": {
+          "value": 1,
+          "weight": 0,
+          "stackable": true,
+          "max_stack": 999999
+        }
       },
-      "depth_range": [1, 100]
+      "spawn": {
+        "weight": 2.0,
+        "min_depth": 1,
+        "max_depth": 100
+      },
+      "tags": ["currency"]
     },
     {
-      "id": "gold_pile",
-      "name": "Large Gold Pile",
-      "description": "A large pile of gold coins",
-      "type": "gold",
-      "symbol": "$",
-      "color": "yellow",
-      "value": 1,
-      "weight": 0,
-      "stackable": true,
-      "max_stack": 9999,
-      "properties": {
-        "amount": 50
-      },
-      "depth_range": [3, 100]
-    },
-    {
-      "id": "ration",
+      "id": "food_ration",
       "name": "Food Ration",
-      "description": "A wrapped package of preserved food",
+      "description": "Preserved food for dungeon exploration",
       "type": "food",
-      "symbol": "%",
+      "glyph": "%",
       "color": "brown",
-      "value": 10,
-      "weight": 2,
-      "stackable": true,
-      "max_stack": 10,
-      "properties": {
-        "nutrition": 500,
-        "single_use": 1
+      "components": {
+        "item": {
+          "value": 10,
+          "weight": 2,
+          "stackable": true,
+          "max_stack": 10,
+          "consumable": true,
+          "heal_amount": 5
+        }
       },
-      "depth_range": [1, 10]
+      "spawn": {
+        "weight": 0.8,
+        "min_depth": 1,
+        "max_depth": 20
+      },
+      "tags": ["consumable", "food"]
     },
     {
-      "id": "bread",
-      "name": "Loaf of Bread",
-      "description": "A fresh loaf of bread",
-      "type": "food",
-      "symbol": "%",
-      "color": "brown",
-      "value": 5,
-      "weight": 1,
-      "stackable": true,
-      "max_stack": 5,
-      "properties": {
-        "nutrition": 200,
-        "single_use": 1
+      "id": "ring_strength",
+      "name": "Ring of Strength",
+      "description": "A ring that enhances physical power",
+      "type": "ring",
+      "glyph": "=",
+      "color": "red",
+      "components": {
+        "item": {
+          "value": 300,
+          "weight": 1,
+          "equippable": true,
+          "stat_bonus": {
+            "strength": 2
+          }
+        }
       },
-      "depth_range": [1, 5]
+      "spawn": {
+        "weight": 0.2,
+        "min_depth": 4,
+        "max_depth": 25
+      },
+      "tags": ["accessory", "magical"]
     },
     {
-      "id": "torch",
-      "name": "Torch",
-      "description": "A wooden torch that provides light",
-      "type": "misc",
-      "symbol": "/",
+      "id": "shield_wooden",
+      "name": "Wooden Shield",
+      "description": "A simple wooden shield",
+      "type": "shield",
+      "glyph": "]",
       "color": "brown",
-      "value": 5,
-      "weight": 2,
-      "stackable": true,
-      "max_stack": 10,
-      "properties": {
-        "light_radius": 3,
-        "duration": 1000
+      "components": {
+        "item": {
+          "value": 50,
+          "weight": 5,
+          "equippable": true,
+          "defense_bonus": 1,
+          "required_strength": 8
+        }
       },
-      "depth_range": [1, 10]
+      "spawn": {
+        "weight": 0.7,
+        "min_depth": 1,
+        "max_depth": 10
+      },
+      "tags": ["shield", "offhand"]
     },
     {
-      "id": "key_iron",
-      "name": "Iron Key",
-      "description": "A rusty iron key",
-      "type": "misc",
-      "symbol": "[",
-      "color": "grey",
-      "value": 20,
-      "weight": 1,
-      "stackable": false,
-      "max_stack": 1,
-      "properties": {
-        "unlock": 1
+      "id": "antidote",
+      "name": "Antidote",
+      "description": "Cures poison",
+      "type": "potion",
+      "glyph": "!",
+      "color": "green",
+      "components": {
+        "item": {
+          "value": 75,
+          "weight": 1,
+          "stackable": true,
+          "max_stack": 10,
+          "consumable": true
+        }
       },
-      "depth_range": [1, 10]
+      "spawn": {
+        "weight": 0.5,
+        "min_depth": 1,
+        "max_depth": 15
+      },
+      "tags": ["consumable", "cure"]
     }
   ]
 }

@@ -5,6 +5,7 @@
 
 #include "ecs/combat_system.h"
 #include "ecs/renderable_component.h"
+#include "ecs/event.h"
 #include <algorithm>
 #include <cmath>
 
@@ -53,6 +54,11 @@ CombatResult CombatSystem::processAttack(std::shared_ptr<Entity> attacker,
         return result;
     }
 
+    // Fire attack event
+    EventSystem::getInstance().emit(
+        AttackEvent(attacker->getID(), defender->getID(), "melee")
+    );
+
     // Calculate hit
     result.hit = calculateHit(*attacker_combat, *defender_combat);
 
@@ -61,10 +67,20 @@ CombatResult CombatSystem::processAttack(std::shared_ptr<Entity> attacker,
         int base_damage = calculateDamage(*attacker_combat);
         result.damage = applyDamage(defender, base_damage);
 
+        // Fire damage event
+        EventSystem::getInstance().emit(
+            DamageEvent(attacker->getID(), defender->getID(), result.damage)
+        );
+
         // Check if defender died
         auto* defender_health = defender->getComponent<HealthComponent>();
         if (defender_health && defender_health->hp <= 0) {
             result.defender_died = true;
+
+            // Fire death event
+            EventSystem::getInstance().emit(
+                DeathEvent(defender->getID(), attacker->getID(), "combat")
+            );
         }
 
         // Create combat message

@@ -173,9 +173,19 @@ add_library(veyrm_core STATIC
     src/ecs/entity_manager_bridge.cpp
     src/ecs/combat_system_bridge.cpp
     src/ecs/renderer_bridge.cpp
-    src/ecs/game_world.cpp
+    src/ecs/game_world_full.cpp
     src/ecs/combat_system.cpp
     src/ecs/ai_system.cpp
+    src/ecs/event.cpp
+    src/ecs/inventory_system_full.cpp
+    src/ecs/input_system.cpp
+    src/ecs/save_load_system.cpp
+    src/ecs/status_effect_system.cpp
+    src/ecs/loot_system.cpp
+    src/ecs/equipment_system.cpp
+    src/ecs/experience_system.cpp
+    src/ecs/entity_factory.cpp
+    src/ecs/data_loader.cpp
 )
 
 # Link libraries to core

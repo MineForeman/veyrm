@@ -36,6 +36,7 @@ add_executable(veyrm_tests
     test_ecs_systems.cpp
     test_ecs_bridges.cpp
     test_ecs_integration.cpp
+    test_data_loader.cpp
 )
 
 # Link with Catch2 and other dependencies

@@ -9,9 +9,11 @@
 
 #include "component.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <typeindex>
 #include <vector>
+#include <string>
 
 namespace ecs {
 
@@ -168,11 +170,39 @@ public:
      */
     bool isValid() const { return !components.empty(); }
 
+    /**
+     * @brief Add a tag to this entity
+     * @param tag Tag string
+     */
+    void addTag(const std::string& tag) { tags.insert(tag); }
+
+    /**
+     * @brief Remove a tag from this entity
+     * @param tag Tag string
+     */
+    void removeTag(const std::string& tag) { tags.erase(tag); }
+
+    /**
+     * @brief Check if entity has a tag
+     * @param tag Tag to check
+     * @return true if entity has the tag
+     */
+    bool hasTag(const std::string& tag) const {
+        return tags.find(tag) != tags.end();
+    }
+
+    /**
+     * @brief Get all tags
+     * @return Set of all tags
+     */
+    const std::unordered_set<std::string>& getTags() const { return tags; }
+
 private:
     static EntityID next_id;  ///< Next available entity ID
     EntityID id;              ///< This entity's unique ID
 
     std::unordered_map<ComponentType, std::unique_ptr<IComponent>> components;
+    std::unordered_set<std::string> tags;  ///< Entity tags for categorization
 };
 
 } // namespace ecs

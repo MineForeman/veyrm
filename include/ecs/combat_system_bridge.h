@@ -26,7 +26,7 @@ namespace ecs {
  */
 class CombatSystemBridge {
 public:
-    CombatSystemBridge(CombatSystem* legacy_system, EntityManagerBridge* entity_bridge);
+    CombatSystemBridge(::CombatSystem* legacy_system, EntityManagerBridge* entity_bridge);
     ~CombatSystemBridge() = default;
 
     /**
@@ -100,7 +100,7 @@ public:
                            std::shared_ptr<ecs::Entity> defender);
 
 private:
-    [[maybe_unused]] CombatSystem* legacy_system;  ///< The legacy combat system (for future use)
+    [[maybe_unused]] ::CombatSystem* legacy_system;  ///< The legacy combat system (for future use)
     EntityManagerBridge* entity_bridge;            ///< Entity manager bridge
 
     /**

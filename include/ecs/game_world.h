@@ -7,22 +7,28 @@
 
 #pragma once
 
+// All includes at global scope
+#include <memory>
+#include <vector>
+#include <string>
+
 #include "system_manager.h"
 #include "entity_manager_bridge.h"
 #include "combat_system_bridge.h"
 #include "renderer_bridge.h"
 #include "../game_state.h"
-#include "../map.h"
-#include <memory>
 
-// Forward declarations
+// Forward declarations at global scope
 class EntityManager;
 class MessageLog;
 class CombatSystem;
+class Map;
 
+// Only now open the namespace
 namespace ecs {
 
 // Forward declare ECS classes
+class ILogger;
 class MovementSystem;
 class RenderSystem;
 class CombatSystem;
@@ -226,6 +232,7 @@ private:
     // Legacy systems (for migration)
     EntityManager* legacy_entities;  ///< Legacy entity manager
     MessageLog* message_log;         ///< Message log
+    std::unique_ptr<ILogger> logger; ///< Logger interface adapter
     Map* game_map;                   ///< Game map
 
     EntityID player_id = 0;  ///< Player entity ID

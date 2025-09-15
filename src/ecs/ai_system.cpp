@@ -3,15 +3,18 @@
  * @brief Native ECS AI system implementation
  */
 
+#include <algorithm>
+#include <queue>
+#include <random>
+#include <limits>
+#include <deque>
+#include <unordered_set>
+#include <cmath>
 #include "ecs/ai_system.h"
 #include "ecs/movement_system.h"
 #include "ecs/combat_system.h"
 #include "ecs/health_component.h"
 #include "ecs/renderable_component.h"
-#include <algorithm>
-#include <queue>
-#include <unordered_set>
-#include <cmath>
 
 namespace ecs {
 
@@ -73,8 +76,13 @@ void AISystem::processEntityAI(std::shared_ptr<Entity> entity,
             handleDefensiveBehavior(entity, player);
             break;
         case AIBehavior::PATROL:
-            // TODO: Implement patrol behavior
-            handleWanderingBehavior(entity);
+            handlePatrolBehavior(entity);
+            break;
+        case AIBehavior::FLEEING:
+            handleFleeingBehavior(entity, player);
+            break;
+        case AIBehavior::SUPPORT:
+            handleSupportBehavior(entity, player);
             break;
     }
 }
@@ -378,6 +386,103 @@ std::shared_ptr<Entity> AISystem::findEntity(
 
     // Create shared_ptr that doesn't own the entity
     return (it != entities.end()) ? std::shared_ptr<Entity>(it->get(), [](Entity*){}) : nullptr;
+}
+
+void AISystem::handlePatrolBehavior(std::shared_ptr<Entity> entity) {
+    auto* ai = entity->getComponent<AIComponent>();
+    auto* pos = entity->getComponent<PositionComponent>();
+    if (!ai || !pos) return;
+
+    // Initialize patrol points if not set
+    if (ai->patrol_points.empty()) {
+        Point current{pos->position.x, pos->position.y};
+        // Create a simple square patrol pattern
+        ai->patrol_points.push_back({current.x + 3, current.y});
+        ai->patrol_points.push_back({current.x + 3, current.y + 3});
+        ai->patrol_points.push_back({current.x, current.y + 3});
+        ai->patrol_points.push_back(current);
+        ai->current_patrol_index = 0;
+    }
+
+    // Move to current patrol point
+    if (ai->current_patrol_index < ai->patrol_points.size()) {
+        Point target = ai->patrol_points[ai->current_patrol_index];
+        Point current{pos->position.x, pos->position.y};
+
+        // Check if we've reached the patrol point
+        if (current.x == target.x && current.y == target.y) {
+            // Move to next patrol point
+            ai->current_patrol_index = (ai->current_patrol_index + 1) % ai->patrol_points.size();
+            target = ai->patrol_points[ai->current_patrol_index];
+        }
+
+        // Move towards patrol point
+        moveTowards(entity, target);
+    }
+}
+
+void AISystem::handleFleeingBehavior(std::shared_ptr<Entity> entity,
+                                     std::shared_ptr<Entity> threat) {
+    if (!threat) return;
+
+    auto* threat_pos = threat->getComponent<PositionComponent>();
+    if (!threat_pos) return;
+
+    Point threat_point{threat_pos->position.x, threat_pos->position.y};
+    moveAway(entity, threat_point);
+
+    // Check if we're far enough away to stop fleeing
+    auto* ai = entity->getComponent<AIComponent>();
+    if (ai && getDistance(entity, threat) > ai->vision_range * 2) {
+        // Switch back to wandering or defensive
+        ai->behavior = AIBehavior::DEFENSIVE;
+    }
+}
+
+void AISystem::handleSupportBehavior(std::shared_ptr<Entity> entity,
+                                     std::shared_ptr<Entity> player) {
+    if (!player) return;
+
+    auto* ai = entity->getComponent<AIComponent>();
+    if (!ai) return;
+
+    // Find nearby allies that need help
+    auto* pos = entity->getComponent<PositionComponent>();
+    if (!pos) return;
+
+    Point current{pos->position.x, pos->position.y};
+
+    // Note: Would need access to all entities to find allies
+    // For now, just follow player
+    /*for (const auto& other : entities) {
+        if (other->getID() == entity->getID()) continue;
+
+        auto* other_ai = other->getComponent<AIComponent>();
+        if (!other_ai || other_ai->behavior == AIBehavior::AGGRESSIVE) continue;
+
+        auto* other_health = other->getComponent<HealthComponent>();
+        if (!other_health) continue;
+
+        // Check if ally is injured
+        if (other_health->hp < other_health->max_hp / 2) {
+            // Move towards injured ally
+            auto* other_pos = other->getComponent<PositionComponent>();
+            if (other_pos && getDistance(entity, other) <= ai->vision_range) {
+                Point ally_pos{other_pos->position.x, other_pos->position.y};
+                moveTowards(entity, ally_pos);
+                return;
+            }
+        }
+    }*/
+
+    // Follow the player at a distance
+    if (getDistance(entity, player) > 3) {
+        auto* player_pos = player->getComponent<PositionComponent>();
+        if (player_pos) {
+            Point player_point{player_pos->position.x, player_pos->position.y};
+            moveTowards(entity, player_point);
+        }
+    }
 }
 
 } // namespace ecs

@@ -10,6 +10,7 @@
 #include <string>
 #include <deque>
 #include <vector>
+#include <memory>
 #include <ftxui/dom/elements.hpp>
 
 /**
