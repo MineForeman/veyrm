@@ -68,7 +68,7 @@ Item::ItemType Item::stringToType(const std::string& type_str) {
     if (type_str == "weapon") return WEAPON;
     if (type_str == "armor") return ARMOR;
     if (type_str == "food") return FOOD;
-    if (type_str == "gold") return GOLD;
+    if (type_str == "gold" || type_str == "currency") return GOLD;
     return MISC;
 }
 

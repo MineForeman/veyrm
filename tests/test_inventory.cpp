@@ -292,7 +292,7 @@ TEST_CASE("Player inventory integration", "[inventory]") {
     SECTION("Gold goes to gold counter") {
         int initial_gold = player.gold;
 
-        auto gold = ItemFactory::getInstance().create("gold_coins");
+        auto gold = ItemFactory::getInstance().create("gold");
         gold->properties["amount"] = 50;
 
         REQUIRE(player.pickupItem(std::move(gold)));

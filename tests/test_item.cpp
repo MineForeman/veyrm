@@ -102,8 +102,8 @@ TEST_CASE("ItemFactory", "[item]") {
         factory.loadFromJson(Config::getInstance().getDataFilePath("items.json"));
 
         REQUIRE(factory.hasTemplate("potion_minor"));
-        REQUIRE(factory.hasTemplate("gold_coins"));
-        REQUIRE(factory.hasTemplate("ration"));
+        REQUIRE(factory.hasTemplate("gold"));
+        REQUIRE(factory.hasTemplate("food_ration"));
     }
 
     SECTION("Create items from templates") {
@@ -116,9 +116,9 @@ TEST_CASE("ItemFactory", "[item]") {
         REQUIRE(potion->symbol == '!');
         REQUIRE(potion->type == Item::ItemType::POTION);
 
-        auto gold = factory.create("gold_coins");
+        auto gold = factory.create("gold");
         REQUIRE(gold != nullptr);
-        REQUIRE(gold->id == "gold_coins");
+        REQUIRE(gold->id == "gold");
         REQUIRE(gold->type == Item::ItemType::GOLD);
         REQUIRE(gold->stackable == true);
     }
@@ -183,7 +183,7 @@ TEST_CASE("ItemManager", "[item]") {
     }
 
     SECTION("Remove items") {
-        manager.spawnItem("ration", 15, 15);
+        manager.spawnItem("food_ration", 15, 15);
         REQUIRE(manager.getItemCount() == 1);
 
         auto item = manager.getItemAt(15, 15);
@@ -204,7 +204,7 @@ TEST_CASE("ItemManager", "[item]") {
 
     SECTION("Clear all items") {
         manager.spawnItem("potion_minor", 1, 1);
-        manager.spawnItem("ration", 2, 2);
+        manager.spawnItem("food_ration", 2, 2);
         manager.spawnGold(3, 3, 100);
 
         REQUIRE(manager.getItemCount() == 3);

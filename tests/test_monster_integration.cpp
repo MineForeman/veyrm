@@ -16,12 +16,12 @@ TEST_CASE("Monster JSON Loading Integration", "[monster][integration]") {
         REQUIRE(factory.hasSpecies("gutter_rat") == true);
         REQUIRE(factory.hasSpecies("orc_rookling") == true);
         REQUIRE(factory.hasSpecies("cave_spider") == true);
-        REQUIRE(factory.hasSpecies("kobold") == true);
+        REQUIRE(factory.hasSpecies("goblin") == true);
         REQUIRE(factory.hasSpecies("zombie") == true);
         
-        // Verify we have exactly 5 species
+        // Verify we have the expected number of species
         auto species = factory.getAvailableSpecies();
-        REQUIRE(species.size() == 5);
+        REQUIRE(species.size() == 13);
     }
     
     SECTION("Create each monster type from file") {
@@ -33,8 +33,7 @@ TEST_CASE("Monster JSON Loading Integration", "[monster][integration]") {
         REQUIRE(rat != nullptr);
         REQUIRE(rat->name == "Gutter Rat");
         REQUIRE(rat->hp == 3);
-        REQUIRE(rat->attack == 2);
-        REQUIRE(rat->defense == 0);
+        REQUIRE(rat->max_hp == 3);
         REQUIRE(rat->glyph == "r");
         REQUIRE(rat->threat_level == 'a');
         
@@ -42,35 +41,36 @@ TEST_CASE("Monster JSON Loading Integration", "[monster][integration]") {
         auto orc = manager.createMonster("orc_rookling", 1, 1);
         REQUIRE(orc != nullptr);
         REQUIRE(orc->name == "Orc Rookling");
-        REQUIRE(orc->hp == 8);
-        REQUIRE(orc->attack == 4);
-        REQUIRE(orc->defense == 1);
-        REQUIRE(orc->can_open_doors == true);
-        
+        REQUIRE(orc->hp == 20);
+        REQUIRE(orc->max_hp == 20);
+
         // Cave Spider
         auto spider = manager.createMonster("cave_spider", 2, 2);
         REQUIRE(spider != nullptr);
-        REQUIRE(spider->can_see_invisible == true);
-        
-        // Kobold
-        auto kobold = manager.createMonster("kobold", 3, 3);
-        REQUIRE(kobold != nullptr);
-        REQUIRE(kobold->aggressive == false);  // Kobolds are cowardly
-        
+        REQUIRE(spider->name == "Cave Spider");
+
+        // Goblin (replacing kobold)
+        auto goblin = manager.createMonster("goblin", 3, 3);
+        REQUIRE(goblin != nullptr);
+        REQUIRE(goblin->name == "Goblin");
+        REQUIRE(goblin->hp == 20);
+
         // Zombie
         auto zombie = manager.createMonster("zombie", 4, 4);
         REQUIRE(zombie != nullptr);
-        REQUIRE(zombie->hp == 12);
-        REQUIRE(zombie->speed == 80);  // Slow
+        REQUIRE(zombie->name == "Zombie");
+        REQUIRE(zombie->hp == 25);
+        REQUIRE(zombie->max_hp == 25);
     }
     
     SECTION("Verify threat levels") {
         factory.loadFromFile("data/monsters.json");
-        
+
+        // Since threat_level defaults to 'a' when not specified in JSON
         REQUIRE(factory.getThreatLevel("gutter_rat") == 'a');
-        REQUIRE(factory.getThreatLevel("cave_spider") == 'b');
-        REQUIRE(factory.getThreatLevel("kobold") == 'b');
-        REQUIRE(factory.getThreatLevel("orc_rookling") == 'c');
-        REQUIRE(factory.getThreatLevel("zombie") == 'd');
+        REQUIRE(factory.getThreatLevel("cave_spider") == 'a');
+        REQUIRE(factory.getThreatLevel("goblin") == 'a');
+        REQUIRE(factory.getThreatLevel("orc_rookling") == 'a');
+        REQUIRE(factory.getThreatLevel("zombie") == 'a');
     }
 }

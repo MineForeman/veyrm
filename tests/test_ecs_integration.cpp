@@ -16,16 +16,16 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
     SECTION("GameManager can initialize ECS") {
         GameManager game(MapType::TEST_ROOM);
 
-        // Initially ECS should be disabled
-        REQUIRE(game.isECSMode() == false);
-        REQUIRE(game.getECSWorld() == nullptr);
-
-        // Initialize ECS
-        game.initializeECS(false);  // Don't migrate existing
-
-        // Now ECS should be enabled
+        // ECS is now enabled by default
         REQUIRE(game.isECSMode() == true);
         REQUIRE(game.getECSWorld() != nullptr);
+
+        // We can disable and re-enable ECS
+        game.setECSMode(false);
+        REQUIRE(game.isECSMode() == false);
+
+        game.setECSMode(true);
+        REQUIRE(game.isECSMode() == true);
     }
 
     SECTION("ECS world creates entities") {

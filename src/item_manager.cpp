@@ -146,7 +146,7 @@ void ItemManager::clear() {
 
 void ItemManager::spawnGold(int x, int y, int amount) {
     // Spawn gold coins with specific amount
-    auto item = ItemFactory::getInstance().create("gold_coins");
+    auto item = ItemFactory::getInstance().create("gold");
     if (item) {
         item->setPosition(x, y);
         item->stack_size = amount;
