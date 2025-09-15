@@ -26,6 +26,12 @@
 
 namespace ecs {
 
+// Debug output
+static bool debug_init = []() {
+    std::cout << "[ECS] GameWorld namespace initialized" << std::endl;
+    return true;
+}();
+
 GameWorld::GameWorld(::EntityManager* entities, ::CombatSystem* /*combat*/,
                      ::MessageLog* log, ::Map* map)
     : legacy_entities(entities),
@@ -208,10 +214,13 @@ std::vector<Entity*> GameWorld::getEntitiesAt(int x, int y) {
 }
 
 ActionSpeed GameWorld::processPlayerAction([[maybe_unused]] int action, int dx, int dy) {
+    std::cout << "[ECS GameWorld] processPlayerAction called with dx=" << dx << ", dy=" << dy
+              << ", player_id=" << player_id << std::endl;
+
     // Get player entity
     Entity* player = getEntity(player_id);
     if (!player) {
-        std::cout << "[ECS GameWorld] No player entity found!" << std::endl;
+        std::cout << "[ECS GameWorld] No player entity found! player_id=" << player_id << std::endl;
         return ActionSpeed::INSTANT;
     }
 

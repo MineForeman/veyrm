@@ -114,12 +114,18 @@ bool GameScreen::handleDoorInteraction() {
 
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
     LOG_DEBUG("handlePlayerMovement called: dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ", dir=" + direction);
+    std::cout << "[handlePlayerMovement] Called with dx=" << dx << ", dy=" << dy << ", dir=" << direction << std::endl;
 
     // Use ECS movement if ECS mode is enabled
-    if (game_manager->isECSMode()) {
+    bool ecs_mode = game_manager->isECSMode();
+    std::cout << "[handlePlayerMovement] ECS mode: " << ecs_mode << std::endl;
+
+    if (ecs_mode) {
         auto ecs_world = game_manager->getECSWorld();
+        std::cout << "[handlePlayerMovement] ECS world exists: " << (ecs_world != nullptr) << std::endl;
         if (ecs_world) {
             LOG_DEBUG("Using ECS movement system for " + direction);
+            std::cout << "[handlePlayerMovement] Calling ECS processPlayerAction" << std::endl;
             ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
 
             // Immediately sync the ECS player position to deprecated variables
@@ -359,9 +365,12 @@ Component GameScreen::Create() {
         // Log the input for debugging
         if (event.is_character()) {
             LOG_DEBUG("Character input: " + event.character());
+            std::cout << "[GameScreen] Character input: '" << event.character() << "'" << std::endl;
         }
         LOG_DEBUG("Action: " + std::to_string(static_cast<int>(action)) +
                   ", State: " + std::to_string(static_cast<int>(game_manager->getState())));
+        std::cout << "[GameScreen] Action: " << static_cast<int>(action)
+                  << ", State: " << static_cast<int>(game_manager->getState()) << std::endl;
 
 
         // Handle inventory-specific input when in inventory state
@@ -373,11 +382,13 @@ Component GameScreen::Create() {
             case InputAction::QUIT:
                 game_manager->setState(GameState::MENU);
                 return true;
-                
+
             case InputAction::MOVE_UP:
+                std::cout << "[GameScreen] MOVE_UP action received!" << std::endl;
                 return handlePlayerMovement(0, -1, "north");
 
             case InputAction::MOVE_DOWN:
+                std::cout << "[GameScreen] MOVE_DOWN action received!" << std::endl;
                 return handlePlayerMovement(0, 1, "south");
 
             case InputAction::MOVE_LEFT:

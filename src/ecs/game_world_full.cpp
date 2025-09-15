@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <iostream>
 #include <string>
 #include <exception>
 #include <variant>
@@ -252,16 +253,24 @@ std::vector<Entity*> GameWorld::getEntitiesAt(int x, int y) {
 }
 
 ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
+    std::cout << "[ECS GameWorld] processPlayerAction called with action=" << action
+              << ", dx=" << dx << ", dy=" << dy << ", player_id=" << player_id << std::endl;
+
     // Get player entity
     Entity* player = getEntity(player_id);
     if (!player) {
+        std::cout << "[ECS GameWorld] No player entity found! player_id=" << player_id << std::endl;
         return ActionSpeed::NORMAL;
     }
 
     auto* pos = player->getComponent<PositionComponent>();
     if (!pos) {
+        std::cout << "[ECS GameWorld] Player has no position component!" << std::endl;
         return ActionSpeed::NORMAL;
     }
+
+    std::cout << "[ECS GameWorld] Player current position: (" << pos->position.x
+              << ", " << pos->position.y << ")" << std::endl;
 
     ActionSpeed speed = ActionSpeed::NORMAL;
 
@@ -271,6 +280,7 @@ ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
             if (dx != 0 || dy != 0) {
                 int new_x = pos->position.x + dx;
                 int new_y = pos->position.y + dy;
+                std::cout << "[ECS GameWorld] Attempting to move to (" << new_x << ", " << new_y << ")" << std::endl;
 
                 // Check for combat (bump to attack)
                 auto entities_at_target = getEntitiesAt(new_x, new_y);
