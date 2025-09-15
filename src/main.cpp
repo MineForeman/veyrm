@@ -458,17 +458,37 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                 return save_load_component->Render();
             case GameState::HELP:
                 return vbox({
-                    text("HELP") | bold,
+                    text("VEYRM HELP") | bold | center,
                     separator(),
-                    text("Arrow keys: Move"),
-                    text("Numpad: Move (with diagonals)"),
-                    text(".: Wait"),
-                    text("i: Inventory"),
-                    text("?: Help"),
-                    text("q: Quit to menu"),
+                    text("MOVEMENT:") | bold | color(Color::Yellow),
+                    text("  Arrow keys    Move in cardinal directions"),
+                    text("  Numpad 1-9    Move (including diagonals)"),
+                    text("  .             Wait a turn"),
+                    text(""),
+                    text("ACTIONS:") | bold | color(Color::Yellow),
+                    text("  g             Get/pickup item"),
+                    text("  o             Open/close door"),
+                    text("  i             Open inventory"),
+                    text("  u             Use item (in inventory)"),
+                    text("  D             Drop item (uppercase D)"),
+                    text("  E             Examine item (uppercase E)"),
+                    text(""),
+                    text("INTERFACE:") | bold | color(Color::Yellow),
+                    text("  ?             Show this help"),
+                    text("  S             Save game (uppercase S)"),
+                    text("  L             Load game (uppercase L)"),
+                    text("  q/Q           Quit to main menu"),
+                    text("  ESC           Cancel/go back"),
+                    text("  Enter         Confirm selection"),
+                    text(""),
+                    text("COMBAT:") | bold | color(Color::Yellow),
+                    text("  Bump to attack - move into an enemy to attack"),
+                    text(""),
+                    text("DEBUG:") | bold | color(Color::Yellow),
+                    text("  F1            Toggle debug mode"),
                     separator(),
-                    text("Press ESC to return")
-                }) | border;
+                    text("Press ESC to return to game") | dim
+                }) | border | size(WIDTH, EQUAL, 60);
             case GameState::DEATH:
                 return vbox({
                     text("") | size(WIDTH, EQUAL, 1),

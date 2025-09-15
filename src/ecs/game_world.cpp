@@ -158,6 +158,7 @@ void GameWorld::update(double delta_time) {
 }
 
 EntityID GameWorld::createPlayer(int x, int y) {
+
     // Create player using factory
     auto player_entity = PlayerFactory().create(x, y);
     EntityID id = player_entity->getID();
@@ -253,24 +254,18 @@ std::vector<Entity*> GameWorld::getEntitiesAt(int x, int y) {
 }
 
 ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
-    std::cout << "[ECS GameWorld] processPlayerAction called with action=" << action
-              << ", dx=" << dx << ", dy=" << dy << ", player_id=" << player_id << std::endl;
 
     // Get player entity
     Entity* player = getEntity(player_id);
     if (!player) {
-        std::cout << "[ECS GameWorld] No player entity found! player_id=" << player_id << std::endl;
         return ActionSpeed::NORMAL;
     }
 
     auto* pos = player->getComponent<PositionComponent>();
     if (!pos) {
-        std::cout << "[ECS GameWorld] Player has no position component!" << std::endl;
         return ActionSpeed::NORMAL;
     }
 
-    std::cout << "[ECS GameWorld] Player current position: (" << pos->position.x
-              << ", " << pos->position.y << ")" << std::endl;
 
     ActionSpeed speed = ActionSpeed::NORMAL;
 
@@ -280,7 +275,6 @@ ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
             if (dx != 0 || dy != 0) {
                 int new_x = pos->position.x + dx;
                 int new_y = pos->position.y + dy;
-                std::cout << "[ECS GameWorld] Attempting to move to (" << new_x << ", " << new_y << ")" << std::endl;
 
                 // Check for combat (bump to attack)
                 auto entities_at_target = getEntitiesAt(new_x, new_y);
@@ -299,7 +293,7 @@ ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
                 auto* movement = world.getSystem<MovementSystem>();
                 if (movement) {
                     auto player_ptr = std::shared_ptr<Entity>(player, [](Entity*){});
-                    if (movement->moveEntity(*player_ptr, new_x, new_y)) {
+                    if (movement->moveEntity(*player_ptr, dx, dy)) {
                         speed = ActionSpeed::NORMAL;
                     }
                 }

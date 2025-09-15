@@ -35,8 +35,6 @@ bool MovementSystem::moveEntity(Entity& entity, int dx, int dy, bool forced) {
     int new_x = pos->position.x + dx;
     int new_y = pos->position.y + dy;
 
-    std::cout << "[ECS] Moving entity from (" << pos->position.x << ", " << pos->position.y
-              << ") to (" << new_x << ", " << new_y << ")" << std::endl;
 
     return moveEntityTo(entity, new_x, new_y, forced);
 }
@@ -49,17 +47,12 @@ bool MovementSystem::moveEntityTo(Entity& entity, int x, int y, bool forced) {
     if (!forced) {
         // Check map bounds and walkability
         if (!game_map || !game_map->inBounds(x, y) || !game_map->isWalkable(x, y)) {
-            std::cout << "[ECS] Movement blocked - map check failed. Map exists: "
-                      << (game_map != nullptr) << ", in bounds: "
-                      << (game_map ? game_map->inBounds(x, y) : false)
-                      << ", walkable: " << (game_map ? game_map->isWalkable(x, y) : false) << std::endl;
             return false;
         }
     }
 
     // Update position
     pos->moveTo(x, y);
-    std::cout << "[ECS] Position updated successfully to (" << x << ", " << y << ")" << std::endl;
     return true;
 }
 

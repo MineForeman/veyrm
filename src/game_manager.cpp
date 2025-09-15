@@ -59,11 +59,11 @@ GameManager::GameManager(MapType initial_map)
         Config::getInstance().getDataDir()
     );
 
-    // Initialize map with MapGenerator
-    initializeMap(initial_map);
-
-    // Initialize ECS system
+    // Initialize ECS system BEFORE map (so it exists when we create the player)
     initializeECS(false);  // false = don't migrate existing entities yet
+
+    // Initialize map with MapGenerator (this creates the player)
+    initializeMap(initial_map);
 
     // Don't set anything visible initially - FOV will handle visibility
 }
@@ -523,10 +523,5 @@ void GameManager::initializeECS(bool migrate_existing) {
 
     // Enable ECS mode
     use_ecs = true;
-
-    // Log the transition
-    if (message_log) {
-        message_log->addSystemMessage("ECS mode enabled");
-    }
 }
 
