@@ -116,11 +116,15 @@ void GameManager::initializeMap(MapType type) {
     
     // Create player entity at spawn point
     if (use_ecs && ecs_world) {
-        // Create player using ECS only
+        // Create player using ECS
         [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
 
-        // Skip legacy spawning when using ECS
-        // ECS handles all entity creation and spawning
+        // Also create legacy player for rendering compatibility
+        // This will be synced by the bridge but not directly updated
+        std::shared_ptr<Player> legacy_player = entity_manager->createPlayer(spawn.x, spawn.y);
+
+        // Skip legacy monster spawning when using ECS
+        // ECS handles monster creation and spawning
     } else {
         // Create player using legacy system
         std::shared_ptr<Player> player = entity_manager->createPlayer(spawn.x, spawn.y);
@@ -130,12 +134,30 @@ void GameManager::initializeMap(MapType type) {
     }
 
     // Update deprecated variables for compatibility
-    auto player = getPlayer();
-    if (player) {
-        player_x = player->x;
-        player_y = player->y;
-        player_hp = player->hp;
-        player_max_hp = player->max_hp;
+    if (use_ecs && ecs_world) {
+        // Get player position from ECS
+        auto player_entity = ecs_world->getPlayerEntity();
+        if (player_entity) {
+            auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+            auto* health = player_entity->getComponent<ecs::HealthComponent>();
+            if (pos) {
+                player_x = pos->position.x;
+                player_y = pos->position.y;
+            }
+            if (health) {
+                player_hp = health->hp;
+                player_max_hp = health->max_hp;
+            }
+        }
+    } else {
+        // Get from legacy player
+        auto player = getPlayer();
+        if (player) {
+            player_x = player->x;
+            player_y = player->y;
+            player_hp = player->hp;
+            player_max_hp = player->max_hp;
+        }
     }
     
     // Log map statistics
@@ -229,6 +251,21 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
         ecs_world->update(deltaTime);
         ecs_world->removeDeadEntities();
 
+        // Update deprecated player position variables from ECS
+        auto player_entity = ecs_world->getPlayerEntity();
+        if (player_entity) {
+            auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+            auto* health = player_entity->getComponent<ecs::HealthComponent>();
+            if (pos) {
+                player_x = pos->position.x;
+                player_y = pos->position.y;
+            }
+            if (health) {
+                player_hp = health->hp;
+                player_max_hp = health->max_hp;
+            }
+        }
+
         // ECS is now authoritative - skip legacy updates
         return;
     }
@@ -237,7 +274,7 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
     if (entity_manager) {
         entity_manager->updateAll(deltaTime);
     }
-    
+
     // Update deprecated player position variables
     if (auto player = getPlayer()) {
         player_x = player->x;

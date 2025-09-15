@@ -220,6 +220,12 @@ public:
      */
     EntityID getPlayerID() const { return player_id; }
 
+    /**
+     * @brief Get player entity
+     * @return Player entity pointer or nullptr if no player
+     */
+    Entity* getPlayerEntity() { return getEntity(player_id); }
+
 private:
     World world;                                          ///< ECS world container
     std::unique_ptr<EntityManagerBridge> entity_bridge;  ///< Entity manager bridge (for legacy compat)

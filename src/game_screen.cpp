@@ -16,6 +16,8 @@
 #include "combat_system.h"
 #include "item_manager.h"
 #include "item.h"
+#include "ecs/game_world.h"
+#include "ecs/position_component.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -111,6 +113,43 @@ bool GameScreen::handleDoorInteraction() {
 }
 
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
+    // Use ECS movement if ECS mode is enabled
+    if (game_manager->isECSMode()) {
+        auto ecs_world = game_manager->getECSWorld();
+        if (ecs_world) {
+            LOG_DEBUG("Using ECS movement system for " + direction);
+            ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
+
+            // Immediately sync the ECS player position to deprecated variables
+            auto player_entity = ecs_world->getPlayerEntity();
+            if (player_entity) {
+                auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+                if (pos) {
+                    // Update the game manager's deprecated position variables
+                    game_manager->player_x = pos->position.x;
+                    game_manager->player_y = pos->position.y;
+                    LOG_DEBUG("ECS player position: (" + std::to_string(pos->position.x) +
+                             ", " + std::to_string(pos->position.y) + ")");
+                }
+            } else {
+                LOG_ERROR("No player entity found in ECS!");
+            }
+
+            game_manager->processPlayerAction(speed);
+
+            // Update FOV and renderer
+            // Get updated player position from ECS (which should now be synced)
+            auto* player = game_manager->getPlayer();
+            if (player && renderer) {
+                renderer->centerOn(player->x, player->y);
+            }
+            game_manager->updateFOV();
+            game_manager->updateMonsters();
+            return true;
+        }
+    }
+
+    // Legacy movement code
     auto* player = game_manager->getPlayer();
     auto* map = game_manager->getMap();
     auto* entity_manager = game_manager->getEntityManager();
