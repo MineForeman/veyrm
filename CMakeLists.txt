@@ -144,9 +144,6 @@ add_library(veyrm_core STATIC
     src/wall_connector.cpp
     src/map_generator.cpp
     src/map_validator.cpp
-    src/entity.cpp
-    src/player.cpp
-    src/entity_manager.cpp
     src/room.cpp
     src/fov.cpp
     src/map_memory.cpp
@@ -159,10 +156,10 @@ add_library(veyrm_core STATIC
     src/pathfinding.cpp
     # combat_system.cpp removed - using ECS CombatSystem
     src/log.cpp
-    src/item.cpp
+    # src/item.cpp  # Legacy - removed, using ECS ItemComponent
     # src/item_factory.cpp removed - using ECS DataLoader
     # src/item_manager.cpp removed - using ECS item system
-    src/inventory.cpp
+    # src/inventory.cpp  # Legacy - removed, using ECS InventoryComponent
     src/inventory_renderer.cpp
     src/game_serializer.cpp
     src/save_load_screen.cpp

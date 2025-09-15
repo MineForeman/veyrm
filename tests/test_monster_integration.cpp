@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include "ecs/data_loader.h"
 #include "ecs/entity_factory.h"
-#include "entity_manager.h"
 
 TEST_CASE("Monster Data Loading via ECS", "[monster][integration][ecs]") {
     ecs::DataLoader& loader = ecs::DataLoader::getInstance();

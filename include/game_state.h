@@ -34,11 +34,10 @@ class TurnManager;
 class MessageLog;
 class FrameStats;
 class Map;
-class EntityManager;
-class Player;
+// class Player;  // Legacy - removed
 // SpawnManager removed - using ECS spawning
 class MapMemory;
-class ItemManager;
+// class ItemManager;  // Legacy - removed
 class GameSerializer;
 
 // Forward declare ECS namespace
@@ -56,7 +55,7 @@ namespace ecs {
  * access to all major subsystems.
  *
  * @see GameLoop
- * @see EntityManager
+ * @see ecs::GameWorld
  * @see Map
  * @see TurnManager
  */
@@ -107,8 +106,7 @@ public:
     FrameStats* getFrameStats() const { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
     const Map* getMap() const { return map.get(); }
-    EntityManager* getEntityManager() { return entity_manager.get(); }
-    const EntityManager* getEntityManager() const { return entity_manager.get(); }
+    // EntityManager removed - using ECS only
     Player* getPlayer();
     int getCurrentDepth() const { return current_depth; }
     void setCurrentDepth(int depth) { current_depth = depth; }
@@ -261,7 +259,6 @@ private:
     std::unique_ptr<MessageLog> message_log;
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
-    std::unique_ptr<EntityManager> entity_manager;
     // spawn_manager removed - using ECS spawning
     std::unique_ptr<MapMemory> map_memory;
     // std::unique_ptr<ItemManager> item_manager;  // Legacy - using ECS item system

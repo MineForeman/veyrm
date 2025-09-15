@@ -6,7 +6,6 @@
 #include "include/game_state.h"
 #include "include/config.h"
 #include "include/message_log.h"
-#include "include/entity_manager.h"
 #include "include/ecs/game_world.h"
 #include <iostream>
 
@@ -21,7 +20,7 @@ int main() {
     std::cout << "1. Creating game in legacy mode..." << std::endl;
     GameManager game(MapType::TEST_ROOM);
     std::cout << "   - ECS Mode: " << (game.isECSMode() ? "ENABLED" : "DISABLED") << std::endl;
-    std::cout << "   - Entity Count: " << game.getEntityManager()->getEntityCount() << std::endl;
+    std::cout << "   - Entity Count: (EntityManager removed)" << std::endl;
     std::cout << std::endl;
 
     // Initialize ECS and migrate

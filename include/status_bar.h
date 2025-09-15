@@ -11,7 +11,7 @@
 #include <string>
 
 class GameManager;
-class Player;
+// class Player;  // Legacy - removed
 
 class StatusBar {
 public:

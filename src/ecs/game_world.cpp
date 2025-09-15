@@ -16,10 +16,9 @@
 #include "ecs/game_world.h"
 #include "ecs/entity_factory.h"
 // EntityAdapter removed - using direct conversion
-// Legacy includes needed for migration
-#include "player.h"
+// Legacy includes removed - using ECS only
 // #include "monster.h"  // Legacy - removed
-#include "item.h"
+// #include "item.h"  // Legacy - removed
 #include "ecs/movement_system.h"
 #include "ecs/render_system.h"
 #include "ecs/combat_system.h"
@@ -29,11 +28,9 @@
 #include "ecs/event.h"
 #include "ecs/experience_component.h"
 #include "ecs/loot_component.h"
-#include "entity_manager.h"
 // Legacy combat_system.h removed - using ECS CombatSystem
-#include "player.h"
 // #include "monster.h"  // Legacy - removed
-#include "item.h"
+// #include "item.h"  // Legacy - removed
 #include "turn_manager.h"
 #include "message_log_adapter.h"
 
@@ -43,10 +40,8 @@ class Map;
 // Only now open the namespace
 namespace ecs {
 
-GameWorld::GameWorld(::EntityManager* entities,
-                     MessageLog* log, ::Map* map)
-    : legacy_entities(entities),
-      message_log(log),
+GameWorld::GameWorld(MessageLog* log, ::Map* map)
+    : message_log(log),
       game_map(map) {
     // Create ILogger adapter for MessageLog
     if (message_log) {
@@ -94,11 +89,10 @@ void GameWorld::initializeSystems() {
 }
 
 void GameWorld::migrateExistingEntities() {
-    if (!legacy_entities) return;
+    // Legacy entity migration removed - no longer needed
+    return;
 
-    // Get all legacy entities
-    auto all_entities = legacy_entities->getAllEntities();
-
+    /* Old migration code disabled:
     for (const auto& legacy_entity : all_entities) {
         if (!legacy_entity) continue;
 
@@ -106,21 +100,17 @@ void GameWorld::migrateExistingEntities() {
         std::unique_ptr<Entity> ecs_entity;
 
         // Check entity type and convert appropriately
-        if (auto player = std::dynamic_pointer_cast<Player>(legacy_entity)) {
-            // Create player entity directly
+        if (legacy_entity->is_player) {
+            // Legacy player entity - create basic ECS entity
             ecs_entity = std::make_unique<Entity>();
 
             // Core components
-            ecs_entity->addComponent<PositionComponent>(player->x, player->y);
-            ecs_entity->addComponent<RenderableComponent>(player->glyph, player->color);
-            ecs_entity->addComponent<HealthComponent>(player->max_hp, player->hp);
+            ecs_entity->addComponent<PositionComponent>(legacy_entity->x, legacy_entity->y);
+            ecs_entity->addComponent<RenderableComponent>(legacy_entity->glyph, legacy_entity->color);
+            ecs_entity->addComponent<HealthComponent>(100, 100);  // Default player health
 
-            // Combat with player stats
-            auto& combat = ecs_entity->addComponent<CombatComponent>(
-                player->getBaseDamage(),
-                player->getAttackBonus(),
-                player->getDefenseBonus()
-            );
+            // Combat with default player stats
+            auto& combat = ecs_entity->addComponent<CombatComponent>(6, 3, 2);
             combat.combat_name = "Player";
             combat.setDamageRange(1, 6);  // Player uses d6
 
@@ -128,6 +118,7 @@ void GameWorld::migrateExistingEntities() {
             ecs_entity->addComponent<InventoryComponent>();
             ecs_entity->addComponent<StatsComponent>();
             ecs_entity->addComponent<ExperienceComponent>();
+            ecs_entity->addComponent<PlayerComponent>();
 
             // Tag as player
             ecs_entity->addTag("player");
@@ -207,6 +198,7 @@ void GameWorld::migrateExistingEntities() {
             // Legacy sync removed - no longer needed
         }
     }
+    */
 }
 
 void GameWorld::update(double delta_time) {
@@ -269,10 +261,7 @@ EntityID GameWorld::createItem(const std::string& type, int x, int y) {
     // Add to world
     world.addEntity(std::move(item_entity));
 
-    // Create legacy item if needed
-    if (legacy_entities) {
-        // Legacy item creation would go here if available
-    }
+    // Legacy item creation removed
 
     return id;
 }

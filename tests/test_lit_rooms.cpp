@@ -3,8 +3,6 @@
 #include "room.h"
 #include "map_generator.h"
 #include "game_state.h"
-#include "player.h"
-#include "entity_manager.h"
 #include "fov.h"
 #include "ecs/game_world.h"
 #include "ecs/position_component.h"

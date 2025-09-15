@@ -2,9 +2,8 @@
 #include "map.h"
 #include "game_state.h"
 #include "color_scheme.h"
-#include "entity_manager.h"
 // #include "item_manager.h"  // Legacy - using ECS
-#include "item.h"
+// #include "item.h"  // Legacy - removed
 #include "ecs/game_world.h"
 #include "ecs/render_system.h"
 #include <ftxui/dom/elements.hpp>
@@ -94,11 +93,7 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
     }
 
     // Items now rendered through ECS
-    // const auto* item_manager = game.getItemManager();
-    std::vector<const Item*> all_items;
-    // if (item_manager) {
-    //     all_items = item_manager->getAllItems();
-    // }
+    // Legacy Item system removed
     
     for (int screen_y = 0; screen_y < viewport_height; screen_y++) {
         std::vector<Element> row_elements;

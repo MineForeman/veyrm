@@ -1,12 +1,10 @@
 #include "game_serializer.h"
 #include "game_state.h"
 #include "map.h"
-#include "player.h"
-#include "entity_manager.h"
 // #include "item_manager.h"  // Legacy - using ECS
 #include "message_log.h"
 // #include "monster.h"  // Legacy - removed
-#include "item.h"
+// #include "item.h"  // Legacy - removed
 #include "log.h"
 #include "turn_manager.h"
 #include <fstream>
@@ -115,40 +113,30 @@ json GameSerializer::serializeMap() const {
 }
 
 json GameSerializer::serializePlayer() const {
-    Player* player = game_manager->getPlayer();
-    if (!player) return json();
-
+    // Player class removed - use ECS data from game_manager
     json player_data;
 
-    // Base entity data - using public members
-    player_data["x"] = player->x;
-    player_data["y"] = player->y;
-    player_data["name"] = player->name;
+    // Use deprecated player position variables that are synced from ECS
+    player_data["x"] = game_manager->player_x;
+    player_data["y"] = game_manager->player_y;
+    player_data["name"] = "Player";
 
-    // Player-specific data - using public members
-    player_data["hp"] = player->hp;
-    player_data["max_hp"] = player->max_hp;
-    player_data["attack"] = player->attack;
-    player_data["defense"] = player->defense;
-    // player_data["speed"] = player->speed;  // TODO: Add speed member
-    player_data["gold"] = player->gold;
+    // Use deprecated player health variables that are synced from ECS
+    player_data["hp"] = game_manager->player_hp;
+    player_data["max_hp"] = game_manager->player_max_hp;
+    player_data["attack"] = 6;  // Default values for now
+    player_data["defense"] = 2;
+    player_data["gold"] = 0;
 
-    // Serialize inventory
-    if (player->inventory) {
-        player_data["inventory"] = player->inventory->serialize();
-    }
+    // TODO: Serialize inventory from ECS when implemented
 
     return player_data;
 }
 
 json GameSerializer::serializeEntities() const {
-    EntityManager* em = game_manager->getEntityManager();
-    if (!em) return json::array();
-
+    // EntityManager removed - using ECS
     json entities = json::array();
 
-    // Monster serialization removed - using ECS entities
-    // Legacy entities not serialized anymore
     // TODO: Serialize ECS entities when needed
 
     return entities;
@@ -447,58 +435,24 @@ bool GameSerializer::deserializePlayer(const json& data) {
     }
 
     try {
-        // Get or create player
-        EntityManager* em = game_manager->getEntityManager();
-        if (!em) {
-            LOG_ERROR("No entity manager available");
-            return false;
-        }
-
-        // Get position from data
-        int x = data.value("x", 1);
-        int y = data.value("y", 1);
-
-        // Create player if doesn't exist
-        auto player_ptr = em->getPlayer();
-        if (!player_ptr) {
-            LOG_INFO("Creating new player at (" + std::to_string(x) + ", " + std::to_string(y) + ")");
-            player_ptr = em->createPlayer(x, y);
-        }
-
-        Player* player = player_ptr.get();
-        if (!player) {
-            LOG_ERROR("Failed to get or create player");
-            return false;
-        }
-
-        // Deserialize player data
-        player->x = x;
-        player->y = y;
+        // EntityManager removed - deserialize to game_manager variables
+        // These will be used when creating the ECS player
+        game_manager->player_x = data.value("x", 1);
+        game_manager->player_y = data.value("y", 1);
 
         if (data.contains("hp")) {
-            player->hp = data["hp"];
+            game_manager->player_hp = data["hp"];
         }
         if (data.contains("max_hp")) {
-            player->max_hp = data["max_hp"];
-        }
-        if (data.contains("attack")) {
-            player->attack = data["attack"];
-        }
-        if (data.contains("defense")) {
-            player->defense = data["defense"];
-        }
-        if (data.contains("gold")) {
-            player->gold = data["gold"];
+            game_manager->player_max_hp = data["max_hp"];
         }
 
-        // Deserialize inventory
-        if (data.contains("inventory") && player->inventory) {
-            player->inventory->deserialize(data["inventory"]);
-        }
+        // TODO: Store other player data for ECS creation
+        // attack, defense, gold, inventory
 
-        LOG_INFO("Player deserialized: pos=(" + std::to_string(player->x) + "," +
-                 std::to_string(player->y) + "), hp=" + std::to_string(player->hp) + "/" +
-                 std::to_string(player->max_hp));
+        LOG_INFO("Player data deserialized: pos=(" + std::to_string(game_manager->player_x) + "," +
+                 std::to_string(game_manager->player_y) + "), hp=" + std::to_string(game_manager->player_hp) + "/" +
+                 std::to_string(game_manager->player_max_hp));
 
         return true;
     } catch (const std::exception& e) {
@@ -511,11 +465,7 @@ bool GameSerializer::deserializeEntities(const json& data) {
     if (data.is_null() || !data.is_array()) return false;
 
     try {
-        EntityManager* em = game_manager->getEntityManager();
-        if (!em) return false;
-
-        // Clear existing entities (except player)
-        em->clearNonPlayerEntities();
+        // EntityManager removed - ECS handles entities
 
         // Recreate entities
         for (const auto& entity_data : data) {

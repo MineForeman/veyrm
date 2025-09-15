@@ -17,7 +17,6 @@
 #include "../game_state.h"
 
 // Forward declarations at global scope
-class EntityManager;
 class MessageLog;
 class CombatSystem;
 class Map;
@@ -44,12 +43,10 @@ class GameWorld {
 public:
     /**
      * @brief Construct GameWorld with necessary systems
-     * @param legacy_entities Legacy entity manager (for transition)
      * @param message_log Message logging system
      * @param game_map Game map
      */
-    GameWorld(EntityManager* legacy_entities,
-              MessageLog* message_log,
+    GameWorld(MessageLog* message_log,
               Map* game_map);
 
     ~GameWorld();
@@ -223,7 +220,6 @@ private:
     AISystem* native_ai_system = nullptr;                ///< Native ECS AI system
 
     // Legacy systems (for migration)
-    EntityManager* legacy_entities;  ///< Legacy entity manager
     MessageLog* message_log;         ///< Message log
     std::unique_ptr<ILogger> logger; ///< Logger interface adapter
     Map* game_map;                   ///< Game map

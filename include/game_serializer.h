@@ -20,9 +20,8 @@ using json = nlohmann::json;
 // Forward declarations
 class GameManager;
 class Map;
-class Player;
-class EntityManager;
-class ItemManager;
+// class Player;  // Legacy - removed
+// class ItemManager;  // Legacy - removed
 class MessageLog;
 
 /**

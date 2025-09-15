@@ -7,8 +7,6 @@
 #include "color_scheme.h"
 #include "map_generator.h"
 #include "map_validator.h"
-#include "entity_manager.h"
-#include "player.h"
 #include "fov.h"
 #include "map_memory.h"
 #include "config.h"
@@ -35,7 +33,6 @@ GameManager::GameManager(MapType initial_map)
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
-      entity_manager(std::make_unique<EntityManager>()),
       // spawn_manager removed - using ECS spawning
       // monster_ai removed - using ECS AISystem
       // combat_system removed - using ECS CombatSystem
@@ -96,7 +93,6 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Clear existing entities
-    entity_manager->clear();
     
     // Set player spawn point
     Point spawn = MapGenerator::getDefaultSpawnPoint(type);
@@ -118,10 +114,8 @@ void GameManager::initializeMap(MapType type) {
         // Skip legacy monster spawning when using ECS
         // ECS handles monster creation and spawning
     } else {
-        // Create player using legacy system
-        std::shared_ptr<Player> player = entity_manager->createPlayer(spawn.x, spawn.y);
-
-        // Legacy spawning removed - ECS handles spawning
+        // Legacy system removed - ECS is required
+        LOG_ERROR("Cannot create player without ECS enabled");
     }
 
     // Update deprecated variables for compatibility
@@ -141,14 +135,11 @@ void GameManager::initializeMap(MapType type) {
             }
         }
     } else {
-        // Get from legacy player
-        auto player = getPlayer();
-        if (player) {
-            player_x = player->x;
-            player_y = player->y;
-            player_hp = player->hp;
-            player_max_hp = player->max_hp;
-        }
+        // Legacy player removed - ECS is required
+        player_x = 0;
+        player_y = 0;
+        player_hp = 0;
+        player_max_hp = 0;
     }
     
     // Log map statistics
@@ -189,10 +180,7 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
 }
 
 Player* GameManager::getPlayer() {
-    if (entity_manager) {
-        auto player_ptr = entity_manager->getPlayer();
-        return player_ptr ? player_ptr.get() : nullptr;
-    }
+    // Player class removed - use ECS instead
     return nullptr;
 }
 
@@ -227,17 +215,8 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
     }
 
     // Only update legacy entities if ECS is disabled
-    if (entity_manager) {
-        entity_manager->updateAll(deltaTime);
-    }
 
-    // Update deprecated player position variables
-    if (auto player = getPlayer()) {
-        player_x = player->x;
-        player_y = player->y;
-        player_hp = player->hp;
-        player_max_hp = player->max_hp;
-    }
+    // Player class removed - player data comes from ECS
     
     // Update game systems
     // Future: Update animations, particles, etc.
@@ -258,10 +237,8 @@ void GameManager::updateFOV() {
         // Use ECS player position
         playerPos = Point(player_x, player_y);  // These are synced from ECS
     } else {
-        // Legacy mode
-        Player* player = getPlayer();
-        if (!player) return;
-        playerPos = Point(player->x, player->y);
+        // Legacy mode removed - ECS is required
+        return;
     }
 
     // Calculate FOV from player position
@@ -334,10 +311,7 @@ void GameManager::updateFOV() {
         }
     }
     
-    // Update entity visibility based on FOV
-    if (entity_manager) {
-        entity_manager->updateEntityVisibility(current_fov);
-    }
+    // Legacy entity visibility removed - ECS handles visibility
 
     // Update ECS FOV if enabled
     if (use_ecs && ecs_world) {
@@ -386,7 +360,6 @@ void GameManager::initializeECS(bool migrate_existing) {
     // Create ECS world if not already created
     if (!ecs_world) {
         ecs_world = std::make_unique<ecs::GameWorld>(
-            entity_manager.get(),
             message_log.get(),
             map.get()
         );

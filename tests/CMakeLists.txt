@@ -27,8 +27,8 @@ add_executable(veyrm_tests
     test_monster_integration.cpp
     test_config.cpp
     # test_combat_system.cpp removed - using ECS CombatSystem
-    test_item.cpp
-    test_inventory.cpp
+    # test_item.cpp  # Legacy - removed, using ECS ItemComponent
+    # test_inventory.cpp  # Legacy - removed, using ECS InventoryComponent
     test_ecs.cpp
     test_ecs_factory.cpp
     test_ecs_systems.cpp

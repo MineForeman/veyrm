@@ -6,8 +6,6 @@
 #include "frame_stats.h"
 #include "map.h"
 #include "renderer.h"
-#include "entity_manager.h"
-#include "player.h"
 #include "status_bar.h"
 #include "layout_system.h"
 #include "inventory_renderer.h"
@@ -20,7 +18,7 @@
 #include "ecs/game_world.h"
 #include "ecs/combat_system.h"
 // #include "item_manager.h"  // Legacy - using ECS
-#include "item.h"  // Still needed for Player inventory
+// #include "item.h"  // Legacy - removed, using ECS ItemComponent
 #include "ecs/position_component.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -39,12 +37,8 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
       layout_system(std::make_unique<LayoutSystem>()),
       inventory_renderer(nullptr) {
     // Center renderer on player's starting position
-    if (auto* player = game_manager->getPlayer()) {
-        renderer->centerOn(player->x, player->y);
-    } else {
-        // Fallback to deprecated variables if entity system not initialized
-        renderer->centerOn(game_manager->player_x, game_manager->player_y);
-    }
+    // Player class removed - use game_manager position variables
+    renderer->centerOn(game_manager->player_x, game_manager->player_y);
 }
 
 GameScreen::~GameScreen() = default;
@@ -65,17 +59,16 @@ bool GameScreen::handleDoorInteraction() {
 }
 
 bool GameScreen::handleDirectionalDoorInteraction(int dx, int dy) {
-    auto* player = game_manager->getPlayer();
     auto* map = game_manager->getMap();
     auto* msg_log = game_manager->getMessageLog();
 
-    if (!player || !map || !msg_log) {
+    if (!map || !msg_log) {
         return false;
     }
 
-    // Calculate target position
-    int target_x = player->x + dx;
-    int target_y = player->y + dy;
+    // Calculate target position using game_manager position
+    int target_x = game_manager->player_x + dx;
+    int target_y = game_manager->player_y + dy;
 
     if (!map->inBounds(target_x, target_y)) {
         msg_log->addMessage("There is no door there.");
@@ -156,59 +149,8 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
         }
     }
 
-    // Legacy movement code
-    auto* player = game_manager->getPlayer();
-    auto* map = game_manager->getMap();
-    auto* entity_manager = game_manager->getEntityManager();
-    // Combat is now handled by ECS systems
-
-    LOG_PLAYER("Moving " + direction + " (dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ")");
-
-    if (!player || !map || !entity_manager) {
-        LOG_ERROR("Missing required components for player movement");
-        return false;
-    }
-
-    int new_x = player->x + dx;
-    int new_y = player->y + dy;
-    LOG_PLAYER("Target position: (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
-
-    // Check for monsters to attack
-    auto blocking = entity_manager->getBlockingEntityAt(new_x, new_y);
-    if (blocking && blocking->is_monster) {
-        LOG_COMBAT("Player bumping into monster at (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
-
-        // In ECS mode, combat is handled by ECS systems
-        // This legacy combat code is bypassed
-        LOG_COMBAT("Combat delegated to ECS systems");
-
-        auto* msg_log = game_manager->getMessageLog();
-        if (msg_log) {
-            msg_log->addMessage("You attack the " + blocking->name + "!");
-        }
-
-        // The ECS systems will handle the actual combat processing
-        // For now, just consume the turn
-        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-        game_manager->updateMonsters();  // Let ECS systems respond
-        return true;
-    } else if (player->tryMove(*map, entity_manager, dx, dy)) {
-        LOG_PLAYER("Moved successfully to (" + std::to_string(player->x) + ", " + std::to_string(player->y) + ")");
-        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-
-        // Only add movement message if not in combat
-        if (!direction.empty()) {
-            // Commenting out movement messages to reduce log spam
-            // game_manager->getMessageLog()->addMessage("You move " + direction + ".");
-        }
-
-        renderer->centerOn(player->x, player->y);
-        game_manager->updateFOV();
-        game_manager->updateMonsters();  // Let monsters act after player moves
-        return true;
-    } else {
-        LOG_PLAYER("Movement blocked");
-    }
+    // Legacy movement code - should not be reached in ECS mode
+    LOG_ERROR("Legacy movement code reached - this should not happen in ECS mode");
     return false;
 }
 
@@ -543,78 +485,29 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
             return true;
 
         case InputAction::USE_ITEM: {
-            auto* player = game_manager->getPlayer();
+            // Legacy inventory system removed - ECS inventory not yet implemented
             auto* msg_log = game_manager->getMessageLog();
-            Item* item = inventory_renderer->getSelectedItem();
-
-            if (item && player && msg_log) {
-                // Handle potion use
-                if (item->type == Item::ItemType::POTION) {
-                    if (item->properties.count("heal")) {
-                        int heal_amount = item->properties.at("heal");
-                        player->heal(heal_amount);
-                        msg_log->addMessage("You drink the " + item->name + " and recover " +
-                                          std::to_string(heal_amount) + " HP.");
-
-                        // Remove the item
-                        player->inventory->removeItem(inventory_renderer->getSelectedSlot());
-
-                        // Close inventory and consume turn
-                        game_manager->setState(GameState::PLAYING);
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        inventory_renderer->reset();
-                        return true;
-                    }
-                }
-                msg_log->addMessage("You can't use that item.");
+            if (msg_log) {
+                msg_log->addMessage("Inventory system is being migrated to ECS.");
             }
             return true;
         }
 
         case InputAction::DROP_ITEM: {
-            auto* player = game_manager->getPlayer();
-            auto* item_manager = game_manager->getItemManager();
+            // Legacy inventory system removed - ECS inventory not yet implemented
             auto* msg_log = game_manager->getMessageLog();
-
-            if (player && item_manager && msg_log) {
-                auto dropped = player->inventory->removeItem(inventory_renderer->getSelectedSlot());
-                if (dropped) {
-                    std::string item_name = dropped->name;
-                    int px = player->x;
-                    int py = player->y;
-
-                    msg_log->addMessage("You drop the " + item_name + ".");
-                    LOG_INFO("Dropping item: " + item_name + " at (" +
-                             std::to_string(px) + ", " + std::to_string(py) + ")");
-
-                    // Item drop temporarily disabled during migration to ECS
-                    // TODO: Implement ECS-based item drop
-                    // item_manager->spawnItem(std::move(dropped), px, py);
-
-                    // Log item count after drop
-                    // LOG_INFO("Items in world after drop: " +
-                    //          std::to_string(item_manager->getItemCount()));
-
-                    // Consume turn
-                    game_manager->processPlayerAction(ActionSpeed::FAST);
-                }
+            if (msg_log) {
+                msg_log->addMessage("Inventory system is being migrated to ECS.");
             }
             return true;
         }
 
         case InputAction::EXAMINE_ITEM: {
             auto* msg_log = game_manager->getMessageLog();
-            Item* item = inventory_renderer->getSelectedItem();
-
-            if (item && msg_log) {
-                msg_log->addMessage("Examining: " + item->name);
-                if (!item->description.empty()) {
-                    msg_log->addMessage(item->description);
-                }
-                // Add more detailed info
-                if (item->type == Item::ItemType::POTION && item->properties.count("heal")) {
-                    msg_log->addMessage("Heals " + std::to_string(item->properties.at("heal")) + " HP when used.");
-                }
+            // Legacy item examination - needs ECS implementation
+            if (msg_log) {
+                msg_log->addMessage("Item examination needs ECS implementation.");
+                // TODO: Get item from ECS inventory system
             }
             return true;
         }
