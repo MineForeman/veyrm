@@ -3,51 +3,59 @@
  * @brief Implementation of ECS-based game world
  */
 
+// All includes at global scope
 #include <memory>
 #include <vector>
 #include <deque>
+#include <algorithm>
 #include <iostream>
-#include "../../include/ecs/game_world.h"
-#include "../../include/ecs/entity_factory.h"
-#include "../../include/ecs/entity_adapter.h"
-#include "../../include/ecs/movement_system.h"
-#include "../../include/ecs/render_system.h"
-#include "../../include/ecs/combat_system.h"
-#include "../../include/ecs/ai_system.h"
-#include "../../include/ecs/inventory_system.h"
-#include "../../include/ecs/event.h"
-#include "../../include/entity_manager.h"
-#include "../../include/combat_system.h"
-#include "../../include/message_log.h"
-#include "../../include/player.h"
-#include "../../include/monster.h"
-#include "../../include/item.h"
-#include "../../include/turn_manager.h"
+#include <string>
+#include <exception>
+#include <variant>
 
+#include "ecs/game_world.h"
+#include "ecs/entity_factory.h"
+#include "ecs/entity_adapter.h"
+#include "ecs/movement_system.h"
+#include "ecs/render_system.h"
+#include "ecs/combat_system.h"
+#include "ecs/ai_system.h"
+#include "ecs/inventory_system.h"
+#include "ecs/equipment_system.h"
+#include "ecs/event.h"
+#include "entity_manager.h"
+#include "combat_system.h"
+#include "player.h"
+#include "monster.h"
+#include "item.h"
+#include "turn_manager.h"
+#include "message_log_adapter.h"
+
+// Forward declare Map to avoid include issues
+class Map;
+
+// Only now open the namespace
 namespace ecs {
 
-// Debug output
-static bool debug_init = []() {
-    std::cout << "[ECS] GameWorld namespace initialized" << std::endl;
-    return true;
-}();
-
 GameWorld::GameWorld(::EntityManager* entities, ::CombatSystem* /*combat*/,
-                     ::MessageLog* log, ::Map* map)
+                     MessageLog* log, ::Map* map)
     : legacy_entities(entities),
       message_log(log),
       game_map(map) {
-    // Note: legacy_combat parameter kept for API compatibility but not used
+    // Create ILogger adapter for MessageLog
+    if (message_log) {
+        logger = std::make_unique<MessageLogAdapter>(message_log);
+    }
 }
 
 GameWorld::~GameWorld() = default;
 
 void GameWorld::initialize(bool migrate_existing) {
-    // Create bridge objects (for legacy compatibility)
+    // Create bridge objects for legacy compatibility
     entity_bridge = std::make_unique<EntityManagerBridge>(legacy_entities);
     renderer_bridge = std::make_unique<RendererBridge>(entity_bridge.get());
 
-    // Initialize ECS systems
+    // Initialize all ECS systems
     initializeSystems();
 
     // Migrate existing entities if requested
@@ -58,17 +66,27 @@ void GameWorld::initialize(bool migrate_existing) {
 
 void GameWorld::initializeSystems() {
     // Register core systems with priorities
-    auto& movement = world.registerSystem<MovementSystem>(game_map);    // Priority 10 (early)
-    world.registerSystem<RenderSystem>(game_map);                       // Priority 90 (late)
+    auto& movement = world.registerSystem<MovementSystem>(game_map);
+    world.registerSystem<RenderSystem>(game_map);
 
-    // Register native ECS systems
-    native_combat_system = &world.registerSystem<CombatSystem>(message_log);  // Priority 50 (mid)
+    // Register native ECS combat system
+    native_combat_system = &world.registerSystem<CombatSystem>(message_log);
+
+    // Register AI system with dependencies
     native_ai_system = &world.registerSystem<AISystem>(game_map, &movement,
                                                         native_combat_system,
-                                                        message_log);           // Priority 30 (after input)
+                                                        message_log);
 
     // Register inventory system
-    world.registerSystem<InventorySystem>(game_map, message_log);            // Priority 40
+    world.registerSystem<InventorySystem>(game_map, logger.get());
+
+    // Register equipment system with world access
+    world.registerSystem<EquipmentSystem>(logger.get(), &world);
+
+    // Set player ID for AI targeting
+    if (native_ai_system && player_id != 0) {
+        native_ai_system->setPlayerId(player_id);
+    }
 }
 
 void GameWorld::migrateExistingEntities() {
@@ -90,13 +108,18 @@ void GameWorld::migrateExistingEntities() {
             // Track player ID
             if (ecs_entity) {
                 player_id = ecs_entity->getID();
+
+                // Update AI system with player ID
+                if (native_ai_system) {
+                    native_ai_system->setPlayerId(player_id);
+                }
             }
         } else if (auto monster = std::dynamic_pointer_cast<Monster>(legacy_entity)) {
             ecs_entity = EntityAdapter::fromMonster(*monster);
         } else if (auto item = std::dynamic_pointer_cast<Item>(legacy_entity)) {
             ecs_entity = EntityAdapter::fromItem(*item);
         } else {
-            // Generic entity
+            // Generic entity migration
             ecs_entity = std::make_unique<Entity>();
             ecs_entity->addComponent<PositionComponent>(
                 legacy_entity->getPosition().x,
@@ -118,16 +141,19 @@ void GameWorld::migrateExistingEntities() {
 }
 
 void GameWorld::update(double delta_time) {
-    // Process all queued events
+    // Process all queued events from previous frame
     EventSystem::getInstance().update();
 
-    // Update ECS systems
+    // Update all ECS systems
     world.update(delta_time);
 
     // Process any events generated by systems
     EventSystem::getInstance().update();
 
-    // Sync changes back to legacy
+    // Remove dead entities
+    removeDeadEntities();
+
+    // Sync changes back to legacy systems
     syncToLegacy();
 }
 
@@ -139,7 +165,7 @@ EntityID GameWorld::createPlayer(int x, int y) {
     // Add to world
     Entity& added = world.addEntity(std::move(player_entity));
 
-    // Create legacy player if needed
+    // Create legacy player if needed for compatibility
     if (legacy_entities) {
         auto legacy_player = legacy_entities->createPlayer(x, y);
         if (legacy_player) {
@@ -150,6 +176,11 @@ EntityID GameWorld::createPlayer(int x, int y) {
 
     // Track player ID
     player_id = id;
+
+    // Update AI system
+    if (native_ai_system) {
+        native_ai_system->setPlayerId(player_id);
+    }
 
     return id;
 }
@@ -180,9 +211,12 @@ EntityID GameWorld::createItem(const std::string& type, int x, int y) {
     EntityID id = item_entity->getID();
 
     // Add to world
-    [[maybe_unused]] Entity& added = world.addEntity(std::move(item_entity));
+    world.addEntity(std::move(item_entity));
 
-    // Note: Legacy item creation would go here if ItemFactory was ready
+    // Create legacy item if needed
+    if (legacy_entities) {
+        // Legacy item creation would go here if available
+    }
 
     return id;
 }
@@ -195,6 +229,11 @@ bool GameWorld::removeEntity(EntityID id) {
     // Don't remove player
     if (id == player_id) {
         return false;
+    }
+
+    // Remove from bridges if present
+    if (entity_bridge) {
+        entity_bridge->removeEntity(id);
     }
 
     return world.removeEntity(id);
@@ -213,104 +252,141 @@ std::vector<Entity*> GameWorld::getEntitiesAt(int x, int y) {
     return result;
 }
 
-ActionSpeed GameWorld::processPlayerAction([[maybe_unused]] int action, int dx, int dy) {
-    std::cout << "[ECS GameWorld] processPlayerAction called with dx=" << dx << ", dy=" << dy
-              << ", player_id=" << player_id << std::endl;
+ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
+    std::cout << "[ECS GameWorld] processPlayerAction called with action=" << action
+              << ", dx=" << dx << ", dy=" << dy << ", player_id=" << player_id << std::endl;
 
     // Get player entity
     Entity* player = getEntity(player_id);
     if (!player) {
         std::cout << "[ECS GameWorld] No player entity found! player_id=" << player_id << std::endl;
-        return ActionSpeed::INSTANT;
+        return ActionSpeed::NORMAL;
     }
 
-    // Get movement system
-    auto* movement = world.getSystem<MovementSystem>();
-    if (!movement) {
-        std::cout << "[ECS GameWorld] No movement system found!" << std::endl;
-        return ActionSpeed::INSTANT;
+    auto* pos = player->getComponent<PositionComponent>();
+    if (!pos) {
+        std::cout << "[ECS GameWorld] Player has no position component!" << std::endl;
+        return ActionSpeed::NORMAL;
     }
 
-    std::cout << "[ECS GameWorld] Processing player action: dx=" << dx << ", dy=" << dy << std::endl;
+    std::cout << "[ECS GameWorld] Player current position: (" << pos->position.x
+              << ", " << pos->position.y << ")" << std::endl;
 
-    // Process movement
-    if (dx != 0 || dy != 0) {
-        // Check for combat
-        int target_x = player->getComponent<PositionComponent>()->position.x + dx;
-        int target_y = player->getComponent<PositionComponent>()->position.y + dy;
+    ActionSpeed speed = ActionSpeed::NORMAL;
 
-        auto targets = getEntitiesAt(target_x, target_y);
-        for (auto* target : targets) {
-            if (target->hasComponent<CombatComponent>()) {
-                // Use native combat system
-                if (native_combat_system) {
-                    // Find shared_ptr for entities
-                    std::shared_ptr<Entity> attacker_ptr;
-                    std::shared_ptr<Entity> defender_ptr;
+    // Handle different actions
+    switch (action) {
+        case 0: // Movement
+            if (dx != 0 || dy != 0) {
+                int new_x = pos->position.x + dx;
+                int new_y = pos->position.y + dy;
+                std::cout << "[ECS GameWorld] Attempting to move to (" << new_x << ", " << new_y << ")" << std::endl;
 
-                    for (const auto& e : world.getEntities()) {
-                        if (e.get() == player) attacker_ptr = std::shared_ptr<Entity>(e.get(), [](Entity*){});
-                        if (e.get() == target) defender_ptr = std::shared_ptr<Entity>(e.get(), [](Entity*){});
-                    }
-
-                    if (attacker_ptr && defender_ptr) {
-                        native_combat_system->queueAttack(attacker_ptr->getID(),
-                                                         defender_ptr->getID());
+                // Check for combat (bump to attack)
+                auto entities_at_target = getEntitiesAt(new_x, new_y);
+                for (Entity* target : entities_at_target) {
+                    if (target->hasComponent<CombatComponent>() &&
+                        target->getID() != player_id) {
+                        // Attack the target
+                        if (native_combat_system) {
+                            native_combat_system->queueAttack(player_id, target->getID());
+                        }
+                        return ActionSpeed::NORMAL;
                     }
                 }
-                return ActionSpeed::NORMAL;
-            }
-        }
 
-        // Regular movement
-        std::cout << "[ECS GameWorld] Attempting regular movement" << std::endl;
-        if (movement->moveEntity(*player, dx, dy)) {
-            std::cout << "[ECS GameWorld] Movement successful!" << std::endl;
-            return ActionSpeed::NORMAL;
-        } else {
-            std::cout << "[ECS GameWorld] Movement failed!" << std::endl;
-        }
+                // Move if no combat
+                auto* movement = world.getSystem<MovementSystem>();
+                if (movement) {
+                    auto player_ptr = std::shared_ptr<Entity>(player, [](Entity*){});
+                    if (movement->moveEntity(*player_ptr, new_x, new_y)) {
+                        speed = ActionSpeed::NORMAL;
+                    }
+                }
+            }
+            break;
+
+        case 1: // Pickup item
+            {
+                auto items_here = getEntitiesAt(pos->position.x, pos->position.y);
+                auto* inv_system = world.getSystem<InventorySystem>();
+                if (inv_system) {
+                    for (Entity* item : items_here) {
+                        if (item->hasComponent<ItemComponent>()) {
+                            if (inv_system->pickupItem(player, item)) {
+                                speed = ActionSpeed::FAST;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+
+        case 2: // Use item
+            // Would need item selection UI
+            speed = ActionSpeed::FAST;
+            break;
+
+        case 3: // Drop item
+            // Would need item selection UI
+            speed = ActionSpeed::FAST;
+            break;
+
+        case 4: // Wait
+            speed = ActionSpeed::NORMAL;
+            break;
+
+        default:
+            speed = ActionSpeed::NORMAL;
+            break;
     }
 
-    return ActionSpeed::INSTANT;
+    return speed;
 }
 
 void GameWorld::processMonsterAI() {
-    // Native AI system handles this now
-    if (native_ai_system) {
+    // AI system handles this automatically in update loop
+    // Just ensure player ID is set
+    if (native_ai_system && player_id != 0) {
         native_ai_system->setPlayerId(player_id);
-        // AI system update is called automatically during world.update()
-        // No need to manually process here
     }
-    // Note: The actual AI processing happens in world.update() which calls AISystem::update()
 }
 
 void GameWorld::updateFOV(const std::vector<std::vector<bool>>& fov) {
-    // Update render system's FOV
-    auto* render_system = world.getSystem<RenderSystem>();
-    if (render_system) {
-        render_system->setFOV(fov);
-    }
+    // Update visibility for all entities based on FOV
+    for (const auto& entity : world.getEntities()) {
+        auto* pos = entity->getComponent<PositionComponent>();
+        auto* renderable = entity->getComponent<RenderableComponent>();
 
-    // Update renderer bridge's visibility
-    if (renderer_bridge) {
-        renderer_bridge->updateEntitiesVisibility(fov);
+        if (pos && renderable) {
+            if (pos->position.x >= 0 && pos->position.x < (int)fov.size() &&
+                pos->position.y >= 0 && pos->position.y < (int)fov[0].size()) {
+                renderable->is_visible = fov[pos->position.x][pos->position.y];
+            }
+        }
     }
 }
 
 void GameWorld::syncToLegacy() {
     if (!entity_bridge) return;
 
-    // Sync positions and health
-    entity_bridge->updatePositionsFromComponents();
-    entity_bridge->updateHealthFromComponents();
+    // Sync all ECS entities back to legacy system
+    for (const auto& entity : world.getEntities()) {
+        entity_bridge->syncToLegacy(entity.get());
+    }
 }
 
 void GameWorld::syncFromLegacy() {
     if (!entity_bridge) return;
 
-    // Create components for any new legacy entities
-    entity_bridge->createComponentsForLegacyEntities();
+    // Sync legacy entities to ECS
+    if (legacy_entities) {
+        auto all_entities = legacy_entities->getAllEntities();
+        for (const auto& legacy_entity : all_entities) {
+            entity_bridge->syncFromLegacy(legacy_entity);
+        }
+    }
 }
 
 MovementSystem* GameWorld::getMovementSystem() {
@@ -322,30 +398,60 @@ RenderSystem* GameWorld::getRenderSystem() {
 }
 
 bool GameWorld::isPositionBlocked(int x, int y) const {
-    if (!entity_bridge) return false;
+    // Check map
+    if (game_map && !game_map->isWalkable(x, y)) {
+        return true;
+    }
 
-    return entity_bridge->isPositionBlockedByCombatEntity(x, y);
-}
-
-void GameWorld::removeDeadEntities() {
-    if (!entity_bridge) return;
-
-    entity_bridge->removeDeadEntitiesFromComponents();
-
-    // Also remove from world
-    std::vector<EntityID> to_remove;
-
+    // Check entities
     for (const auto& entity : world.getEntities()) {
-        if (entity->getID() == player_id) continue;
+        auto* pos = entity->getComponent<PositionComponent>();
+        auto* combat = entity->getComponent<CombatComponent>();
 
-        auto* health = entity->getComponent<HealthComponent>();
-        if (health && health->isDead()) {
-            to_remove.push_back(entity->getID());
+        // Blocking entities have position and combat components
+        if (pos && combat && pos->isAt(x, y)) {
+            return true;
         }
     }
 
+    return false;
+}
+
+void GameWorld::removeDeadEntities() {
+    std::vector<EntityID> to_remove;
+
+    for (const auto& entity : world.getEntities()) {
+        auto* health = entity->getComponent<HealthComponent>();
+        if (health && health->hp <= 0 && entity->getID() != player_id) {
+            to_remove.push_back(entity->getID());
+
+            // Drop items on death
+            auto* inventory = entity->getComponent<InventoryComponent>();
+            auto* pos = entity->getComponent<PositionComponent>();
+            if (inventory && pos) {
+                for (EntityID item_id : inventory->items) {
+                    Entity* item = getEntity(item_id);
+                    if (item) {
+                        // Add position back to item
+                        item->addComponent<PositionComponent>(
+                            pos->position.x, pos->position.y
+                        );
+                    }
+                }
+            }
+
+            // Log death message
+            if (logger) {
+                auto* renderable = entity->getComponent<RenderableComponent>();
+                std::string name = renderable ? renderable->name : "Something";
+                logger->logCombat(name + " dies!");
+            }
+        }
+    }
+
+    // Remove dead entities
     for (EntityID id : to_remove) {
-        world.removeEntity(id);
+        removeEntity(id);
     }
 }
 
