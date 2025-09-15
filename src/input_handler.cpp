@@ -22,6 +22,7 @@ void InputHandler::initializeDefaultBindings() {
     keyBindings["7"] = InputAction::MOVE_UP_LEFT;
     keyBindings["8"] = InputAction::MOVE_UP;
     keyBindings["9"] = InputAction::MOVE_UP_RIGHT;
+
     
     // Actions
     keyBindings["."] = InputAction::WAIT;

@@ -1,6 +1,6 @@
 #include "entity.h"
 #include "map.h"
-#include "monster_ai.h"
+// monster_ai.h removed - using ECS AISystem
 #include <cmath>
 
 Entity::Entity(int x, int y, const std::string& glyph, ftxui::Color color, const std::string& name)
@@ -71,24 +71,4 @@ std::string Entity::getCombatName() const {
 }
 
 // Type-safe AI data accessors
-MonsterAIData* Entity::getAIData() {
-    if (auto* ai_ptr = std::get_if<std::shared_ptr<MonsterAIData>>(&ai_data_storage)) {
-        return ai_ptr->get();
-    }
-    return nullptr;
-}
-
-const MonsterAIData* Entity::getAIData() const {
-    if (auto* ai_ptr = std::get_if<std::shared_ptr<MonsterAIData>>(&ai_data_storage)) {
-        return ai_ptr->get();
-    }
-    return nullptr;
-}
-
-void Entity::setAIData(std::shared_ptr<MonsterAIData> data) {
-    ai_data_storage = std::move(data);
-}
-
-bool Entity::hasAIData() const {
-    return std::holds_alternative<std::shared_ptr<MonsterAIData>>(ai_data_storage);
-}
+// MonsterAI methods removed - using ECS AISystem

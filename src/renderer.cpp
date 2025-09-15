@@ -3,7 +3,7 @@
 #include "game_state.h"
 #include "color_scheme.h"
 #include "entity_manager.h"
-#include "item_manager.h"
+// #include "item_manager.h"  // Legacy - using ECS
 #include "item.h"
 #include "ecs/game_world.h"
 #include "ecs/render_system.h"
@@ -93,12 +93,12 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
         }
     }
 
-    // Get items for rendering
-    const auto* item_manager = game.getItemManager();
+    // Items now rendered through ECS
+    // const auto* item_manager = game.getItemManager();
     std::vector<const Item*> all_items;
-    if (item_manager) {
-        all_items = item_manager->getAllItems();
-    }
+    // if (item_manager) {
+    //     all_items = item_manager->getAllItems();
+    // }
     
     for (int screen_y = 0; screen_y < viewport_height; screen_y++) {
         std::vector<Element> row_elements;
@@ -132,9 +132,10 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                 continue;
             }
 
-            // Check for items at this position (only if visible)
+            // Items now rendered through ECS entity grid
+            // Legacy item rendering disabled
             bool item_rendered = false;
-            if (map.isVisible(map_pos.x, map_pos.y)) {
+            /*if (map.isVisible(map_pos.x, map_pos.y)) {
                 for (const auto& item : all_items) {
                     if (item && item->x == map_pos.x && item->y == map_pos.y) {
                         // Convert item color string to ftxui Color
@@ -156,7 +157,7 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
                         break;
                     }
                 }
-            }
+            }*/
 
             if (item_rendered) {
                 continue;

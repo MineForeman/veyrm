@@ -12,6 +12,9 @@
 #include "renderable_component.h"
 #include "health_component.h"
 #include "combat_component.h"
+#include "inventory_component.h"
+#include "player_component.h"
+#include "stats_component.h"
 #include "ai_system.h"
 #include "../color_scheme.h"
 #include <memory>
@@ -355,6 +358,23 @@ public:
             .withCombatName("Player")
             .build();
         entity->addTag("player");
+
+        // Add player-specific component
+        entity->addComponent<PlayerComponent>();
+
+        // Add inventory component for item pickup functionality
+        entity->addComponent<InventoryComponent>(26, 100.0f);  // 26 slots, 100 weight limit
+
+        // Add stats component for RPG mechanics
+        auto& stats = entity->addComponent<StatsComponent>();
+        stats.strength = 12;
+        stats.dexterity = 10;
+        stats.constitution = 14;
+        stats.intelligence = 10;
+        stats.wisdom = 10;
+        stats.charisma = 10;
+        stats.recalculateDerived();
+
         return entity;
     }
 

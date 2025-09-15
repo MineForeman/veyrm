@@ -1,4 +1,4 @@
-# Claude Code VIBE prompts.
+# Claude Code VIBE prompts
 
 These are the user note
 
@@ -6,7 +6,7 @@ These are the user note
 
 - Create DOC/SPEC.md that sumerises and indexes all of the other md files in DOC/MVP/ and DOC/WORLD
 - Create DOC/IMPLEMENTATION_PLAN.md that breaks down each phase and step in order to create the MVP. Make the phaeses and steps as small as possable for ease of implementaion and emphasise testeing, documentation and git management with tags.
-- I have created a git repo at git@github.com:MineForeman/veyrm.git, create an appropriate gitignore and do the first check in.
+- I have created a git repo at `git@github.com:MineForeman/veyrm.git`, create an appropriate gitignore and do the first check in.
 
 ## Step
 
@@ -27,7 +27,7 @@ These are the user note
 - Tag and push 0.3, ensure that all files are checked in.
 
 - Detail what is needed to complete 0.4 in its own document.
-- Tag and checkin 1.1. 
+- Tag and checkin 1.1.
 
 - Document what is necessary for 1.2 Turn System
 - Implement 1.2 Turn System (with testing support)
@@ -43,12 +43,11 @@ These are the user note
 - Implement 2.1 Tile System
 - Update implementation plan and push
 
-can you tell me why you use [[maybe_unused]], I have not seen that before and would like to know more 
+can you tell me why you use [[maybe_unused]], I have not seen that before and would like to know more
 Test
 Can you make it so that I dont have to escape characters when sending keys to build.sh
 
 Can you make it so that build.sh reports on the binary size and other stats on the main menu.  Also, remove the Press Enter to continue... messages and just go back.
-
 
 Create any testss needed and run them.
 
@@ -59,16 +58,11 @@ Do a git add -A, check in and push.
 
 Add an option to build.sh that creates a gorse video in a tmp directory so it does not check in.
 
-
-
 I just played a game, the only log generated was veyrm_debug.log, why?
-
 
 The "load" screen loks odd, jazz it up!
 
-
 Implement doors and bind a key for players to use to toggle the door open and close them, also add it to the log.
-
 
 Implement and log 8.3 Basic AI
 
@@ -79,7 +73,6 @@ Create a new brach where we will refactor and optimize and switch to it.
 I want to refactor the documentation, search through the md files and document what could be improved.
 I want to refactor abd optimize the classes and implement Doxygen comments, search through the md files and document what could be improved.  Refer to tmp/veyrm_classes.svg.
 
-
 TODO
 
 Seach through the code base and find TODO code and document it.
@@ -87,7 +80,6 @@ Seach through the code base and find TODO code and document it.
 Redundent
 
 Seach through the code base and find any redundent code and document it.
-
 
 Tests
 
@@ -107,20 +99,29 @@ CONTAINER ID   IMAGE                COMMAND                  CREATED      STATUS
 ➜  verym git:(main) ✗ ls ../docker_mysql
 data               docker-compose.yml Dockerfile
 ➜  verym git:(main) ✗ cat ../docker_mysql/Dockerfile
-# ./Dockerfile
+
+## ./Dockerfile
+
 FROM mysql:8.4
 
-# (Optional) You can add custom configs later by COPY-ing a my.cnf into /etc/mysql/conf.d/
-# Example:
-# COPY my.cnf /etc/mysql/conf.d/my.cnf
-# RUN chmod 0444 /etc/mysql/conf.d/my.cnf
+### (Optional) You can add custom configs later by COPY-ing a my.cnf into /etc/mysql/conf.d/
+
+### Example
+
+### COPY my.cnf /etc/mysql/conf.d/my.cnf
+
+### RUN chmod 0444 /etc/mysql/conf.d/my.cnf
 
 ➜  verym git:(main) ✗ cat ../docker_mysql/docker-compose.yml
-# ./docker-compose.yml
+
+## ./docker-compose.yml
+
 version: "3.9"
 
 services:
+
   mysql:
+
     build: .
     container_name: mysql-local
     restart: unless-stopped
@@ -163,8 +164,7 @@ and anything else needed.
 
 I want build.sh to be able to load, clear, view, backup and reload the data.
 
-Document was must be done.  
-
+Document was must be done.
 
 Multiplayer
 
@@ -173,8 +173,6 @@ Multiplayer
 - All traffic between the server and client must be done over the network, later they wont even be on the same machiene.
 - Must be server authritive.
 - As much as the "heavy lifting" as possable be done by the client.
-
-
 
 Ranged attacks
 Spell system

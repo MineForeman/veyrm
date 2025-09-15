@@ -28,6 +28,7 @@ enum class ComponentType {
     PHYSICS,      ///< Physical properties (blocking, etc)
     STATS,        ///< RPG statistics
     ITEM_DATA,    ///< Item-specific properties
+    PLAYER,       ///< Player-specific data
     CUSTOM        ///< User-defined components
 };
 

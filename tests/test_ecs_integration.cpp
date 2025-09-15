@@ -7,7 +7,8 @@
 #include "../include/ecs/health_component.h"
 #include "../include/ecs/combat_component.h"
 #include "../include/entity_manager.h"
-#include "../include/combat_system.h"
+// legacy combat_system.h removed - using ECS CombatSystem
+#include "../include/ecs/combat_system.h"
 #include "../include/message_log.h"
 #include "../include/map.h"
 #include "../include/config.h"
@@ -34,12 +35,11 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
     SECTION("ECS world creates entities") {
         // Create standalone components
         EntityManager entity_manager;
-        ::CombatSystem combat_system;
         MessageLog message_log;
         Map map(20, 20);
 
         // Create ECS world
-        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        ecs::GameWorld world(&entity_manager, &message_log, &map);
         world.initialize(false);
 
         // Create player
@@ -61,7 +61,6 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
 
     SECTION("ECS world processes movement") {
         EntityManager entity_manager;
-        ::CombatSystem combat_system;
         MessageLog message_log;
         Map map(20, 20);
 
@@ -72,7 +71,7 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
             }
         }
 
-        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        ecs::GameWorld world(&entity_manager, &message_log, &map);
         world.initialize(false);
 
         // Create player
@@ -96,10 +95,9 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
     SECTION("ECS world handles combat") {
         EntityManager entity_manager;
         MessageLog message_log;
-        ::CombatSystem combat_system(&message_log);
         Map map(20, 20);
 
-        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
+        ecs::GameWorld world(&entity_manager, &message_log, &map);
         world.initialize(false);
 
         // Create player and monster
@@ -122,12 +120,20 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
         // Queue attack
         ecs_combat->queueAttack(player->getID(), monster->getID());
 
+        // Check initial state
+        INFO("Initial monster HP: " << monster->getComponent<ecs::HealthComponent>()->hp);
+        INFO("Monster position: " << monster->getComponent<ecs::PositionComponent>()->position.x
+             << "," << monster->getComponent<ecs::PositionComponent>()->position.y);
+        INFO("Player position: " << player->getComponent<ecs::PositionComponent>()->position.x
+             << "," << player->getComponent<ecs::PositionComponent>()->position.y);
+
         // Process the attack
         world.update(0.016); // One frame update
 
         // Check that monster took damage
         auto* monster_health = monster->getComponent<ecs::HealthComponent>();
         REQUIRE(monster_health != nullptr);
+        INFO("After update monster HP: " << monster_health->hp);
 
         // If this fails, print diagnostic info
         if (monster_health->hp >= monster_health->max_hp) {
@@ -145,36 +151,7 @@ TEST_CASE("ECS Integration with GameManager", "[ecs][integration]") {
         }
     }
 
-    SECTION("ECS world syncs with legacy") {
-        EntityManager entity_manager;
-        ::CombatSystem combat_system;
-        MessageLog message_log;
-        Map map(20, 20);
-
-        ecs::GameWorld world(&entity_manager, &combat_system, &message_log, &map);
-        world.initialize(false);
-
-        // Create player through ECS
-        auto player_id = world.createPlayer(5, 5);
-
-        // Should also create legacy player
-        auto legacy_player = entity_manager.getPlayer();
-        REQUIRE(legacy_player != nullptr);
-        REQUIRE(legacy_player->getPosition().x == 5);
-        REQUIRE(legacy_player->getPosition().y == 5);
-
-        // Move ECS player
-        auto* player = world.getEntity(player_id);
-        auto* pos = player->getComponent<ecs::PositionComponent>();
-        pos->moveTo(7, 7);
-
-        // Sync to legacy
-        world.syncToLegacy();
-
-        // Legacy should be updated
-        REQUIRE(legacy_player->getPosition().x == 7);
-        REQUIRE(legacy_player->getPosition().y == 7);
-    }
+    // Legacy sync test removed - using full ECS mode only
 
     SECTION("GameManager with ECS mode processes updates") {
         GameManager game(MapType::TEST_ROOM);

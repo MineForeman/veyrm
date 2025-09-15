@@ -36,10 +36,8 @@ class FrameStats;
 class Map;
 class EntityManager;
 class Player;
-class SpawnManager;
+// SpawnManager removed - using ECS spawning
 class MapMemory;
-class MonsterAI;
-class CombatSystem;
 class ItemManager;
 class GameSerializer;
 
@@ -149,7 +147,7 @@ public:
     void enableFrameStats() { /* Frame stats are always enabled if available */ }
     
     // Spawn management
-    SpawnManager* getSpawnManager() { return spawn_manager.get(); }
+    // getSpawnManager removed - using ECS spawning
     
     // Game data (deprecated - use entity_manager->getPlayer() instead)
     int player_hp = 10;      // DEPRECATED
@@ -200,14 +198,11 @@ public:
 
     // Monster AI
     void updateMonsters();
-    MonsterAI* getMonsterAI() { return monster_ai.get(); }
 
-    // Combat system
-    CombatSystem* getCombatSystem() { return combat_system.get(); }
 
-    // Item system
-    ItemManager* getItemManager() { return item_manager.get(); }
-    const ItemManager* getItemManager() const { return item_manager.get(); }
+    // Item system - Legacy (using ECS item system)
+    ItemManager* getItemManager() { return nullptr; /*item_manager.get();*/ }
+    const ItemManager* getItemManager() const { return nullptr; /*item_manager.get();*/ }
 
     // Save/Load system
 
@@ -267,11 +262,9 @@ private:
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
     std::unique_ptr<EntityManager> entity_manager;
-    std::unique_ptr<SpawnManager> spawn_manager;
+    // spawn_manager removed - using ECS spawning
     std::unique_ptr<MapMemory> map_memory;
-    std::unique_ptr<MonsterAI> monster_ai;
-    std::unique_ptr<CombatSystem> combat_system;
-    std::unique_ptr<ItemManager> item_manager;
+    // std::unique_ptr<ItemManager> item_manager;  // Legacy - using ECS item system
     std::unique_ptr<GameSerializer> serializer;
     std::unique_ptr<ecs::GameWorld> ecs_world;  ///< ECS world manager
     std::vector<std::vector<bool>> current_fov;

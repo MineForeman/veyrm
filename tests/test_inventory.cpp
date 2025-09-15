@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "inventory.h"
 #include "item.h"
-#include "item_factory.h"
+// #include "item_factory.h"  // Legacy - removed
 #include "player.h"
 #include "config.h"
 
@@ -271,7 +271,7 @@ TEST_CASE("Inventory utility functions", "[inventory]") {
 TEST_CASE("Player inventory integration", "[inventory]") {
     // Ensure config is loaded
     Config::getInstance().loadFromFile("config.yml");
-    ItemFactory::getInstance().loadFromJson(Config::getInstance().getDataFilePath("items.json"));
+    // ItemFactory::getInstance().loadFromJson(Config::getInstance().getDataFilePath("items.json"));  // Removed
 
     Player player(5, 5);
 
@@ -281,8 +281,12 @@ TEST_CASE("Player inventory integration", "[inventory]") {
     }
 
     SECTION("Pickup regular items") {
-        auto potion = ItemFactory::getInstance().create("potion_minor");
-        REQUIRE(potion != nullptr);
+        // ItemFactory removed - create items manually
+        auto potion = std::make_unique<Item>("potion_minor");
+        potion->name = "Minor Healing Potion";
+        potion->type = Item::ItemType::POTION;
+        potion->properties["heal"] = 6;
+        potion->stackable = true;
 
         REQUIRE(player.pickupItem(std::move(potion)));
         REQUIRE(player.hasItem("potion_minor"));
@@ -292,7 +296,9 @@ TEST_CASE("Player inventory integration", "[inventory]") {
     SECTION("Gold goes to gold counter") {
         int initial_gold = player.gold;
 
-        auto gold = ItemFactory::getInstance().create("gold");
+        // Create gold item manually
+        auto gold = std::make_unique<Item>("gold");
+        gold->type = Item::ItemType::GOLD;
         gold->properties["amount"] = 50;
 
         REQUIRE(player.pickupItem(std::move(gold)));
@@ -328,5 +334,5 @@ TEST_CASE("Player inventory integration", "[inventory]") {
     }
 
     // Cleanup
-    ItemFactory::cleanup();
+    // ItemFactory::cleanup();  // Removed
 }

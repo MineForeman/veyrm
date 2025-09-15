@@ -152,17 +152,16 @@ add_library(veyrm_core STATIC
     src/map_memory.cpp
     src/status_bar.cpp
     src/layout_system.cpp
-    src/monster.cpp
-    src/monster_factory.cpp
+    # src/monster.cpp removed - using ECS entities
+    # monster_factory.cpp removed - using ECS DataLoader
     src/config.cpp
-    src/spawn_manager.cpp
-    src/monster_ai.cpp
+    # spawn_manager.cpp removed - using ECS spawning
     src/pathfinding.cpp
-    src/combat_system.cpp
+    # combat_system.cpp removed - using ECS CombatSystem
     src/log.cpp
     src/item.cpp
-    src/item_factory.cpp
-    src/item_manager.cpp
+    # src/item_factory.cpp removed - using ECS DataLoader
+    # src/item_manager.cpp removed - using ECS item system
     src/inventory.cpp
     src/inventory_renderer.cpp
     src/game_serializer.cpp

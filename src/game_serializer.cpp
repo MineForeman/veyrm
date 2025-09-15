@@ -3,9 +3,9 @@
 #include "map.h"
 #include "player.h"
 #include "entity_manager.h"
-#include "item_manager.h"
+// #include "item_manager.h"  // Legacy - using ECS
 #include "message_log.h"
-#include "monster.h"
+// #include "monster.h"  // Legacy - removed
 #include "item.h"
 #include "log.h"
 #include "turn_manager.h"
@@ -147,38 +147,21 @@ json GameSerializer::serializeEntities() const {
 
     json entities = json::array();
 
-    // Serialize all monsters
-    for (const auto& entity : em->getAllEntities()) {
-        if (auto* monster = dynamic_cast<Monster*>(entity.get())) {
-            json monster_data;
-            monster_data["type"] = "monster";
-            monster_data["species"] = monster->species;
-            monster_data["x"] = monster->x;
-            monster_data["y"] = monster->y;
-            monster_data["hp"] = monster->hp;
-            monster_data["max_hp"] = monster->max_hp;
-            // TODO: Add AI state when accessible
-            entities.push_back(monster_data);
-        }
-    }
+    // Monster serialization removed - using ECS entities
+    // Legacy entities not serialized anymore
+    // TODO: Serialize ECS entities when needed
 
     return entities;
 }
 
 json GameSerializer::serializeItems() const {
-    ItemManager* im = game_manager->getItemManager();
-    if (!im) return json::array();
+    // ItemManager removed - using ECS
+    // ItemManager* im = game_manager->getItemManager();
+    // if (!im) return json::array();
 
     json items = json::array();
 
-    // Get all items in the world
-    // TODO: Add getItems() method to ItemManager
-    /*for (const auto& item : im->getItems()) {
-        if (item) {
-            json item_data = item->serialize();
-            items.push_back(item_data);
-        }
-    }*/
+    // TODO: Serialize items from ECS world
 
     return items;
 }
@@ -558,22 +541,11 @@ bool GameSerializer::deserializeItems(const json& data) {
     if (data.is_null() || !data.is_array()) return false;
 
     try {
-        ItemManager* im = game_manager->getItemManager();
-        if (!im) return false;
+        // ItemManager removed - using ECS
+        // ItemManager* im = game_manager->getItemManager();
+        // if (!im) return false;
 
-        // Clear existing items
-        im->clear();
-
-        // Recreate items
-        for (const auto& item_data : data) {
-            // Items will deserialize themselves
-            auto item = std::make_unique<Item>();
-            if (item->deserialize(item_data)) {
-                int x = item_data["x"];
-                int y = item_data["y"];
-                im->spawnItem(std::move(item), x, y);
-            }
-        }
+        // TODO: Deserialize items into ECS world
 
         return true;
     } catch (const std::exception& e) {

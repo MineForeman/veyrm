@@ -23,7 +23,11 @@ void CombatSystem::update(const std::vector<std::unique_ptr<Entity>>& entities, 
         auto defender = findEntity(entities, attack.defender_id);
 
         if (attacker && defender) {
-            processAttack(attacker, defender);
+            auto result = processAttack(attacker, defender);
+            // Log the result if we have a message log
+            if (message_log && !result.message.empty()) {
+                message_log->addMessage(result.message);
+            }
         }
     }
 

@@ -21,7 +21,7 @@ TEST_CASE("InputHandler: Movement keys", "[input_handler]") {
         REQUIRE(handler.processEvent(Event::Character('k')) == InputAction::NONE);
         REQUIRE(handler.processEvent(Event::Character('l')) == InputAction::NONE);
     }
-    
+
     SECTION("Diagonal movement not implemented") {
         // Diagonal movement is not yet implemented
         REQUIRE(handler.processEvent(Event::Character('y')) == InputAction::NONE);

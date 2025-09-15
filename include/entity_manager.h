@@ -16,7 +16,6 @@
 // Forward declarations
 class Map;
 class MapRenderer;
-class Monster;
 
 /**
  * @class EntityManager
@@ -59,14 +58,6 @@ public:
      */
     std::shared_ptr<Player> createPlayer(int x, int y);
 
-    /**
-     * @brief Create a monster entity
-     * @param species Monster type identifier
-     * @param x Initial X coordinate
-     * @param y Initial Y coordinate
-     * @return Shared pointer to created monster
-     */
-    std::shared_ptr<Monster> createMonster(const std::string& species, int x, int y);
 
     /**
      * @brief Remove entity from manager
@@ -125,13 +116,6 @@ public:
      */
     std::shared_ptr<Entity> getItemAt(int x, int y) const;
 
-    /**
-     * @brief Get monster at position
-     * @param x X coordinate
-     * @param y Y coordinate
-     * @return Monster at position, or nullptr
-     */
-    std::shared_ptr<Monster> getMonsterAt(int x, int y) const;
     
     // Get all entities of type
 

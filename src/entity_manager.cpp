@@ -1,6 +1,6 @@
 #include "entity_manager.h"
-#include "monster.h"
-#include "monster_factory.h"
+// Monster class removed - using ECS entities
+// MonsterFactory removed - using ECS EntityFactory
 #include <algorithm>
 
 EntityManager::EntityManager() {
@@ -52,23 +52,6 @@ std::shared_ptr<Player> EntityManager::createPlayer(int x, int y) {
     return player;
 }
 
-std::shared_ptr<Monster> EntityManager::createMonster(const std::string& species, int x, int y) {
-    // Use MonsterFactory to create the monster
-    auto& factory = MonsterFactory::getInstance();
-    auto monster_unique = factory.createMonster(species, x, y);
-    
-    if (!monster_unique) {
-        return nullptr;
-    }
-    
-    // Convert unique_ptr to shared_ptr
-    std::shared_ptr<Monster> monster(std::move(monster_unique));
-    
-    // Add to entity list
-    addEntity(monster);
-    
-    return monster;
-}
 
 void EntityManager::destroyEntity(std::shared_ptr<Entity> entity) {
     if (!entity) return;
@@ -131,14 +114,6 @@ std::shared_ptr<Entity> EntityManager::getItemAt(int x, int y) const {
     return nullptr;
 }
 
-std::shared_ptr<Monster> EntityManager::getMonsterAt(int x, int y) const {
-    for (const auto& entity : entities) {
-        if (entity && entity->isAt(x, y) && entity->getType() == EntityType::MONSTER) {
-            return std::dynamic_pointer_cast<Monster>(entity);
-        }
-    }
-    return nullptr;
-}
 
 std::vector<std::shared_ptr<Entity>> EntityManager::getMonsters() const {
     std::vector<std::shared_ptr<Entity>> result;

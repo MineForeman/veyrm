@@ -3,8 +3,8 @@
 #include "entity_manager.h"
 #include "color_scheme.h"
 #include "config.h"
-#include "monster.h"
-#include "combat_system.h"
+// #include "monster.h"  // Legacy - removed
+// combat_system.h removed - using ECS CombatSystem
 #include "game_state.h"
 #include "message_log.h"
 #include "log.h"

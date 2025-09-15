@@ -1,9 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../include/ecs/entity_factory.h"
-#include "../include/ecs/entity_adapter.h"
-#include "../include/player.h"
-#include "../include/monster.h"
-#include "../include/item.h"
+// Legacy includes removed - EntityAdapter no longer used
 
 using namespace ecs;
 
@@ -190,6 +187,7 @@ TEST_CASE("ItemFactoryECS", "[ecs][factory]") {
     }
 }
 
+/* EntityAdapter tests removed - adapter no longer used
 TEST_CASE("EntityAdapter - Legacy to ECS conversion", "[ecs][adapter]") {
     SECTION("Convert Player to ECS") {
         Player legacy_player(10, 10);
@@ -302,25 +300,5 @@ TEST_CASE("EntityAdapter - ECS to Legacy sync", "[ecs][adapter]") {
     }
 }
 
-TEST_CASE("EntityAdapter - Type detection", "[ecs][adapter]") {
-    SECTION("Detect player entity") {
-        auto player = PlayerFactory().create(0, 0);
-        REQUIRE(EntityAdapter::isPlayer(*player));
-        REQUIRE(!EntityAdapter::isMonster(*player));
-        REQUIRE(!EntityAdapter::isItem(*player));
-    }
-
-    SECTION("Detect monster entity") {
-        auto monster = MonsterFactoryECS().create("goblin", 0, 0);
-        REQUIRE(!EntityAdapter::isPlayer(*monster));
-        REQUIRE(EntityAdapter::isMonster(*monster));
-        REQUIRE(!EntityAdapter::isItem(*monster));
-    }
-
-    SECTION("Detect item entity") {
-        auto item = ItemFactoryECS().create("potion", 0, 0);
-        REQUIRE(!EntityAdapter::isPlayer(*item));
-        REQUIRE(!EntityAdapter::isMonster(*item));
-        REQUIRE(EntityAdapter::isItem(*item));
-    }
-}
+// EntityAdapter tests removed
+*/

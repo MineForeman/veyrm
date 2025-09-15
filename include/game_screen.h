@@ -66,6 +66,10 @@ private:
     std::unique_ptr<LayoutSystem> layout_system;            ///< Layout management
     std::unique_ptr<InventoryRenderer> inventory_renderer;  ///< Inventory display
 
+    // Directional action state
+    bool awaiting_direction = false;                        ///< Waiting for direction input
+    std::string direction_prompt;                           ///< Current direction prompt message
+
     // UI component creation methods
 
     /**
@@ -112,6 +116,14 @@ private:
      * @return true if door interaction occurred
      */
     bool handleDoorInteraction();
+
+    /**
+     * @brief Handle directional door opening/closing
+     * @param dx X direction (-1, 0, 1)
+     * @param dy Y direction (-1, 0, 1)
+     * @return true if door interaction occurred
+     */
+    bool handleDirectionalDoorInteraction(int dx, int dy);
 
     /**
      * @brief Process inventory-related input

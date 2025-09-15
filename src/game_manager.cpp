@@ -12,16 +12,16 @@
 #include "fov.h"
 #include "map_memory.h"
 #include "config.h"
-#include "spawn_manager.h"
-#include "monster_factory.h"
-#include "monster_ai.h"
-#include "monster.h"
-#include "combat_system.h"
+// spawn_manager.h removed - using ECS spawning
+// MonsterFactory removed - using ECS DataLoader
+// monster_ai.h removed - using ECS AISystem
+// #include "monster.h"  // Legacy - removed
+// combat_system.h removed - using ECS CombatSystem
 #include "log.h"
 #include "ecs/position_component.h"
 #include "ecs/health_component.h"
-#include "item_manager.h"
-#include "item_factory.h"
+// #include "item_manager.h"  // Legacy - using ECS item system
+// #include "item_factory.h"  // Legacy - using ECS DataLoader
 #include "game_serializer.h"
 #include "ecs/game_world.h"
 #include "ecs/data_loader.h"
@@ -36,30 +36,22 @@ GameManager::GameManager(MapType initial_map)
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
       entity_manager(std::make_unique<EntityManager>()),
-      spawn_manager(std::make_unique<SpawnManager>(this)),
-      monster_ai(std::make_unique<MonsterAI>()),
-      combat_system(std::make_unique<CombatSystem>(message_log.get())),
-      item_manager(std::make_unique<ItemManager>(map.get())),
+      // spawn_manager removed - using ECS spawning
+      // monster_ai removed - using ECS AISystem
+      // combat_system removed - using ECS CombatSystem
+      // item_manager(std::make_unique<ItemManager>(map.get())),  // Legacy - using ECS
       serializer(std::make_unique<GameSerializer>(this)),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
     ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
     
-    // Load monster data
-    MonsterFactory::getInstance().loadFromFile(
-        Config::getInstance().getDataFilePath("monsters.json")
-    );
-
-    // Load item data
-    ItemFactory::getInstance().loadFromJson(
-        Config::getInstance().getDataFilePath("items.json")
-    );
-
-    // Load ECS data
+    // Load ECS data (includes monsters and items)
     ecs::DataLoader::getInstance().loadAllData(
         Config::getInstance().getDataDir()
     );
+
+    // Item data is now loaded by ECS DataLoader in loadAllData()
 
     // Initialize ECS system BEFORE map (so it exists when we create the player)
     initializeECS(false);  // false = don't migrate existing entities yet
@@ -121,7 +113,7 @@ void GameManager::initializeMap(MapType type) {
         // Create player using ECS only
         [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
 
-        // No legacy player needed in full ECS mode
+        // No legacy player in ECS mode
 
         // Skip legacy monster spawning when using ECS
         // ECS handles monster creation and spawning
@@ -129,8 +121,7 @@ void GameManager::initializeMap(MapType type) {
         // Create player using legacy system
         std::shared_ptr<Player> player = entity_manager->createPlayer(spawn.x, spawn.y);
 
-        // Spawn initial monsters after player placement (legacy only)
-        spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
+        // Legacy spawning removed - ECS handles spawning
     }
 
     // Update deprecated variables for compatibility
@@ -165,44 +156,8 @@ void GameManager::initializeMap(MapType type) {
                                  " walkable tiles, " + std::to_string(validation.room_count) +
                                  " rooms");
 
-    // Spawn initial items
-    if (item_manager) {
-        item_manager->clear();  // Clear any existing items
-
-        // Spawn items in rooms
-        const auto& rooms = map->getRooms();
-        if (!rooms.empty()) {
-            // Spawn 5-10 random items
-            int item_count = 5 + (rand() % 6);
-            for (int i = 0; i < item_count; i++) {
-                const Room& room = rooms[rand() % rooms.size()];
-
-                // Find random position in room
-                int x = room.x + 1 + (rand() % (room.width - 2));
-                int y = room.y + 1 + (rand() % (room.height - 2));
-
-                // Make sure position is walkable and not occupied
-                if (map->isWalkable(x, y)) {
-                    item_manager->spawnRandomItem(x, y, current_depth);
-                }
-            }
-
-            // Spawn some gold piles
-            int gold_count = 3 + (rand() % 4);
-            for (int i = 0; i < gold_count; i++) {
-                const Room& room = rooms[rand() % rooms.size()];
-                int x = room.x + 1 + (rand() % (room.width - 2));
-                int y = room.y + 1 + (rand() % (room.height - 2));
-
-                if (map->isWalkable(x, y)) {
-                    int amount = 10 + (rand() % 41);  // 10-50 gold
-                    item_manager->spawnGold(x, y, amount);
-                }
-            }
-
-            LOG_INFO("Spawned " + std::to_string(item_manager->getItemCount()) + " items");
-        }
-    }
+    // Item spawning now handled by ECS world
+    // TODO: Implement ECS-based item spawning when needed
 
     // Calculate initial FOV from player position
     updateFOV();
@@ -229,10 +184,7 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
     if (use_ecs) {
         // ECS mode - skip legacy spawning, ECS handles it
     } else {
-        Player* player = getPlayer();
-        if (player && spawn_manager) {
-            spawn_manager->update(*map, *entity_manager, player, current_depth);
-        }
+        // Legacy dynamic spawning removed - ECS handles spawning
     }
 }
 
@@ -394,92 +346,8 @@ void GameManager::updateFOV() {
 }
 
 void GameManager::updateMonsters() {
-    // Use ECS for monster updates if enabled
-    if (use_ecs && ecs_world) {
-        // ECS handles monster updates in its update() call
-        // No need for separate monster updates
-        return;
-    }
-
-    // Legacy path only if ECS is disabled
-    if (!entity_manager || !monster_ai) {
-        return;
-    }
-
-    Player* player = getPlayer();
-    if (!player) {
-        return;
-    }
-
-    auto monsters = entity_manager->getMonsters();
-    for (auto& monster_ptr : monsters) {
-        if (!monster_ptr || !monster_ptr->canAct()) {
-            continue;
-        }
-
-        Monster* monster = dynamic_cast<Monster*>(monster_ptr.get());
-        if (!monster) {
-            continue;
-        }
-
-        // Update AI state
-        monster_ai->updateMonsterAI(*monster, *player, *map);
-
-        // Get next move from AI
-        Point next_pos = monster_ai->getNextMove(*monster, *player, *map);
-
-        LOG_AI("Monster " + monster->name + " AI suggests move from (" +
-               std::to_string(monster->x) + "," + std::to_string(monster->y) + ") to (" +
-               std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
-
-        // Check if the move is valid (not blocked by another entity)
-        if (next_pos != monster->getPosition()) {
-            bool blocked = false;
-
-            // Check if player is at target position (attack)
-            if (next_pos == player->getPosition()) {
-                LOG_AI("Monster " + monster->name + " at (" + std::to_string(monster->x) + "," + std::to_string(monster->y) + ") attacking player at (" + std::to_string(player->x) + "," + std::to_string(player->y) + ")");
-
-                // Use CombatSystem for attack resolution
-                auto result = combat_system->processAttack(*monster, *player);
-
-                LOG_AI("Attack result: hit=" + std::string(result.hit ? "true" : "false") +
-                      ", damage=" + std::to_string(result.damage) +
-                      ", critical=" + std::string(result.critical ? "true" : "false") +
-                      ", fatal=" + std::string(result.fatal ? "true" : "false"));
-
-                // Handle player death
-                if (result.fatal) {
-                    LOG_ERROR("=== PLAYER DEATH ===");
-                    LOG_ERROR("Player has been killed by " + monster->name + "!");
-                    LOG_ERROR("Final player HP: " + std::to_string(player->hp));
-                    LOG_ERROR("Game Over - Setting state to DEATH");
-                    LOG_ERROR("=== GAME OVER ===");
-                    setState(GameState::DEATH);
-                }
-
-                continue;
-            }
-
-            // Check if another monster is blocking
-            for (const auto& other : monsters) {
-                if (other.get() != monster && other->getPosition() == next_pos) {
-                    blocked = true;
-                    break;
-                }
-            }
-
-            // Move if not blocked
-            if (!blocked) {
-                LOG_MOVEMENT("Monster " + monster->name + " moving to (" + std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
-                monster->moveTo(next_pos.x, next_pos.y);
-            } else {
-                LOG_AI("Monster " + monster->name + " movement blocked");
-            }
-        } else {
-            LOG_AI("Monster " + monster->name + " AI returned current position - no movement");
-        }
-    }
+    // ECS handles monster updates through AISystem in its update() call
+    // This method is now a no-op as monster AI is handled by ECS
 }
 
 bool GameManager::saveGame(int slot) {
@@ -519,7 +387,6 @@ void GameManager::initializeECS(bool migrate_existing) {
     if (!ecs_world) {
         ecs_world = std::make_unique<ecs::GameWorld>(
             entity_manager.get(),
-            combat_system.get(),
             message_log.get(),
             map.get()
         );

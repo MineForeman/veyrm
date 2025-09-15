@@ -43,14 +43,12 @@ class AISystem;
 class GameWorld {
 public:
     /**
-     * @brief Construct GameWorld with legacy managers
-     * @param legacy_entities Legacy entity manager
-     * @param legacy_combat Legacy combat system
+     * @brief Construct GameWorld with necessary systems
+     * @param legacy_entities Legacy entity manager (for transition)
      * @param message_log Message logging system
      * @param game_map Game map
      */
     GameWorld(EntityManager* legacy_entities,
-              ::CombatSystem* legacy_combat,
               MessageLog* message_log,
               Map* game_map);
 

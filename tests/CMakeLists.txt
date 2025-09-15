@@ -6,9 +6,11 @@ add_executable(veyrm_tests
     test_json.cpp
     test_basic.cpp
     test_map.cpp
-    test_entity.cpp
-    test_player.cpp
-    test_entity_manager.cpp
+    # Legacy entity tests removed - using ECS
+    # test_entity.cpp
+    # test_player.cpp
+    # test_entity_manager.cpp
+    # test_monster.cpp
     test_map_generator.cpp
     test_map_validator.cpp
     test_turn_manager.cpp
@@ -22,15 +24,11 @@ add_executable(veyrm_tests
     test_status_bar.cpp
     test_layout_system.cpp
     test_lit_rooms.cpp
-    test_monster.cpp
     test_monster_integration.cpp
     test_config.cpp
-    test_spawn_manager.cpp
-    test_monster_ai.cpp
-    test_combat_system.cpp
+    # test_combat_system.cpp removed - using ECS CombatSystem
     test_item.cpp
     test_inventory.cpp
-    test_entity_memory_safety.cpp
     test_ecs.cpp
     test_ecs_factory.cpp
     test_ecs_systems.cpp

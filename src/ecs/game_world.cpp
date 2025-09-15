@@ -15,7 +15,11 @@
 
 #include "ecs/game_world.h"
 #include "ecs/entity_factory.h"
-#include "ecs/entity_adapter.h"
+// EntityAdapter removed - using direct conversion
+// Legacy includes needed for migration
+#include "player.h"
+// #include "monster.h"  // Legacy - removed
+#include "item.h"
 #include "ecs/movement_system.h"
 #include "ecs/render_system.h"
 #include "ecs/combat_system.h"
@@ -23,10 +27,12 @@
 #include "ecs/inventory_system.h"
 #include "ecs/equipment_system.h"
 #include "ecs/event.h"
+#include "ecs/experience_component.h"
+#include "ecs/loot_component.h"
 #include "entity_manager.h"
-#include "combat_system.h"
+// Legacy combat_system.h removed - using ECS CombatSystem
 #include "player.h"
-#include "monster.h"
+// #include "monster.h"  // Legacy - removed
 #include "item.h"
 #include "turn_manager.h"
 #include "message_log_adapter.h"
@@ -37,7 +43,7 @@ class Map;
 // Only now open the namespace
 namespace ecs {
 
-GameWorld::GameWorld(::EntityManager* entities, ::CombatSystem* /*combat*/,
+GameWorld::GameWorld(::EntityManager* entities,
                      MessageLog* log, ::Map* map)
     : legacy_entities(entities),
       message_log(log),
@@ -101,7 +107,30 @@ void GameWorld::migrateExistingEntities() {
 
         // Check entity type and convert appropriately
         if (auto player = std::dynamic_pointer_cast<Player>(legacy_entity)) {
-            ecs_entity = EntityAdapter::fromPlayer(*player);
+            // Create player entity directly
+            ecs_entity = std::make_unique<Entity>();
+
+            // Core components
+            ecs_entity->addComponent<PositionComponent>(player->x, player->y);
+            ecs_entity->addComponent<RenderableComponent>(player->glyph, player->color);
+            ecs_entity->addComponent<HealthComponent>(player->max_hp, player->hp);
+
+            // Combat with player stats
+            auto& combat = ecs_entity->addComponent<CombatComponent>(
+                player->getBaseDamage(),
+                player->getAttackBonus(),
+                player->getDefenseBonus()
+            );
+            combat.combat_name = "Player";
+            combat.setDamageRange(1, 6);  // Player uses d6
+
+            // Add new components for full ECS support
+            ecs_entity->addComponent<InventoryComponent>();
+            ecs_entity->addComponent<StatsComponent>();
+            ecs_entity->addComponent<ExperienceComponent>();
+
+            // Tag as player
+            ecs_entity->addTag("player");
 
             // Track player ID
             if (ecs_entity) {
@@ -112,10 +141,53 @@ void GameWorld::migrateExistingEntities() {
                     native_ai_system->setPlayerId(player_id);
                 }
             }
-        } else if (auto monster = std::dynamic_pointer_cast<Monster>(legacy_entity)) {
-            ecs_entity = EntityAdapter::fromMonster(*monster);
+        } else if (legacy_entity->is_monster) {
+            // Legacy monster entity - create basic ECS entity
+            ecs_entity = std::make_unique<Entity>();
+
+            // Core components
+            ecs_entity->addComponent<PositionComponent>(legacy_entity->x, legacy_entity->y);
+            ecs_entity->addComponent<RenderableComponent>(legacy_entity->glyph, legacy_entity->color);
+            ecs_entity->addComponent<HealthComponent>(legacy_entity->max_hp, legacy_entity->hp);
+
+            // Basic combat stats
+            auto& combat = ecs_entity->addComponent<CombatComponent>(
+                5,    // attack
+                2,    // defense
+                5     // damage
+            );
+            combat.combat_name = legacy_entity->name;
+            combat.setDamageRange(3, 7);
+
+            // AI component
+            auto& ai = ecs_entity->addComponent<AIComponent>();
+            ai.behavior = AIBehavior::AGGRESSIVE;
+
+            // Loot component
+            auto& loot = ecs_entity->addComponent<LootComponent>();
+            loot.guaranteed_gold = 5;
+            loot.random_gold_max = 20;
+
+            // Tag as monster
+            ecs_entity->addTag("monster");
         } else if (auto item = std::dynamic_pointer_cast<Item>(legacy_entity)) {
-            ecs_entity = EntityAdapter::fromItem(*item);
+            // Create item entity directly
+            ecs_entity = std::make_unique<Entity>();
+
+            // Items typically just need position and rendering
+            ecs_entity->addComponent<PositionComponent>(item->x, item->y);
+            // Item has symbol and color string (need to convert)
+            std::string glyph(1, item->symbol);  // Convert char to string
+            ecs_entity->addComponent<RenderableComponent>(glyph, ftxui::Color::White);
+
+            // Add ItemComponent with basic properties
+            auto& item_comp = ecs_entity->addComponent<ItemComponent>();
+            item_comp.name = item->name;
+            item_comp.item_type = ItemType::MISC;  // Default type
+            item_comp.value = 10;  // Default value
+
+            // Tag as item
+            ecs_entity->addTag("item");
         } else {
             // Generic entity migration
             ecs_entity = std::make_unique<Entity>();

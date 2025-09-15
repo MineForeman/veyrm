@@ -15,7 +15,7 @@
 
 // Forward declarations
 class Map;
-struct MonsterAIData;
+// MonsterAIData removed - using ECS AISystem
 
 /**
  * @enum EntityType
@@ -91,26 +91,13 @@ public:
      */
     bool isVisible() const { return is_visible; }
 
-    /**
-     * @brief Get AI data pointer if entity has AI
-     * @return Pointer to AI data or nullptr if not a monster
-     * @note Type-safe access to AI-specific data
-     */
-    MonsterAIData* getAIData();
-    const MonsterAIData* getAIData() const;
-
-    /**
-     * @brief Set AI data for this entity
-     * @param data Unique pointer to AI data (ownership transferred)
-     * @note Only valid for monster entities
-     */
-    void setAIData(std::shared_ptr<MonsterAIData> data);
+    // AI data methods removed - using ECS AISystem
 
     /**
      * @brief Check if entity has AI data
      * @return true if entity has AI data attached
      */
-    bool hasAIData() const;
+    // hasAIData removed - using ECS AISystem
 
     /**
      * @brief Get attack bonus for combat calculations
@@ -167,8 +154,8 @@ private:
     // Type-safe AI data storage using std::variant
     // std::monostate represents "no data" state
     // Using shared_ptr to avoid incomplete type issues
-    using AIDataStorage = std::variant<std::monostate, std::shared_ptr<MonsterAIData>>;
-    AIDataStorage ai_data_storage;
+    // AIDataStorage removed - using ECS AISystem
+    // ai_data_storage removed - using ECS AISystem
     
 public:
     
