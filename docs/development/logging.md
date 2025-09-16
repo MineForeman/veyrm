@@ -82,11 +82,13 @@ Log::shutdown();
 ## Log Format
 
 Each log entry follows this format:
+
 ```
 HH:MM:SS.mmm [CATEGORY] Message
 ```
 
 Example:
+
 ```
 18:45:16.087 [PLAYER] Moving east (dx=1, dy=0)
 18:45:16.087 [PLAYER] Target position: (166, 13)
@@ -99,6 +101,7 @@ Example:
 ### Clearing Logs
 
 Use the build script to clear all log files:
+
 ```bash
 ./build.sh clearlog
 ```
@@ -143,6 +146,7 @@ To add a new logging category:
 5. Create a convenience method and macro
 
 Example:
+
 ```cpp
 // In log.h
 static std::ofstream questLogFile;

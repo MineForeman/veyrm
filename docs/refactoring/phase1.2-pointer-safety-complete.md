@@ -9,11 +9,13 @@ Successfully improved pointer safety in GameManager by making the Room pointer r
 ### 1. GameManager Room Tracking (`include/game_state.h`)
 
 **Before:**
+
 ```cpp
 Room* current_room = nullptr;  // Track which room the player is currently in
 ```
 
 **After:**
+
 ```cpp
 // Room tracking - using observer pointer since Map owns the rooms
 // This is safe because rooms lifetime is tied to Map lifetime
@@ -28,12 +30,14 @@ void setCurrentRoom(const Room* room) { current_room = room; }
 ### 2. Const-Correctness in Usage (`src/game_manager.cpp`)
 
 **Before:**
+
 ```cpp
 Room* new_room = map->getRoomAt(playerPos);
 Room* old_room = current_room;
 ```
 
 **After:**
+
 ```cpp
 const Room* new_room = map->getRoomAt(playerPos);
 const Room* old_room = current_room;
@@ -71,6 +75,7 @@ const Room* old_room = current_room;
 ## Testing
 
 All tests pass with the changes:
+
 - 1779 assertions in 135 test cases
 - No memory leaks or safety issues
 - Deprecated API warnings resolved
@@ -78,6 +83,7 @@ All tests pass with the changes:
 ## Next Steps
 
 Phase 1.3: MonsterAI Memory Pool Refactoring
+
 - Remove deprecated AI data pool
 - Simplify memory management further
 - Complete transition to entity-owned AI data

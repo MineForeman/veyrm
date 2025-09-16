@@ -14,6 +14,7 @@ Coding standards and best practices for Veyrm development.
 These standards ensure consistency, quality, and maintainability across the Veyrm codebase.
 
 ### Core Principles
+
 - **Consistency** - Follow established patterns
 - **Clarity** - Write readable, self-documenting code
 - **Quality** - Maintain high standards
@@ -23,11 +24,13 @@ These standards ensure consistency, quality, and maintainability across the Veyr
 ## Code Standards
 
 ### Language Version
+
 - C++23 with modern features
 - Prefer standard library over custom implementations
 - Use smart pointers for memory management
 
 ### Style Overview
+
 ```cpp
 class ExampleClass {
 public:
@@ -44,12 +47,14 @@ See [Code Style Guide](code-style.md) for complete guidelines.
 ## Git Standards
 
 ### Branch Naming
+
 - `feature/description` - New features
 - `bugfix/description` - Bug fixes
 - `refactor/description` - Code refactoring
 - `docs/description` - Documentation
 
 ### Commit Messages
+
 ```
 type: Brief description
 
@@ -63,12 +68,14 @@ See [Git Workflow](git-workflow.md) for details.
 ## Testing Standards
 
 ### Requirements
+
 - All new features must have tests
 - Maintain >90% code coverage
 - Tests must pass before merge
 - Use Catch2 framework
 
 ### Test Structure
+
 ```cpp
 TEST_CASE("Component: What is tested", "[category]") {
     SECTION("Specific scenario") {
@@ -84,12 +91,14 @@ See [Testing Standards](testing.md) for complete guide.
 ## Documentation Standards
 
 ### Requirements
+
 - Document all public APIs
 - Include usage examples
 - Keep documentation current
 - Use Markdown format
 
 ### Documentation Types
+
 - **Code Comments** - Explain why, not what
 - **API Documentation** - Doxygen format
 - **User Documentation** - Markdown files
@@ -102,24 +111,28 @@ See [Documentation Standards](documentation.md) for guidelines.
 Before submitting code:
 
 ### Code Quality
+
 - [ ] Follows code style guide
 - [ ] No compiler warnings
 - [ ] Memory leaks checked
 - [ ] Error cases handled
 
 ### Testing
+
 - [ ] Tests written
 - [ ] Tests passing
 - [ ] Coverage maintained
 - [ ] Edge cases tested
 
 ### Documentation
+
 - [ ] API documented
 - [ ] Examples provided
 - [ ] README updated
 - [ ] Changelog updated
 
 ### Git
+
 - [ ] Clean commit history
 - [ ] Descriptive messages
 - [ ] Branch up to date
@@ -128,17 +141,20 @@ Before submitting code:
 ## Tools
 
 ### Formatting
+
 ```bash
 clang-format -i src/*.cpp
 ```
 
 ### Linting
+
 ```bash
 clang-tidy src/*.cpp
 cppcheck --enable=all src/
 ```
 
 ### Testing
+
 ```bash
 ./build.sh test
 ```
@@ -146,6 +162,7 @@ cppcheck --enable=all src/
 ## Enforcement
 
 Standards are enforced through:
+
 1. Code review process
 2. Automated CI checks
 3. Pre-commit hooks
@@ -154,6 +171,7 @@ Standards are enforced through:
 ## Updates
 
 Standards evolve with the project:
+
 1. Propose changes via RFC
 2. Discuss with team
 3. Update documentation

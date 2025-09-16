@@ -12,4 +12,5 @@
 - **Data:** Monsters & items defined in JSON tables.
 
 ## Non-goals (later)
+
 Multiple floors, ranged/magic, shops, quests, factions, tilesets, mouse, rebindable keys, modding, netcode, hunger, complex AI.

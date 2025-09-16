@@ -10,18 +10,21 @@ Detailed architecture documentation for individual systems.
 ## System Categories
 
 ### Core Systems
+
 - Game Manager
 - Map System
 - Entity System
 - Render System
 
 ### Gameplay Systems
+
 - Combat System
 - Movement System
 - Inventory System
 - Save/Load System
 
 ### Support Systems
+
 - Input Handler
 - Message Log
 - FOV Calculator

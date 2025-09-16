@@ -116,6 +116,7 @@ bool GameScreen::handleDoorInteraction() {
 ### Monster Interaction
 
 Currently, monsters cannot open doors. This creates:
+
 - Safe zones when doors are closed
 - Strategic retreat options
 - Puzzle-like navigation challenges
@@ -177,6 +178,7 @@ doors:
 ### Debug Commands
 
 Future debug commands for door testing:
+
 - Toggle all doors open/closed
 - Spawn door at cursor
 - Show door states overlay

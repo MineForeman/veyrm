@@ -9,6 +9,7 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 ## 🎮 Features
 
 ### Current (v0.0.3)
+
 - **Item System** - Complete item entity system with collectibles and treasure
 - **Item Pickup** - Press 'g' to get items, automatic gold collection
 - **Combat System** - d20-based tactical bump-to-attack with critical hits
@@ -33,11 +34,13 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 - **Status Bar** - HP with color coding, position, time, depth, and gold display
 
 ### Recently Added
+
 - **Inventory System** - Full 26-slot inventory with use, drop, and examine
 - **Item Effects** - Healing potions restore HP
 - **Save/Load** - 9 save slots with seed-based map regeneration
 
 ### Planned
+
 - **Experience System** - Leveling and skill progression
 - **Multiple Levels** - Stairs functionality to descend deeper
 - **More Items** - Weapons, armor, scrolls, and magic items
@@ -46,6 +49,7 @@ A modern roguelike game inspired by Angband, written in C++23 with a terminal-ba
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - C++23 compatible compiler (GCC 12+, Clang 15+, MSVC 2022+)
 - CMake 3.25 or higher
 - Git
@@ -157,12 +161,15 @@ veyrm/
 ## 📚 Documentation
 
 ### Quick Links
+
 - **[Getting Started](docs/getting-started/README.md)** - Installation and first game
 - **[Player Guide](docs/guides/player/README.md)** - Gameplay mechanics and strategies
 - **[Developer Guide](docs/guides/developer/README.md)** - Contributing to Veyrm
 - **[Project Status](docs/project/status.md)** - Current development state
 - **[API Reference](docs/reference/api/README.md)** - Code documentation
+
 ### Additional Resources
+
 - **[Build Commands](docs/reference/commands/build-script.md)** - Build.sh command reference
 - **[Architecture](docs/guides/developer/architecture.md)** - System architecture
 - **[World Design](docs/design/world/README.md)** - Game lore and setting
@@ -171,6 +178,7 @@ veyrm/
 ## 🛠️ Development
 
 ### Current Phase: 3.1 Complete - Entity Base ✅
+
 Entity system implemented with Player class, EntityManager, and movement integration. All tests passing (57 test cases, 404 assertions).
 
 ### Build Modes
@@ -196,11 +204,13 @@ Veyrm supports PostgreSQL for persistent game data (save games, leaderboards, te
 #### Quick Setup
 
 1. **Copy environment template:**
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Edit database credentials in `.env`:**
+
    ```bash
    # PostgreSQL Configuration
    POSTGRES_DB=veyrm_db
@@ -209,6 +219,7 @@ Veyrm supports PostgreSQL for persistent game data (save games, leaderboards, te
    ```
 
 3. **Database management commands:**
+
    ```bash
    # Create database tables
    ./build.sh db create
@@ -258,16 +269,19 @@ If the terminal becomes unresponsive:
 ## 🎨 Features in Detail
 
 ### Map Generation
+
 - **5 Test Map Types**: Room, Dungeon, Corridor, Arena, Stress Test
 - **Validation System**: Ensures connectivity and playability
 - **Proper Corridors**: Walls around corridors with automatic doorways
 
 ### Rendering System
+
 - **Viewport-Based**: Handles large maps efficiently
 - **Adaptive Colors**: Works on both dark and light terminals
 - **Unicode Support**: Wall connections for better visuals (future)
 
 ### Turn System
+
 - **Action-Based**: Different actions take different amounts of time
 - **Speed System**: Fast (50%), Normal (100%), Slow (150%)
 - **Turn Counter**: Tracks game progression
@@ -275,6 +289,7 @@ If the terminal becomes unresponsive:
 ## 🤝 Contributing
 
 This is currently a personal project, but feel free to:
+
 - Report issues
 - Suggest features
 - Fork and experiment
@@ -298,18 +313,21 @@ This project is currently under development. License TBD.
 ## 🔮 Roadmap
 
 ### Near Term (Phase 3-4)
+
 - [x] Entity system (player, entities, manager)
 - [ ] Monster entities with basic AI
 - [ ] Basic combat system
 - [ ] Item pickup and inventory
 
 ### Mid Term (Phase 5-7)
+
 - [ ] Field of view system
 - [ ] Save/load functionality
 - [ ] Character stats and progression
 - [ ] Status effects
 
 ### Long Term (Phase 8+)
+
 - [ ] Procedural dungeon generation
 - [ ] Multiple dungeon levels
 - [ ] Boss encounters

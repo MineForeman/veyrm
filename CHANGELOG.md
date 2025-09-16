@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.0.3] - 2025-09-16
 
 ### Added
+
 - **GitLab CI/CD Integration** - Full continuous integration pipeline
   - Windows, macOS, and Linux builds via GitLab runners
   - Automated testing on all platforms
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command-line GitLab management
 
 ### Fixed
+
 - **Windows Build Compatibility** - Resolved all MSVC compiler warnings
   - Fixed EntityID to int conversion warnings in event.h
   - Fixed parameter shadowing in ai_system.h and equipment_system.h
@@ -27,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All tests pass on Windows platform
 
 ### Changed
+
 - **Documentation Updates**
   - Updated CLAUDE.md with GitLab remote configuration
   - Improved ECS architecture documentation
@@ -34,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clarified build and test requirements
 
 ### Technical
+
 - **Cross-Platform Improvements**
   - Enhanced CMake configuration for Windows
   - Improved compiler warning handling
@@ -42,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.0.0-MVP] - 2025-09-14
 
-### 🎉 MVP Complete!
+### 🎉 MVP Complete
 
 This marks the completion of the Minimum Viable Product for Veyrm. The game is now fully playable with all core systems implemented, tested, and documented.
 
@@ -151,6 +155,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## Previous Releases
 
 ### Added
+
 - Phase 9: Complete Combat System Implementation
   - Phase 9.1: Combat Stats - full d20 combat mechanics
     - CombatSystem class with d20 attack rolls and defense values
@@ -218,6 +223,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
   - Strategic gameplay element with risk/reward tradeoffs
 
 ### Changed
+
 - Lit room probability increased from 30% to 95% (configurable)
 - Map generation now uses config values for all parameters
 - Player stats now use config values (HP: 20, Attack: 5, Defense: 2)
@@ -225,6 +231,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 - Tests updated to use config values instead of hardcoded constants
 
 ### Fixed
+
 - Critical HP display bug - Player and Entity classes had duplicate hp/max_hp members causing combat to use wrong values
 - Player could not attack monsters - bump-to-attack was not implemented in input handling
 - Combat messages not appearing in game log - messages were only going to debug log, not the UI
@@ -238,18 +245,21 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.7.3] - 2025-01-13
 
 ### Added
+
 - Phase 7.3: Layout System - responsive three-panel UI layout
 - Fullscreen terminal support with dynamic sizing
 - Minimum terminal size validation (80x24)
 - Proper panel boundaries to prevent map/UI overlap
 
 ### Changed
+
 - Switched from fixed-size to fullscreen terminal display
 - Map viewport now dynamically adjusts to terminal size
 
 ## [0.7.2] - 2025-01-13
 
 ### Added
+
 - Phase 7.2: Status Bar - real-time game status display
 - HP display with current/max values
 - Player position tracking
@@ -260,6 +270,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.7.1] - 2025-01-13
 
 ### Added
+
 - Phase 7.1: Message Log - game event messaging system
 - 5-line scrolling message display
 - Message history with 100-message buffer
@@ -268,6 +279,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.6.3] - 2025-01-12
 
 ### Added
+
 - Phase 6.3: Map Memory - exploration tracking
 - Remembered tiles shown dimmed when out of sight
 - Persistent exploration state between turns
@@ -275,6 +287,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.6.2] - 2025-01-12
 
 ### Added
+
 - Phase 6.2: Visibility System - fog of war rendering
 - Entity visibility filtering based on FOV
 - Different rendering styles for visible/remembered/unknown tiles
@@ -282,6 +295,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.6.1] - 2025-01-12
 
 ### Added
+
 - Phase 6.1: FOV Algorithm - field of view calculation
 - Symmetric shadowcasting with 10-tile sight radius
 - Line-of-sight blocking by walls
@@ -290,6 +304,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.5.3] - 2025-01-11
 
 ### Added
+
 - Phase 5.3: Map Validation - connectivity verification
 - BFS connectivity checking
 - Automatic stair placement at farthest point
@@ -298,6 +313,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.5.2] - 2025-01-11
 
 ### Added
+
 - Phase 5.2: Corridor Generation - room connection system
 - L-shaped, straight, and S-shaped corridor styles
 - MST, nearest neighbor, and sequential connection strategies
@@ -306,6 +322,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.5.1] - 2025-01-11
 
 ### Added
+
 - Phase 5.1: Room Generation - procedural dungeon rooms
 - Random room placement with overlap detection
 - Configurable room size and count
@@ -313,6 +330,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.4.0] - 2025-01-10
 
 ### Added
+
 - Basic player entity system
 - Movement with collision detection
 - Turn-based action system
@@ -321,6 +339,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.3.0] - 2025-01-09
 
 ### Added
+
 - Map rendering with Unicode tiles
 - Viewport system for large maps
 - Color scheme support with terminal auto-detection
@@ -328,6 +347,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.2.0] - 2025-01-08
 
 ### Added
+
 - FTXUI terminal UI framework integration
 - Main menu system
 - Game state management
@@ -336,6 +356,7 @@ This marks the completion of the Minimum Viable Product for Veyrm. The game is n
 ## [0.1.0] - 2025-01-07
 
 ### Added
+
 - Initial project structure
 - CMake build system
 - Basic game loop

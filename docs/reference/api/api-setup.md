@@ -9,18 +9,21 @@ This document describes how to generate and maintain API documentation for the V
 ### Installing Doxygen
 
 #### macOS
+
 ```bash
 brew install doxygen
 brew install graphviz  # For class diagrams
 ```
 
 #### Linux
+
 ```bash
 sudo apt-get install doxygen
 sudo apt-get install graphviz
 ```
 
 #### Windows
+
 Download from [Doxygen website](https://www.doxygen.nl/download.html)
 
 ## Configuration
@@ -234,6 +237,7 @@ endif()
 ```
 
 Then build with:
+
 ```bash
 cmake --build build --target doc
 ```
@@ -304,11 +308,13 @@ doc)
 ## Current Documentation Status
 
 ### Well Documented
+
 - Core game systems
 - Entity management
 - Map generation
 
 ### Needs Documentation
+
 - Combat formulas
 - AI decision trees
 - Save file format
@@ -317,6 +323,7 @@ doc)
 ## Maintenance
 
 ### Regular Tasks
+
 1. Generate docs before releases
 2. Review undocumented APIs
 3. Update examples
@@ -324,6 +331,7 @@ doc)
 5. Remove obsolete documentation
 
 ### Documentation Reviews
+
 - Check new PRs for documentation
 - Ensure API changes update docs
 - Verify examples still work
@@ -332,10 +340,12 @@ doc)
 ## Tools and Extensions
 
 ### VS Code Extensions
+
 - Doxygen Documentation Generator
 - Doxygen Comment Generator
 
 ### Alternative Generators
+
 - Sphinx (with Breathe)
 - Natural Docs
 - ROBODoc
@@ -343,6 +353,7 @@ doc)
 ## Example Output
 
 The generated documentation includes:
+
 - Class hierarchy
 - Collaboration diagrams
 - Call graphs

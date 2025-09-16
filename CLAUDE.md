@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Git Remote Configuration
 
 **IMPORTANT:** This repository uses GitLab as the primary remote.
+
 - **Default push destination:** `ssh://git@horse.local:23/nrf/veyrm.git` (GitLab)
 - **GitHub mirror:** `origin` (github.com/MineForeman/veyrm) - Only push here when explicitly requested
 - Always use `git push ssh://git@horse.local:23/nrf/veyrm.git <branch>` for normal pushes
@@ -31,6 +32,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./build.sh clean      # Clean build directory
 ./build.sh reset      # Reset terminal after crashes
 
+# Database commands (PostgreSQL integration)
+./build.sh db create  # Create database tables
+./build.sh db load    # Load initial data
+./build.sh db status  # Check database connection
+./build.sh db reset   # Clear and reload database
+
 # Testing commands
 ./build.sh keys '\njjjq'   # Automated gameplay (Enter, down 2x, quit)
 ./build.sh dump            # Frame-by-frame dump mode
@@ -54,7 +61,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The game uses a modern **ECS (Entity Component System)** architecture. Legacy entity classes have been completely removed.
 
 ### Core ECS System (`include/ecs/`, `src/ecs/`)
-```
+
+```text
 game_world.h/cpp        # Central ECS world manager
 entity_factory.h        # Creates entities with components
 entity.h               # ECS entity (just an ID)
@@ -63,6 +71,7 @@ system.h               # Base system class
 ```
 
 ### Key Components
+
 - **PositionComponent**: x, y coordinates
 - **HealthComponent**: current/max HP
 - **RenderableComponent**: glyph, color for display
@@ -76,8 +85,10 @@ system.h               # Base system class
 - **ExperienceComponent**: XP tracking and leveling
 - **EquipmentComponent**: equipped items
 - **EffectsComponent**: status effects and buffs
+- **SaveLoadComponent**: save/load state tracking
 
 ### Key Systems
+
 - **MovementSystem**: Handles entity movement and collision
 - **CombatSystem**: Bump-to-attack combat resolution
 - **AISystem**: Monster behavior and pathfinding
@@ -90,9 +101,16 @@ system.h               # Base system class
 - **StatusEffectSystem**: Status effects and buffs
 - **SaveLoadSystem**: Game state persistence
 
+### Services (`include/services/`, `src/services/`)
+
+- **CloudSaveService**: PostgreSQL cloud save integration
+- **SyncStatus**: Save synchronization state tracking
+
 ### Game Flow Architecture
-```
+
+```text
 GameManager (main loop)
+  ├── LoginScreen (PostgreSQL auth)
   ├── MainMenuScreen
   ├── GameScreen (gameplay)
   │    ├── GameWorld (ECS)
@@ -105,6 +123,7 @@ GameManager (main loop)
 ## Key Implementation Patterns
 
 ### Creating Entities
+
 ```cpp
 // Always use EntityFactory
 auto player = factory.createPlayer(x, y);
@@ -113,6 +132,7 @@ auto item = factory.createItem("potion_minor", x, y);
 ```
 
 ### System Processing
+
 ```cpp
 // Systems process entities with matching components
 movementSystem.update(deltaTime, world);
@@ -120,6 +140,7 @@ combatSystem.update(deltaTime, world);
 ```
 
 ### Component Access
+
 ```cpp
 // Get component from entity
 if (auto* pos = world.getComponent<PositionComponent>(entity)) {
@@ -131,12 +152,14 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 ## Data Files
 
 ### Configuration
+
 - `config.yml`: Game settings, map generation parameters
 - `data/monsters.json`: Monster definitions with ECS components
 - `data/items.json`: Item definitions with properties
 - Save files: 9 slots with seed-based map regeneration
 
 ### Monster Definition Format
+
 ```json
 {
   "id": "goblin",
@@ -153,16 +176,19 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Located in `tests/test_*.cpp`
 - Run with `./build.sh test`
 - Must cover new components/systems
 
 ### Integration Tests
+
 - `test_ecs_integration.cpp`: Full ECS workflow
 - `test_monster_integration.cpp`: Monster behavior
 - `test_input_handler.cpp`: Input processing
 
 ### Gameplay Tests
+
 ```bash
 # Test basic movement
 ./build.sh keys '\njjjq'
@@ -177,9 +203,11 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 ## Database Configuration
 
 ### PostgreSQL Docker Setup
+
 The project includes PostgreSQL database integration for persistent storage:
 
 **Docker Services:**
+
 - PostgreSQL 16 Alpine on port 5432
 - Database: `veyrm_db`
 - User: `veyrm_admin`
@@ -187,12 +215,14 @@ The project includes PostgreSQL database integration for persistent storage:
 - Optional PgAdmin on port 5050
 
 **Connection from C++:**
+
 ```cpp
 // Connection string for local development
 "host=localhost port=5432 dbname=veyrm_db user=veyrm_admin password=changeme_to_secure_password"
 ```
 
 **Quick Commands:**
+
 ```bash
 docker-compose up -d          # Start PostgreSQL
 docker-compose logs postgres  # View logs
@@ -204,23 +234,27 @@ See `docs/database/postgres-setup.md` for full setup details.
 ## Common Tasks
 
 ### Adding a New Component
+
 1. Create `include/ecs/<name>_component.h`
 2. Inherit from `ecs::Component`
 3. Add factory method in `entity_factory.cpp`
 4. Write tests in `tests/test_ecs.cpp`
 
 ### Adding a New System
+
 1. Create `include/ecs/<name>_system.h`
 2. Inherit from `ecs::System`
 3. Register in `game_world.cpp`
 4. Write tests in `tests/test_ecs_systems.cpp`
 
 ### Adding a New Monster
+
 1. Add to `data/monsters.json` with proper ECS component structure
 2. Test with `./build.sh run arena`
 3. Verify spawning works
 
 ### Debugging ECS Issues
+
 1. Check `GameWorld::getEntityAt()` for position queries
 2. Verify component registration in factory
 3. Ensure systems are added to world
@@ -241,4 +275,8 @@ See `docs/database/postgres-setup.md` for full setup details.
 - `input_handler.cpp`: Keyboard mapping and input dispatch
 - `game_world.cpp`: ECS world implementation
 - `entity_factory.h`: All entity creation logic
+- `game_serializer.cpp`: Save/load serialization logic
+- `db/database_manager.cpp`: PostgreSQL connection management
+- `db/save_game_repository.cpp`: Cloud save operations
+- `services/cloud_save_service.cpp`: Save sync orchestration
 - `docs/project/notes.md`: User's notes (DO NOT EDIT)

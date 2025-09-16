@@ -199,11 +199,13 @@ Command-line arguments can override any configuration value:
 ## Creating Custom Configurations
 
 1. Copy the default `config.yml`:
+
    ```bash
    cp config.yml my_config.yml
    ```
 
 2. Edit your custom configuration:
+
    ```yaml
    # my_config.yml
    game:
@@ -213,6 +215,7 @@ Command-line arguments can override any configuration value:
    ```
 
 3. Load with custom config (feature planned):
+
    ```bash
    ./build/bin/veyrm --config my_config.yml
    ```
@@ -220,16 +223,19 @@ Command-line arguments can override any configuration value:
 ## Configuration Tips
 
 ### For Testing
+
 - Set `lit_room_chance: 1.0` to make all rooms lit
 - Increase `starting_hp` for easier gameplay
 - Set a fixed `seed` for reproducible maps
 
 ### For Development
+
 - Enable `debug_mode: true` to see coordinates
 - Set `verbose_logging: true` for detailed logs
 - Reduce `autosave_interval` for frequent saves
 
 ### For Performance
+
 - Adjust `target_fps` based on your system
 - Toggle `multithread_generation` if having issues
 - Increase `fov_cache_size` for complex maps
@@ -250,6 +256,7 @@ If a value is not specified in config.yml, these defaults are used:
 ## Validation
 
 The configuration system validates values at load time:
+
 - Numeric values must be within reasonable ranges
 - Enum values (like map types) must be valid
 - File paths are checked for existence where applicable

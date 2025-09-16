@@ -7,12 +7,14 @@ This document outlines a second-pass refactoring to establish a logical file/fol
 ## Current Issues
 
 ### Structural Problems
+
 1. **Mixed organizational schemes** - Some by topic, some by phase, some by type
 2. **Inconsistent depth** - Some topics deeply nested, others at root
 3. **Unclear hierarchy** - Not obvious what belongs where
 4. **Scattered related content** - Similar topics in different locations
 
 ### Naming Inconsistencies
+
 1. **Mixed case styles**:
    - UPPER_CASE.md (CURRENT_STATE.md)
    - PascalCase.md (DOC/VISUALIZATION_OPTIONS.md)
@@ -171,6 +173,7 @@ docs/                           # Lowercase root (standard)
 ## Migration Plan
 
 ### Phase 1: Create New Structure ✅ COMPLETED
+
 ```bash
 # Create new directory structure
 mkdir -p docs/{getting-started,guides/{developer,player,content}}
@@ -209,6 +212,7 @@ mkdir -p docs/{project,archive}
 ### Phase 4: Add Navigation
 
 Create README.md in each directory with:
+
 - Purpose of the directory
 - List of contents with descriptions
 - Links to related sections
@@ -224,24 +228,28 @@ Create README.md in each directory with:
 ## Benefits
 
 ### Improved Organization
+
 - **Logical grouping** by purpose and audience
 - **Clear hierarchy** from general to specific
 - **Consistent depth** across topics
 - **Related content together**
 
 ### Better Discovery
+
 - **Predictable locations** for content
 - **README navigation** in every directory
 - **Purpose-driven structure**
 - **Clear audience separation** (player vs developer)
 
 ### Easier Maintenance
+
 - **Consistent naming** reduces confusion
 - **Clear ownership** of sections
 - **Simpler updates** with logical structure
 - **Better version control** with smaller files
 
 ### Professional Appearance
+
 - **Industry-standard structure**
 - **Familiar to new developers**
 - **Ready for documentation generators**
@@ -250,12 +258,14 @@ Create README.md in each directory with:
 ## Implementation Checklist
 
 ### Pre-Migration
+
 - [ ] Backup current documentation
 - [ ] Create migration script
 - [ ] Map all existing files
 - [ ] Identify deprecated content
 
 ### Migration
+
 - [ ] Create new directory structure
 - [ ] Copy files to new locations
 - [ ] Rename files per conventions
@@ -263,6 +273,7 @@ Create README.md in each directory with:
 - [ ] Create navigation READMEs
 
 ### Post-Migration
+
 - [ ] Verify all links work
 - [ ] Update build scripts
 - [ ] Update code references
@@ -270,6 +281,7 @@ Create README.md in each directory with:
 - [ ] Update contributing guide
 
 ### Validation
+
 - [ ] All files accessible
 - [ ] No broken links
 - [ ] Search still works
@@ -279,6 +291,7 @@ Create README.md in each directory with:
 ## Rollback Plan
 
 If migration causes issues:
+
 1. Keep old `DOC/` structure for 30 days
 2. Maintain redirect map
 3. Provide migration guide
@@ -303,12 +316,14 @@ If migration causes issues:
 ## Notes
 
 ### Considerations
+
 - Some tools expect `docs/` (lowercase)
 - GitHub Pages prefers `docs/` directory
 - Many doc generators assume this structure
 - IDEs have better support for standard layouts
 
 ### Future Enhancements
+
 - Add search functionality
 - Generate site from markdown
 - Add versioned documentation

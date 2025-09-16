@@ -3,6 +3,7 @@
 ## Problem: Invisible Walls Due to Layer Compositing Issue
 
 ### Initial Symptoms
+
 - Walls were collision-detected (player couldn't walk through them)
 - Walls were counted in debug output (182 walls found)
 - Walls were NOT visible on screen in any terminal (black or white background)
@@ -10,6 +11,7 @@
 ### Root Cause Analysis
 
 #### The Layering Problem
+
 The original implementation used FTXUI's `dbox` to composite multiple rendering layers:
 
 ```cpp
@@ -23,6 +25,7 @@ Element composite = dbox({
 ```
 
 The `renderPlayer()` function created a full viewport-sized grid:
+
 ```cpp
 // This created a grid of spaces with ONE @ character
 for (int y = 0; y < viewport_height; y++) {
@@ -39,7 +42,9 @@ for (int y = 0; y < viewport_height; y++) {
 **Key Discovery:** FTXUI's `dbox` treats space characters as opaque. The player layer's spaces were overwriting the entire terrain layer beneath.
 
 #### Color Visibility Issues
+
 Secondary problems discovered:
+
 1. Walls initially set to `Color::White` - invisible on white terminals
 2. Void tiles set to `Color::Black` - invisible on black terminals  
 3. No consideration for terminal theme compatibility
@@ -47,7 +52,9 @@ Secondary problems discovered:
 ### Solution Implemented
 
 #### Single-Pass Rendering
+
 Eliminated the layering system in favor of direct rendering:
+
 ```cpp
 Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& game) {
     // Check player position first
@@ -61,7 +68,9 @@ Element MapRenderer::renderTerrainWithPlayer(const Map& map, const GameManager& 
 ```
 
 #### Terminal-Compatible Colors
+
 Changed to high-visibility colors:
+
 - Walls: `Color::Yellow` (visible on both black and white)
 - Floors: `Color::White` (with gray for explored areas)
 - Void: Black space (not rendered, natural transparency)
@@ -91,6 +100,7 @@ struct Renderable {
 ```
 
 **Benefits:**
+
 - Extensible for future content (monsters, items, spells)
 - Clear visual hierarchy
 - No layer compositing issues
@@ -98,6 +108,7 @@ struct Renderable {
 ### 2. Terminal-Adaptive Color Schemes
 
 **Implementation Plan:**
+
 ```cpp
 class ColorScheme {
 public:
@@ -119,6 +130,7 @@ public:
 ```
 
 **Color Palettes:**
+
 - **Dark Terminal:** Bright colors on black
 - **Light Terminal:** Dark colors on white  
 - **High Contrast:** Maximum differentiation
@@ -127,6 +139,7 @@ public:
 ### 3. Visual Clarity Improvements
 
 **Unicode Wall Characters:**
+
 ```cpp
 // Intelligent wall connection
 char getWallGlyph(int x, int y) {
@@ -142,6 +155,7 @@ char getWallGlyph(int x, int y) {
 ```
 
 **Tile Variants for Atmosphere:**
+
 - Floors: `.` `,` `·` `'` (subtle variation)
 - Walls: Different textures based on position hash
 - Water/Lava: Animated `~` `≈` characters
@@ -149,6 +163,7 @@ char getWallGlyph(int x, int y) {
 ### 4. Debug & Development Tools
 
 **Render Debug Overlay (F3 key):**
+
 ```cpp
 class RenderDebugger {
     bool show_tile_types;      // Display T/W/F/V for tile types
@@ -160,6 +175,7 @@ class RenderDebugger {
 ```
 
 **Automated Testing:**
+
 - Extend dump mode to output JSON
 - Compare frame renders for regression testing
 - Performance benchmarking
@@ -167,6 +183,7 @@ class RenderDebugger {
 ### 5. Performance Optimizations
 
 **Dirty Rectangle Tracking:**
+
 ```cpp
 class DirtyRectTracker {
     std::vector<Rect> dirty_regions;
@@ -179,17 +196,20 @@ class DirtyRectTracker {
 ```
 
 **Render Caching:**
+
 - Cache ANSI escape sequences
 - Reuse formatted strings
 - Skip unchanged cells
 
 **Viewport Culling:**
+
 - Don't process off-screen tiles
 - Early exit for out-of-bounds
 
 ### 6. Accessibility Features
 
 **Screen Reader Support:**
+
 ```cpp
 struct TileDescription {
     std::string brief;    // "wall"
@@ -199,6 +219,7 @@ struct TileDescription {
 ```
 
 **Display Modes:**
+
 - **ASCII Only:** No Unicode, maximum compatibility
 - **Large Text:** Double-height characters
 - **Symbols:** Icons instead of letters for items

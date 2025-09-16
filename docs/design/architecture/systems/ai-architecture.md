@@ -11,6 +11,7 @@ Veyrm's AI system provides intelligent behavior for monsters through a state-bas
 The central AI controller that manages monster behavior through a state machine pattern.
 
 #### Key Features
+
 - **5 AI States**: IDLE, ALERT, HOSTILE, FLEEING, RETURNING
 - **Room Assignment**: Territorial behavior with spawn room binding
 - **Memory System**: Tracks last seen player position
@@ -18,6 +19,7 @@ The central AI controller that manages monster behavior through a state machine 
 - **Performance Optimized**: Pool-based memory management
 
 #### Public Interface
+
 ```cpp
 class MonsterAI {
 public:
@@ -29,6 +31,7 @@ public:
 ```
 
 #### AI State Machine
+
 ```
 IDLE ←→ ALERT ←→ HOSTILE
   ↑                ↓
@@ -40,6 +43,7 @@ IDLE ←→ ALERT ←→ HOSTILE
 A* pathfinding implementation optimized for 8-directional movement with obstacle avoidance.
 
 #### Features
+
 - **A* Algorithm**: Optimal path calculation
 - **8-Way Movement**: Full directional support including diagonals
 - **Line-of-Sight**: Bresenham line algorithm for vision
@@ -47,6 +51,7 @@ A* pathfinding implementation optimized for 8-directional movement with obstacle
 - **Collision Avoidance**: Respects entity blocking
 
 #### Public Interface
+
 ```cpp
 class Pathfinding {
 public:
@@ -60,6 +65,7 @@ public:
 ## Data Structures
 
 ### AIData Structure
+
 Each monster maintains AI state through the AIData component:
 
 ```cpp
@@ -76,6 +82,7 @@ struct AIData {
 ```
 
 ### Entity User Data
+
 AI data is attached to monsters via the Entity base class user data system:
 
 ```cpp
@@ -93,6 +100,7 @@ void ensureAIData(Monster& monster);
 ### Game Systems Integration
 
 #### Turn Manager (`src/turn_manager.cpp`)
+
 AI updates are integrated into the world turn phase:
 
 ```cpp
@@ -109,6 +117,7 @@ void TurnManager::processWorldTurn() {
 ```
 
 #### Game Manager (`src/game_manager.cpp`)
+
 Coordinates AI processing for all active monsters:
 
 ```cpp
@@ -127,6 +136,7 @@ void GameManager::updateMonsters() {
 ```
 
 #### Spawn Manager (`src/spawn_manager.cpp`)
+
 Automatically assigns rooms to monsters during creation:
 
 ```cpp
@@ -145,30 +155,35 @@ if (monster && game_manager && game_manager->getMonsterAI()) {
 ### State Descriptions
 
 #### IDLE State
+
 - **Trigger**: Default state, no player detected
 - **Behavior**: Random movement within room boundaries
 - **Frequency**: Low movement rate (every 3+ turns)
 - **Restrictions**: Room-bound monsters stay within assigned room
 
 #### ALERT State
+
 - **Trigger**: Player detected at medium distance (8-10 tiles)
 - **Behavior**: Increased attention, faces toward player
 - **Movement**: May investigate last known position
 - **Duration**: Until player comes closer or disappears
 
 #### HOSTILE State
+
 - **Trigger**: Player visible within combat range (≤8 tiles)
 - **Behavior**: Active pursuit using pathfinding
 - **Movement**: Direct approach via optimal path
 - **Exception**: Can leave assigned room to chase player
 
 #### FLEEING State
+
 - **Trigger**: Monster health < 25% and player visible
 - **Behavior**: Escape from player using reverse pathfinding
 - **Movement**: Maximize distance from player
 - **Duration**: Until player out of sight for 3+ turns
 
 #### RETURNING State
+
 - **Trigger**: Room-bound monster lost player outside assigned room
 - **Behavior**: Navigate back to home room center
 - **Movement**: Pathfind to room center point
@@ -187,18 +202,21 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 ## Performance Considerations
 
 ### Memory Management
+
 - **Pool Allocation**: AIData stored in managed pool
 - **Entity Components**: Minimal memory overhead per monster
 - **Path Caching**: Reuse calculated paths when valid
 - **Early Termination**: Stop processing distant monsters
 
 ### Computational Efficiency
+
 - **A* Optimization**: Efficient priority queue and data structures
 - **FOV Reuse**: Leverage existing field-of-view calculations
 - **State Caching**: Avoid redundant state evaluations
 - **Batch Processing**: Update all monsters in single pass
 
 ### Scalability Targets
+
 - **30+ Monsters**: Smooth performance with full AI population
 - **Large Maps**: Efficient pathfinding on 100x100+ grids
 - **Real-time**: No perceptible lag during AI processing
@@ -209,23 +227,27 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 ### Unit Tests (`tests/test_monster_ai.cpp`)
 
 #### Core Functionality
+
 - **State Transitions**: All state changes work correctly
 - **Pathfinding**: Optimal path calculation verified
 - **8-Way Movement**: All directions tested
 - **Line-of-Sight**: Vision and obstacle detection
 
 #### Behavioral Testing
+
 - **Room Boundaries**: Territorial behavior validation
 - **Chase Mechanics**: Pursuit and engagement
 - **Fleeing Logic**: Escape behavior verification
 - **Combat Approach**: Intelligent positioning
 
 #### Integration Testing
+
 - **Multi-Monster**: Collision avoidance and coordination
 - **Performance**: Stress testing with many active monsters
 - **Edge Cases**: Boundary conditions and error handling
 
 ### Test Coverage
+
 - **120 Test Cases**: Comprehensive validation suite
 - **1602 Assertions**: Detailed behavior verification
 - **All Passing**: ✅ No failing tests
@@ -234,6 +256,7 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 ## Future Extensions
 
 ### Planned Enhancements
+
 - **Group AI**: Pack behavior and monster coordination
 - **Advanced Pathfinding**: Hierarchical and multi-threaded
 - **Dynamic Difficulty**: AI adaptation based on player skill
@@ -241,6 +264,7 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 - **Patrol Routes**: Predefined movement patterns
 
 ### Extensibility Points
+
 - **State Addition**: Easy to add new AI states
 - **Behavior Customization**: Per-species AI parameters
 - **Plugin System**: External AI behavior modules
@@ -249,12 +273,14 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 ## Debugging and Monitoring
 
 ### Debug Information
+
 - **State Visualization**: Current AI state per monster
 - **Path Display**: Visual pathfinding routes
 - **Vision Cones**: Monster sight range indicators
 - **Performance Metrics**: AI processing timing
 
 ### Logging Integration
+
 - **State Changes**: Track AI transitions
 - **Pathfinding**: Log path calculation results
 - **Performance**: Monitor AI update timing
@@ -263,6 +289,7 @@ static const int RETURN_THRESHOLD = 15;       // Distance before returning
 ## Code Organization
 
 ### File Structure
+
 ```
 include/
   monster_ai.h      - AI system interface
@@ -277,6 +304,7 @@ tests/
 ```
 
 ### Dependencies
+
 - **Entity System**: Base monster and player classes
 - **Map System**: Tile data and room information
 - **Turn System**: Integration with game timing

@@ -3,6 +3,7 @@
 ## Movement
 
 ### Arrow Keys & Numpad
+
 The primary movement controls use arrow keys for 4-directional movement and numpad for 8-directional movement including diagonals.
 
 | Key | Action |
@@ -22,6 +23,7 @@ The primary movement controls use arrow keys for 4-directional movement and nump
 ## Actions
 
 ### Item Management
+
 | Key | Action |
 |-----|--------|
 | **g** | Get/pickup item at current position |
@@ -31,6 +33,7 @@ The primary movement controls use arrow keys for 4-directional movement and nump
 | **E** | Examine selected item (uppercase E) |
 
 ### Game Management
+
 | Key | Action |
 |-----|--------|
 | **S** | Save game (uppercase S) |
@@ -39,12 +42,14 @@ The primary movement controls use arrow keys for 4-directional movement and nump
 | **q** / **Q** | Quit to menu |
 
 ### Environment
+
 | Key | Action |
 |-----|--------|
 | **o** | Open/close adjacent doors |
 | **.** | Wait one turn (pass) |
 
 ### System
+
 | Key | Action |
 |-----|--------|
 | **?** | Show help screen |
@@ -53,9 +58,11 @@ The primary movement controls use arrow keys for 4-directional movement and nump
 | **F1** | Toggle debug mode (when available) |
 
 ## Combat
+
 Combat is automatic when you move into an enemy (bump-to-attack). No special keys required.
 
 ## Inventory Navigation
+
 When the inventory screen is open:
 
 | Key | Action |
@@ -68,6 +75,7 @@ When the inventory screen is open:
 | **Escape** | Close inventory |
 
 ## Menu Navigation
+
 In menus and selection screens:
 
 | Key | Action |
@@ -78,6 +86,7 @@ In menus and selection screens:
 | **q** | Quit |
 
 ## Build Script Testing Keys
+
 For automated testing with `./build.sh keys`:
 
 | Code | Produces |
@@ -94,6 +103,7 @@ Example: `./build.sh keys '\njjjq'` sends Enter, three j's, and q.
 ## Quick Reference Card
 
 ### Essential Keys
+
 - **Movement**: Arrow keys or Numpad 1-9
 - **Get Item**: g
 - **Inventory**: i
@@ -103,6 +113,7 @@ Example: `./build.sh keys '\njjjq'` sends Enter, three j's, and q.
 - **Wait**: . or 5
 
 ### In Inventory
+
 - **Navigate**: Arrow keys
 - **Use**: u
 - **Drop**: D (uppercase)

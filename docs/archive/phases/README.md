@@ -13,6 +13,7 @@ All phases through Phase 12 have been completed, marking the achievement of MVP 
 The following phases have been completed and their documentation moved to `ARCHIVE/`:
 
 #### Foundation (Phases 0-3)
+
 - **Phase 0**: Project Setup
   - 0.1 Initialize Repository
   - 0.2 Dependencies Setup
@@ -30,6 +31,7 @@ The following phases have been completed and their documentation moved to `ARCHI
   - 3.3 Entity Manager
 
 #### Core Systems (Phases 4-7)
+
 - **Phase 4**: Entity Management
 - **Phase 5**: Map Generation
   - 5.1 Room Generation
@@ -44,6 +46,7 @@ The following phases have been completed and their documentation moved to `ARCHI
   - 7.3 Layout System
 
 #### Gameplay (Phases 8-12)
+
 - **Phase 8**: Monster System
   - 8.1 Monster Entity
   - 8.2 Monster Spawning
@@ -74,6 +77,7 @@ ls DOC/PHASES/ARCHIVE/
 **MVP COMPLETE** - All planned phases have been successfully implemented.
 
 The game now includes:
+
 - Procedural map generation
 - Player movement and FOV
 - Monster AI and spawning
@@ -85,6 +89,7 @@ The game now includes:
 ## Future Development
 
 Future phases will be documented here as they are planned and implemented. Potential areas include:
+
 - Multiple dungeon levels
 - Character progression
 - Magic system
@@ -94,6 +99,7 @@ Future phases will be documented here as they are planned and implemented. Poten
 ## Documentation Structure
 
 Each phase typically includes:
+
 - Requirements document
 - Implementation checklist
 - Completion summary
@@ -103,6 +109,7 @@ Each phase typically includes:
 ## Contributing
 
 When adding new phase documentation:
+
 1. Use consistent naming: `PHASE_SUBPHASE_DESCRIPTION.md`
 2. Include clear requirements
 3. Track progress with checklists

@@ -7,6 +7,7 @@ Plan for integrating Doxygen to auto-generate API documentation from the Veyrm c
 ## Prerequisites
 
 ### 1. Install Doxygen
+
 ```bash
 # macOS
 brew install doxygen
@@ -25,6 +26,7 @@ sudo apt-get install graphviz
 ### Phase 1: Basic Setup
 
 #### 1.1 Create Doxyfile
+
 ```bash
 # Generate default configuration
 doxygen -g Doxyfile
@@ -34,7 +36,9 @@ mv Doxyfile /path/to/veyrm/
 ```
 
 #### 1.2 Configure Doxyfile
+
 Key settings to modify:
+
 ```
 PROJECT_NAME           = "Veyrm"
 PROJECT_NUMBER         = "1.0.0-MVP"
@@ -57,6 +61,7 @@ CALLER_GRAPH           = YES
 ### Phase 2: Code Documentation Standards
 
 #### 2.1 Header Documentation Format
+
 ```cpp
 /**
  * @file game_manager.h
@@ -67,6 +72,7 @@ CALLER_GRAPH           = YES
 ```
 
 #### 2.2 Class Documentation
+
 ```cpp
 /**
  * @class GameManager
@@ -83,6 +89,7 @@ class GameManager {
 ```
 
 #### 2.3 Method Documentation
+
 ```cpp
 /**
  * @brief Process one game turn
@@ -99,6 +106,7 @@ bool processTurn(InputCommand input);
 ```
 
 #### 2.4 Member Variable Documentation
+
 ```cpp
 /// Current game state (MENU, PLAYING, PAUSED)
 GameState m_state;
@@ -111,6 +119,7 @@ Player* m_player;
 ### Phase 3: Documentation Coverage
 
 #### 3.1 Priority Classes to Document
+
 1. **Core Systems** (High Priority)
    - GameManager
    - Map
@@ -135,6 +144,7 @@ Player* m_player;
    - MessageLog
 
 #### 3.2 Documentation Checklist
+
 - [ ] All public methods documented
 - [ ] All public members documented
 - [ ] Class overview provided
@@ -147,6 +157,7 @@ Player* m_player;
 ### Phase 4: Build Integration
 
 #### 4.1 Add to build.sh
+
 ```bash
 # Add new command to build.sh
 docs)
@@ -162,6 +173,7 @@ docs)
 ```
 
 #### 4.2 CMake Integration (Optional)
+
 ```cmake
 # Find Doxygen
 find_package(Doxygen)
@@ -183,6 +195,7 @@ endif()
 ### Phase 5: CI/CD Integration
 
 #### 5.1 GitHub Actions Workflow
+
 ```yaml
 name: Generate Documentation
 
@@ -218,7 +231,9 @@ jobs:
 ## Advanced Features
 
 ### Custom Styling
+
 Create custom CSS for documentation:
+
 ```css
 /* docs/reference/api/doxygen-custom.css */
 .title {
@@ -228,19 +243,23 @@ Create custom CSS for documentation:
 ```
 
 ### Markdown Support
+
 Enable markdown in comments:
+
 ```
 MARKDOWN_SUPPORT       = YES
 AUTOLINK_SUPPORT       = YES
 ```
 
 ### Search Functionality
+
 ```
 SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = NO
 ```
 
 ### Dependency Graphs
+
 ```
 HAVE_DOT               = YES
 CLASS_DIAGRAMS         = YES
@@ -263,6 +282,7 @@ GRAPHICAL_HIERARCHY    = YES
 ## Maintenance
 
 ### Regular Tasks
+
 - Run doxygen before releases
 - Review undocumented items (`WARN_IF_UNDOCUMENTED = YES`)
 - Update PROJECT_NUMBER for new versions
@@ -270,6 +290,7 @@ GRAPHICAL_HIERARCHY    = YES
 - Validate @param names match actual parameters
 
 ### Documentation Quality Metrics
+
 - Target: >80% documentation coverage
 - All public API documented
 - Examples for complex methods

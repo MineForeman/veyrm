@@ -9,6 +9,7 @@ Veyrm uses a component-based architecture where game objects are composed of reu
 ## Current Components
 
 ### Entity Components
+
 - **Position**: Location in the game world
 - **Renderable**: Visual representation
 - **Stats**: Health, attack, defense
@@ -16,11 +17,13 @@ Veyrm uses a component-based architecture where game objects are composed of reu
 - **Inventory**: Item storage
 
 ### Map Components
+
 - **Tile**: Basic map unit
 - **Room**: Rectangular areas
 - **Corridor**: Connections between rooms
 
 ### UI Components
+
 - **MapView**: Viewport rendering
 - **MessageLog**: Message display
 - **StatusBar**: Player information

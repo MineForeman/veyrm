@@ -9,6 +9,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 ### 1. Base Component System (`include/ecs/component.h`)
 
 **Features:**
+
 - `IComponent` interface with virtual methods
 - `Component<T>` CRTP base for concrete components
 - Type-safe component identification
@@ -18,6 +19,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 
 **Replaces:** Entity x/y coordinates
 **Features:**
+
 - Current and previous position tracking
 - Movement methods (moveTo, moveBy)
 - Distance calculations
@@ -27,6 +29,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 
 **Replaces:** Entity glyph/color/visibility
 **Features:**
+
 - Glyph and color management
 - Visibility control
 - Render priority for layering
@@ -36,6 +39,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 
 **Replaces:** Entity hp/max_hp
 **Features:**
+
 - Health and max health tracking
 - Damage and healing methods
 - Death state detection
@@ -46,6 +50,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 
 **Replaces:** Entity combat methods
 **Features:**
+
 - Attack/defense bonuses
 - Damage ranges
 - Status effects
@@ -55,6 +60,7 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 ### 6. Entity Class (`include/ecs/entity.h`)
 
 **New Architecture:**
+
 - Entities as component containers
 - Type-safe component management
 - Runtime component addition/removal
@@ -63,7 +69,8 @@ Successfully implemented the foundation of an Entity Component System (ECS) arch
 
 ## Architecture Comparison
 
-### Before (Inheritance-Based):
+### Before (Inheritance-Based)
+
 ```cpp
 class Entity {
     int x, y;
@@ -82,7 +89,8 @@ class Monster : public Entity {
 };
 ```
 
-### After (Component-Based):
+### After (Component-Based)
+
 ```cpp
 namespace ecs {
     Entity player;
@@ -96,26 +104,31 @@ namespace ecs {
 ## Benefits of ECS Architecture
 
 ### 1. **Flexibility**
+
 - Add/remove components at runtime
 - Mix and match components freely
 - No rigid inheritance hierarchy
 
 ### 2. **Data Locality**
+
 - Components can be stored contiguously
 - Better cache performance potential
 - Clear data/logic separation
 
 ### 3. **Testability**
+
 - Components tested in isolation
 - Easier to mock and stub
 - Clear responsibilities
 
 ### 4. **Extensibility**
+
 - New components without modifying existing code
 - Systems can operate on component combinations
 - Plugin-friendly architecture
 
 ### 5. **Reusability**
+
 - Components shared across entity types
 - No code duplication
 - Composition over inheritance
@@ -125,7 +138,8 @@ namespace ecs {
 **New Tests Added:** 101 assertions in 7 test cases
 **Total Tests:** 1907 assertions in 144 test cases
 
-### Test Categories:
+### Test Categories
+
 - Entity operations (creation, component management)
 - PositionComponent (movement, tracking)
 - RenderableComponent (visibility, appearance)
@@ -136,17 +150,20 @@ namespace ecs {
 ## Migration Strategy
 
 ### Phase 2.2: Create Entity Factory
+
 - Factory to create entities with appropriate components
 - Builders for common entity types (player, monsters, items)
 - Migration helpers for existing code
 
 ### Phase 2.3: Implement Systems
+
 - MovementSystem (operates on PositionComponent)
 - RenderSystem (operates on RenderableComponent)
 - CombatSystem (operates on CombatComponent + HealthComponent)
 - AISystem (operates on AI components)
 
 ### Phase 2.4: Gradual Migration
+
 - Keep existing Entity class temporarily
 - Add adapter layer for compatibility
 - Migrate one system at a time
@@ -154,29 +171,34 @@ namespace ecs {
 
 ## Code Quality Metrics
 
-### Complexity Reduction:
+### Complexity Reduction
+
 - **Before:** Single Entity class with 250+ lines
 - **After:** 5 focused components, each <150 lines
 - **Separation:** Data and behavior clearly separated
 
-### Type Safety:
+### Type Safety
+
 - Compile-time component type checking
 - No dynamic_cast in normal usage
 - Template-based component access
 
-### Memory Management:
+### Memory Management
+
 - All components use RAII
 - Smart pointers throughout
 - No manual memory management
 
 ## Performance Considerations
 
-### Current:
+### Current
+
 - Virtual function overhead for component interface
 - Dynamic allocation for components
 - Type erasure through base interface
 
-### Future Optimizations:
+### Future Optimizations
+
 - Component pools for allocation
 - Systems with direct array access
 - Data-oriented design patterns
@@ -184,17 +206,20 @@ namespace ecs {
 
 ## Next Steps
 
-### Immediate (Phase 2.2):
+### Immediate (Phase 2.2)
+
 1. Create EntityFactory for common entities
 2. Implement builder pattern for complex entities
 3. Add component serialization for save/load
 
-### Medium Term (Phase 2.3):
+### Medium Term (Phase 2.3)
+
 1. Implement core systems (Movement, Render, Combat)
 2. Create system manager for update order
 3. Add event system for component communication
 
-### Long Term (Phase 2.4):
+### Long Term (Phase 2.4)
+
 1. Migrate existing entities to ECS
 2. Remove inheritance-based Entity class
 3. Optimize component storage
@@ -203,6 +228,7 @@ namespace ecs {
 ## Conclusion
 
 Phase 2.1 successfully establishes a solid ECS foundation that:
+
 - Provides clear separation of concerns
 - Enables flexible entity composition
 - Maintains type safety

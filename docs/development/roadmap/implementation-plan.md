@@ -15,6 +15,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 0: Project Setup (Day 1)
 
 ### 0.1 Initialize Repository ✅
+
 - [x] Create CMakeLists.txt with C++23 configuration
 - [x] Add .gitignore for C++ projects
 - [x] Create directory structure: `src/`, `include/`, `data/`, `tests/`
@@ -22,6 +23,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.0.1-project-init`
 
 ### 0.2 Dependencies Setup ✅
+
 - [x] Configure FetchContent for FTXUI
 - [x] Configure FetchContent for nlohmann/json
 - [x] Configure FetchContent for Catch2
@@ -31,6 +33,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Fixed AddressSanitizer conflicts, added terminal cleanup, enhanced build.sh
 
 ### 0.3 Basic FTXUI Window ✅
+
 - [x] Create minimal FTXUI app with quit on 'q'
 - [x] Set up screen with proper Unicode support
 - [x] Add window title and basic layout
@@ -41,6 +44,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Fixed segfault in menu renderer, resolved terminal mouse tracking issues
 
 ### 0.4 Input and Turn Foundation ✅
+
 - [x] Create `InputHandler` class for keyboard processing
 - [x] Add ~~vi-keys (hjkl)~~ and arrow key movement handling (vi-keys excluded per request)
 - [x] Implement basic turn counter in GameManager
@@ -55,6 +59,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 1: Core Game Loop (Day 2)
 
 ### 1.1 Game State Structure ✅
+
 - [x] Create `GameManager` class with state enum (extended with PAUSED, INVENTORY, HELP)
 - [x] Create `InputHandler` class for keyboard processing
 - [x] Implement state transitions with previous state tracking
@@ -63,6 +68,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Complete state management with InputHandler, player movement, and turn counting
 
 ### 1.2 Turn System ✅
+
 - [x] Implement `TurnManager` class
 - [x] Add player turn vs world turn distinction
 - [x] Create turn counter
@@ -71,6 +77,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Implemented action speed system, message log, world time tracking
 
 ### 1.3 Main Game Loop ✅
+
 - [x] Connect input → update → render cycle
 - [x] Add frame rate limiting
 - [x] Implement clean shutdown
@@ -84,6 +91,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 2: Map Foundation (Day 3)
 
 ### 2.1 Tile System ✅
+
 - [x] Create `Tile` enum (WALL, FLOOR, STAIRS)
 - [x] Create `Map` class with 2D tile array
 - [x] Implement coordinate system (Point struct)
@@ -92,6 +100,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Full tile system with properties, collision detection, visibility tracking
 
 ### 2.2 Map Rendering ✅
+
 - [x] Create `MapRenderer` class with FTXUI integration
 - [x] Render map with ASCII characters (#, ., >)
 - [x] Add terminal-adaptive color support for tiles
@@ -122,6 +131,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 3: Entity System (Day 4)
 
 ### 3.1 Entity Base ✅
+
 - [x] Create `Entity` base class with position
 - [x] Create `Player` class extending Entity
 - [x] Add glyph and color properties
@@ -135,6 +145,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Complete entity system with Player class, EntityManager, movement integration, and full test coverage
 
 ### 3.2 Player on Map (Completed as part of 3.1) ✅
+
 - [x] Add player to game state
 - [x] Render player on map  
 - [x] Ensure player renders above floor
@@ -142,6 +153,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Completed as part of Phase 3.1 integration
 
 ### 3.3 Entity Manager (Completed as part of 3.1) ✅
+
 - [x] Create `EntityManager` class
 - [x] Track all entities in single container
 - [x] Add entity lookup by position
@@ -154,6 +166,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 3.5: Test Suite Completion ✅
 
 ### 3.5.1 Comprehensive Test Coverage
+
 - [x] Document all 57 test cases in TESTS.md
 - [x] Fix MapGenerator stairs placement (out of bounds issue)
 - [x] Fix MapGenerator spawn point validation for all map types
@@ -168,6 +181,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 4: Movement System (Day 5)
 
 ### 4.1 Basic Movement ✅
+
 - [x] Implement 4-directional movement (arrow keys)
 - [x] Add collision detection with walls
 - [x] Update player position on valid moves
@@ -175,6 +189,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Completed as part of entity system integration
 
 ### 4.2 8-Directional Movement (Partially Complete)
+
 - [x] Add wait command (. and numpad 5)
 - [ ] Add diagonal movement (yubn keys) - *Deferred per design decision*
 - [ ] Implement hjkl vim-style movement - *Deferred per design decision*
@@ -182,6 +197,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Arrow keys only for movement, vi-keys explicitly excluded from current design
 
 ### 4.3 Movement Validation ✅
+
 - [x] Movement validation integrated into Player class
 - [x] Add bounds checking
 - [x] Add entity collision checking (blocking vs non-blocking entities)
@@ -212,6 +228,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.5.2-corridors`
 
 ### 5.3 Map Validation ✅ Complete
+
 - [x] Implement BFS connectivity check
 - [x] Ensure all floor tiles reachable
 - [x] Place stairs at farthest point
@@ -224,6 +241,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 6: Field of View (Day 8)
 
 ### 6.1 FOV Algorithm ✅ Complete
+
 - [x] Implement symmetric shadowcasting
 - [x] Create `FOV` class with calculate method
 - [x] Handle 8 octants properly
@@ -231,6 +249,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.6.1-fov-algorithm`
 
 ### 6.2 Visibility System ✅ Complete
+
 - [x] Add visible/revealed states to tiles
 - [x] Update visibility on player move
 - [x] Implement fog of war rendering
@@ -238,6 +257,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.6.2-visibility`
 
 ### 6.3 Map Memory ✅ Complete
+
 - [x] Track explored tiles
 - [x] Render explored but not visible tiles dimmed
 - [x] Persist exploration between turns
@@ -249,6 +269,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 7: UI Framework (Day 9)
 
 ### 7.1 Message Log ✅ Complete
+
 - [x] Create `MessageLog` class
 - [x] Implement 5-line display
 - [x] Add message history storage
@@ -256,6 +277,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.7.1-message-log`
 
 ### 7.2 Status Bar ✅
+
 - [x] Create status bar component (StatusBar class)
 - [x] Display HP, position, turn count
 - [x] Add color coding for HP levels
@@ -264,6 +286,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Implemented StatusBar class with HP color coding, position display, time formatting
 
 ### 7.3 Layout System
+
 - [x] Implement three-panel layout (map, log, status)
 - [x] Handle window resizing
 - [x] Ensure minimum 80x24 size
@@ -276,6 +299,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 7.5: Configuration System ✅ Complete
 
 ### 7.5.1 YAML Configuration
+
 - [x] Implement Config singleton class
 - [x] Integrate rapidyaml library for YAML parsing
 - [x] Create comprehensive config.yml file
@@ -293,6 +317,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 8: Monster System (Day 10-11)
 
 ### 8.1 Monster Entity ✅ Complete
+
 - [x] Create `Monster` class extending Entity
 - [x] Add HP, attack, defense, speed, XP stats
 - [x] Load monster definitions from JSON
@@ -304,6 +329,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.8.1-monster-entity`
 
 ### 8.2 Monster Spawning ✓ COMPLETE
+
 - [x] Add monsters to map generation
 - [x] Implement spawn distribution (95% rooms, 5% corridors)
 - [x] Create all 5 base monsters (Gutter Rat, Cave Spider, Kobold, Orc Rookling, Zombie)
@@ -316,6 +342,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.8.2-spawning`
 
 ### 8.3 Basic AI ✅
+
 - [x] Implement 8-way movement for monsters (N, NE, E, SE, S, SW, W, NW)
 - [x] Add room-bound behavior (monsters stay in spawn room unless chasing)
 - [x] Implement AI states (IDLE, ALERT, HOSTILE, FLEEING, RETURNING)
@@ -340,6 +367,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 9: Combat System (Day 12)
 
 ### 9.1 Combat Stats ✅
+
 - [x] Add HP, attack, defense to all entities
 - [x] Create `CombatSystem` class
 - [x] Implement damage calculation
@@ -353,6 +381,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.9.1-combat-stats`
 
 ### 9.2 Bump Combat ✅
+
 - [x] Detect bump-to-attack
 - [x] Apply damage on collision
 - [x] Add combat messages to log
@@ -360,6 +389,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.9.2-bump-combat`
 
 ### 9.3 Death Handling ✅
+
 - [x] Remove entities at 0 HP
 - [x] Handle player death (game over)
 - [x] Handle monster death (remove from map)
@@ -372,6 +402,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 10: Item System (Day 13-14)
 
 ### 10.1 Item Entity ✅ COMPLETE
+
 - [x] Create `Item` class with full property system
 - [x] Add item types (POTION, SCROLL, WEAPON, ARMOR, FOOD, GOLD, MISC)
 - [x] Load item definitions from JSON (12 types implemented)
@@ -381,6 +412,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Git tag:** `v0.10.1-item-entity` (ready to tag)
 
 ### 10.2 Ground Items ✅ COMPLETE (merged with 10.1)
+
 - [x] Spawn items during map generation (5-10 items, 3-6 gold piles)
 - [x] Render items on map with appropriate colors and symbols
 - [x] Handle multiple items per tile
@@ -388,6 +420,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [x] **Merged with 10.1**
 
 ### 10.3 Pickup System ✅ COMPLETE (merged with 10.1)
+
 - [x] Implement 'g' get command
 - [x] Gold automatically added to player wealth
 - [x] Remove items from map on pickup
@@ -399,6 +432,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 11: Inventory System (Day 15)
 
 ### 11.1 Inventory Storage ✅
+
 - [x] Create `Inventory` class with 26-slot capacity
 - [x] Implement smart stacking for stackable items
 - [x] Add inventory to player with special gold handling
@@ -408,6 +442,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Complete implementation with stacking, weight tracking, full test coverage
 
 ### 11.2 Inventory UI ✅
+
 - [x] Implement 'i' inventory command to open/close
 - [x] Display formatted item list with a-z slots
 - [x] Show item details panel with properties
@@ -418,6 +453,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - **Notes:** Complete UI with selection, actions, proper event routing
 
 ### 11.3 Item Usage
+
 - [x] Implement 'u' use command
 - [x] Add healing potion effect
 - [x] Implement 'D' drop command
@@ -432,6 +468,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 12: Save System (Day 16)
 
 ### 12.1 Game Serialization
+
 - [ ] Create save game JSON structure
 - [ ] Serialize game state
 - [ ] Serialize map and entities
@@ -439,6 +476,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.12.1-serialization`
 
 ### 12.2 Save on Quit
+
 - [ ] Implement autosave on 'q'
 - [ ] Write save.json file
 - [ ] Handle save errors gracefully
@@ -446,6 +484,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.12.2-save-on-quit`
 
 ### 12.3 Load on Start
+
 - [ ] Check for save file on launch
 - [ ] Load and restore game state
 - [ ] Handle missing/corrupt saves
@@ -457,6 +496,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 13: Polish & Balance (Day 17-18)
 
 ### 13.1 Combat Balance
+
 - [ ] Test and adjust damage values
 - [ ] Balance monster HP and spawn rates
 - [ ] Tune healing potion effectiveness
@@ -464,6 +504,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.13.1-balance`
 
 ### 13.2 Victory Condition
+
 - [ ] Add "reach stairs" victory check
 - [ ] Implement 'N' new game command
 - [ ] Add victory/death messages
@@ -471,6 +512,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.13.2-victory`
 
 ### 13.3 Visual Polish
+
 - [ ] Add colors for all entities
 - [ ] Improve message formatting
 - [ ] Add welcome/help text
@@ -482,6 +524,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 14: Testing Suite (Day 19)
 
 ### 14.1 Unit Tests
+
 - [ ] Test map generation connectivity
 - [ ] Test FOV symmetry
 - [ ] Test combat calculations
@@ -490,6 +533,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.14.1-unit-tests`
 
 ### 14.2 Integration Tests
+
 - [ ] Test full game flow
 - [ ] Test all keyboard commands
 - [ ] Test edge cases (death, inventory full)
@@ -497,6 +541,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.14.2-integration-tests`
 
 ### 14.3 Platform Testing
+
 - [ ] Test on macOS
 - [ ] Test on Linux
 - [ ] Test on Windows
@@ -509,6 +554,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 ## Phase 15: Documentation & Release (Day 20)
 
 ### 15.1 User Documentation
+
 - [ ] Write README.md with build instructions
 - [ ] Create CONTROLS.md reference
 - [ ] Add screenshots
@@ -516,6 +562,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.15.1-documentation`
 
 ### 15.2 Developer Documentation
+
 - [ ] Document code architecture
 - [ ] Add inline code comments
 - [ ] Create CONTRIBUTING.md
@@ -523,6 +570,7 @@ A detailed, step-by-step implementation plan for building the Veyrm roguelike MV
 - [ ] **Git tag:** `v0.15.2-dev-docs`
 
 ### 15.3 Release Package
+
 - [ ] Create release build
 - [ ] Package with data files
 - [ ] Create release notes
