@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Remote Configuration
+
+**IMPORTANT:** This repository uses GitLab as the primary remote.
+- **Default push destination:** `ssh://git@horse.local:23/nrf/veyrm.git` (GitLab)
+- **GitHub mirror:** `origin` (github.com/MineForeman/veyrm) - Only push here when explicitly requested
+- Always use `git push ssh://git@horse.local:23/nrf/veyrm.git <branch>` for normal pushes
+- Only use `git push origin <branch>` when the user explicitly asks to push to GitHub
+
 ## Critical Requirements
 
 **TESTING:** ALL tests must pass before marking any task complete. Run `./build.sh test` after every change.
