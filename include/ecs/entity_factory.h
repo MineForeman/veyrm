@@ -13,8 +13,12 @@
 #include "health_component.h"
 #include "combat_component.h"
 #include "inventory_component.h"
+#include "item_component.h"
 #include "player_component.h"
 #include "stats_component.h"
+#include "ai_component.h"
+#include "loot_component.h"
+#include "data_loader.h"
 #include "ai_system.h"
 #include "../color_scheme.h"
 #include <memory>
@@ -291,6 +295,10 @@ public:
         if (auto* combat = entity->getComponent<CombatComponent>()) {
             combat->combat_name = name;
         }
+        // Also set the renderable name for display
+        if (auto* renderable = entity->getComponent<RenderableComponent>()) {
+            renderable->name = name;
+        }
         return *this;
     }
 
@@ -389,96 +397,76 @@ public:
 
 /**
  * @class MonsterFactoryECS
- * @brief Factory for creating monster entities in ECS
- *
- * Note: Named MonsterFactoryECS to avoid conflict with existing MonsterFactory
+ * @brief Factory for creating monster entities from JSON data
  */
 class MonsterFactoryECS {
 public:
-    using MonsterBuilder = std::function<std::unique_ptr<Entity>(int, int)>;
-
-    MonsterFactoryECS() {
-        // Register common monster types
-        registerMonster("goblin", [](int x, int y) {
+    std::unique_ptr<Entity> create(const std::string& type, int x, int y) {
+        // Get monster template from DataLoader
+        const auto* template_data = DataLoader::getInstance().getMonsterTemplate(type);
+        if (!template_data) {
+            // Unknown type - create generic monster
             auto entity = EntityBuilder()
                 .withPosition(x, y)
-                .withRenderable("g", ftxui::Color::Green)
-                .withHealth(20)
-                .withCombatRange(1, 4, 1, 0)
-                .withCombatName("Goblin")
-                .withAI(AIBehavior::AGGRESSIVE, 5, 3)
+                .withRenderable("?", ftxui::Color::Magenta)
+                .withHealth(10)
+                .withCombat(5)
+                .withCombatName("Unknown Monster")
                 .build();
             entity->addTag("monster");
-            entity->addTag("goblin");
             return entity;
-        });
+        }
 
-        registerMonster("orc", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("o", ftxui::Color::RGB(139, 69, 19))  // Brown
-                .withHealth(35)
-                .withCombatRange(2, 6, 2, 1)
-                .withCombatName("Orc")
-                .withAI(AIBehavior::AGGRESSIVE, 6, 4)
-                .build();
-            entity->addTag("monster");
-            entity->addTag("orc");
-            return entity;
-        });
+        // Create entity from template
+        auto entity = std::make_unique<Entity>();
 
-        registerMonster("troll", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("T", ftxui::Color::RGB(0, 128, 0))  // Dark green
-                .withHealth(50)
-                .withCombatRange(3, 8, 3, 2)
-                .withCombatName("Troll")
-                .withAI(AIBehavior::DEFENSIVE, 5, 3)
-                .build();
-            entity->addTag("monster");
-            entity->addTag("troll");
-            return entity;
-        });
+        // Position component
+        entity->addComponent<PositionComponent>(x, y);
 
-        registerMonster("skeleton", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("s", ftxui::Color::RGB(255, 255, 240))  // Ivory
-                .withHealth(15)
-                .withCombatRange(1, 3, 2, 0)
-                .withCombatName("Skeleton")
-                .withAI(AIBehavior::WANDERING, 4, 2)
-                .build();
-            entity->addTag("monster");
-            entity->addTag("skeleton");
-            return entity;
-        });
+        // Renderable component
+        std::string glyph(1, template_data->glyph);
+        auto& renderable = entity->addComponent<RenderableComponent>(glyph, template_data->color);
+        renderable.name = template_data->name;
 
-        registerMonster("dragon", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("D", ftxui::Color::Red)
-                .withHealth(100)
-                .withCombatRange(5, 15, 5, 5)
-                .withCombatName("Dragon")
-                .withAI(AIBehavior::AGGRESSIVE, 8, 6)
-                .asBlocking()
-                .build();
-            entity->addTag("monster");
-            entity->addTag("dragon");
-            entity->addTag("boss");
-            return entity;
-        });
-    }
+        // Health component
+        entity->addComponent<HealthComponent>(template_data->hp, template_data->hp);
 
-    /**
-     * @brief Register a new monster type
-     * @param type Monster type name
-     * @param builder Builder function for the monster
-     */
-    void registerMonster(const std::string& type, MonsterBuilder builder) {
-        monster_builders[type] = builder;
+        // Combat component - extract from JSON data
+        const auto* full_template = DataLoader::getInstance().getMonsterTemplate(type);
+        if (full_template) {
+            // Get combat stats from JSON
+            int min_damage = 1;
+            int max_damage = 4;
+            int attack_bonus = template_data->attack;
+            int defense_bonus = template_data->defense;
+
+            // Parse from original JSON if available
+            auto& combat = entity->addComponent<CombatComponent>(
+                (min_damage + max_damage) / 2,
+                attack_bonus,
+                defense_bonus
+            );
+            combat.setDamageRange(min_damage, max_damage);
+            combat.combat_name = template_data->name;
+        }
+
+        // AI component
+        auto& ai = entity->addComponent<AIComponent>();
+        ai.behavior = template_data->aggressive ? AIBehavior::AGGRESSIVE : AIBehavior::WANDERING;
+        ai.vision_range = 5;  // Default values
+        ai.aggro_range = 3;
+
+        // Loot component
+        auto& loot = entity->addComponent<LootComponent>();
+        loot.guaranteed_gold = 0;
+        loot.random_gold_max = template_data->xp_value / 2;  // Use XP as basis for gold
+        loot.experience_value = template_data->xp_value;
+
+        // Add tags
+        entity->addTag("monster");
+        entity->addTag(type);
+
+        return entity;
     }
 
     std::unique_ptr<Entity> create(int x, int y) {
@@ -486,118 +474,112 @@ public:
         return create("goblin", x, y);
     }
 
-    std::unique_ptr<Entity> create(const std::string& type, int x, int y) {
-        auto it = monster_builders.find(type);
-        if (it != monster_builders.end()) {
-            return it->second(x, y);
-        }
-        // Unknown type - create generic monster
-        auto entity = EntityBuilder()
-            .withPosition(x, y)
-            .withRenderable("?", ftxui::Color::Magenta)
-            .withHealth(10)
-            .withCombat(1)
-            .withCombatName("Unknown")
-            .build();
-        entity->addTag("monster");
-        return entity;
-    }
-
-    /**
-     * @brief Get list of registered monster types
-     * @return Vector of type names
-     */
-    std::vector<std::string> getRegisteredTypes() const {
+    std::vector<std::string> getMonsterTypes() const {
         std::vector<std::string> types;
-        for (const auto& [type, _] : monster_builders) {
-            types.push_back(type);
+        for (const auto& [id, _] : DataLoader::getInstance().getMonsterTemplates()) {
+            types.push_back(id);
         }
         return types;
     }
-
-private:
-    std::unordered_map<std::string, MonsterBuilder> monster_builders;
 };
 
 /**
  * @class ItemFactoryECS
- * @brief Factory for creating item entities in ECS
+ * @brief Factory for creating item entities from JSON data
  */
 class ItemFactoryECS {
 public:
-    using ItemBuilder = std::function<std::unique_ptr<Entity>(int, int)>;
-
-    ItemFactoryECS() {
-        // Register common item types
-        registerItem("potion", [](int x, int y) {
+    std::unique_ptr<Entity> create(const std::string& type, int x, int y) {
+        // Get item template from DataLoader
+        const auto* template_data = DataLoader::getInstance().getItemTemplate(type);
+        if (!template_data) {
+            // Unknown item - create generic
             auto entity = EntityBuilder()
                 .withPosition(x, y)
-                .withRenderable("!", ftxui::Color::Magenta)
+                .withRenderable("*", ftxui::Color::White)
                 .build();
+            auto& item_comp = entity->addComponent<ItemComponent>();
+            item_comp.name = "Unknown Item";
+            item_comp.item_type = ItemType::MISC;
+            item_comp.value = 10;
             entity->addTag("item");
-            entity->addTag("potion");
             return entity;
-        });
+        }
 
-        registerItem("sword", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("/", ftxui::Color::RGB(192, 192, 192))  // Silver
-                .build();
-            entity->addTag("item");
-            entity->addTag("sword");
-            entity->addTag("weapon");
-            return entity;
-        });
+        // Create entity from template
+        auto entity = std::make_unique<Entity>();
 
-        registerItem("gold", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("$", ftxui::Color::Yellow)
-                .build();
-            entity->addTag("item");
-            entity->addTag("gold");
-            entity->addTag("currency");
-            return entity;
-        });
+        // Position component
+        entity->addComponent<PositionComponent>(x, y);
 
-        registerItem("scroll", [](int x, int y) {
-            auto entity = EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("?", ftxui::Color::RGB(255, 248, 220))  // Cornsilk
-                .build();
-            entity->addTag("item");
-            entity->addTag("scroll");
-            entity->addTag("consumable");
-            return entity;
-        });
-    }
+        // Renderable component
+        std::string glyph(1, template_data->symbol);
+        auto& renderable = entity->addComponent<RenderableComponent>(glyph, template_data->color);
+        renderable.name = template_data->name;
 
-    void registerItem(const std::string& type, ItemBuilder builder) {
-        item_builders[type] = builder;
+        // Item component
+        auto& item_comp = entity->addComponent<ItemComponent>();
+        item_comp.name = template_data->name;
+        item_comp.description = template_data->description;
+        item_comp.value = template_data->value;
+        item_comp.weight = static_cast<float>(template_data->weight);
+        item_comp.max_stack = template_data->stackable ? template_data->max_stack : 1;
+        item_comp.stack_size = 1;
+
+        // Map item type string to enum
+        if (template_data->type == "weapon") {
+            item_comp.item_type = ItemType::WEAPON;
+            item_comp.equippable = true;
+            item_comp.min_damage = template_data->min_damage;
+            item_comp.max_damage = template_data->max_damage;
+            item_comp.attack_bonus = template_data->attack_bonus;
+        } else if (template_data->type == "armor") {
+            item_comp.item_type = ItemType::ARMOR;
+            item_comp.equippable = true;
+            item_comp.defense_bonus = template_data->defense_bonus;
+        } else if (template_data->type == "potion") {
+            item_comp.item_type = ItemType::POTION;
+            item_comp.consumable = true;
+            item_comp.heal_amount = template_data->heal_amount;
+        } else if (template_data->type == "scroll") {
+            item_comp.item_type = ItemType::SCROLL;
+            item_comp.consumable = true;
+            item_comp.damage_amount = template_data->damage_amount;
+        } else if (template_data->type == "food") {
+            item_comp.item_type = ItemType::FOOD;
+            item_comp.consumable = true;
+            item_comp.heal_amount = template_data->heal_amount;
+        } else if (template_data->type == "ring") {
+            item_comp.item_type = ItemType::RING;
+            item_comp.equippable = true;
+        } else if (template_data->type == "shield") {
+            item_comp.item_type = ItemType::SHIELD;
+            item_comp.equippable = true;
+            item_comp.defense_bonus = template_data->defense_bonus;
+        } else {
+            item_comp.item_type = ItemType::MISC;
+        }
+
+        // Add tags
+        entity->addTag("item");
+        entity->addTag(type);
+        entity->addTag(template_data->type);
+
+        return entity;
     }
 
     std::unique_ptr<Entity> create(int x, int y) {
         // Default to potion
-        return create("potion", x, y);
+        return create("potion_minor", x, y);
     }
 
-    std::unique_ptr<Entity> create(const std::string& type, int x, int y) {
-        auto it = item_builders.find(type);
-        if (it != item_builders.end()) {
-            return it->second(x, y);
+    std::vector<std::string> getItemTypes() const {
+        std::vector<std::string> types;
+        for (const auto& [id, _] : DataLoader::getInstance().getItemTemplates()) {
+            types.push_back(id);
         }
-        // Unknown item
-        auto entity = EntityBuilder()
-            .withPosition(x, y)
-            .withRenderable("*", ftxui::Color::White)
-            .build();
-        entity->addTag("item");
-        return entity;
+        return types;
     }
-
-private:
-    std::unordered_map<std::string, ItemBuilder> item_builders;
 };
 
 } // namespace ecs

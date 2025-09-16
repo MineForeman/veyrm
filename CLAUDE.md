@@ -34,8 +34,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./build.sh release patch  # Create release (patch/minor/major)
 
 # Running specific tests
-./build/bin/veyrm_tests "[ecs]"      # ECS tests only
-./build/bin/veyrm_tests "[combat]"   # Combat tests only
+./build/bin/veyrm_tests "[ecs]"        # ECS tests only
+./build/bin/veyrm_tests "[combat]"     # Combat tests only
+./build/bin/veyrm_tests "[validator]"  # Map validation tests
+./build/bin/veyrm_tests "[data]"       # Data loading tests
+./build/bin/veyrm_tests "[json]"       # JSON parsing tests
 ```
 
 ## Architecture Overview
@@ -43,9 +46,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The game is transitioning from legacy entity classes to a modern **ECS (Entity Component System)** architecture.
 
 ### Current Branch: refactor-optimize
-- Removing bridge classes (monster_ai.h, spawn_manager.h deleted)
-- Consolidating ECS implementation
-- All rendering now ECS-only
+- ✅ Bridge classes removed (monster_ai.h, spawn_manager.h deleted)
+- ✅ Legacy Entity, Item, and Inventory systems removed
+- ✅ ECS implementation consolidated
+- ✅ All rendering now ECS-only
 
 ### Core ECS System (`include/ecs/`, `src/ecs/`)
 ```
@@ -64,6 +68,12 @@ system.h               # Base system class
 - **AIComponent**: behavior state, target tracking
 - **InventoryComponent**: item storage
 - **StatsComponent**: level, experience, attributes
+- **PlayerComponent**: player-specific data
+- **ItemComponent**: item properties and type
+- **LootComponent**: loot drop configuration
+- **ExperienceComponent**: XP tracking and leveling
+- **EquipmentComponent**: equipped items
+- **EffectsComponent**: status effects and buffs
 
 ### Systems
 - **MovementSystem**: Handles entity movement and collision
@@ -73,6 +83,10 @@ system.h               # Base system class
 - **InputSystem**: Player input processing
 - **LootSystem**: Item drops and pickups
 - **ExperienceSystem**: XP and leveling
+- **InventorySystem**: Item management and usage
+- **EquipmentSystem**: Equipment handling
+- **StatusEffectSystem**: Status effects and buffs
+- **SaveLoadSystem**: Game state persistence
 
 ### Game Flow Architecture
 ```
@@ -86,10 +100,11 @@ GameManager (main loop)
   └── SaveLoadScreen
 ```
 
-### Legacy Systems (Being Phased Out)
-- `include/entity.h`: Old base entity class
-- `include/monster.h`, `include/player.h`: Being replaced by ECS components
-- Bridge classes already removed
+### Legacy Systems (Removed ✅)
+- ✅ `include/entity.h`: Old base entity class (removed)
+- ✅ `include/monster.h`, `include/player.h`: Replaced by ECS components
+- ✅ Bridge classes (monster_ai.h, spawn_manager.h) removed
+- ✅ Legacy Item and Inventory systems removed
 
 ## Key Implementation Patterns
 

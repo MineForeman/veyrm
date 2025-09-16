@@ -15,6 +15,7 @@ std::ofstream Log::systemLogFile;
 std::ofstream Log::turnLogFile;
 std::ofstream Log::fovLogFile;
 std::ofstream Log::spawnLogFile;
+std::ofstream Log::inputLogFile;
 Log::Level Log::currentLevel = Log::INFO;
 bool Log::initialized = false;
 
@@ -39,6 +40,7 @@ void Log::init(const std::string& filename, Level level) {
     turnLogFile.open(logDir + "veyrm_turn.log", std::ios::app);
     fovLogFile.open(logDir + "veyrm_fov.log", std::ios::app);
     spawnLogFile.open(logDir + "veyrm_spawn.log", std::ios::app);
+    inputLogFile.open(logDir + "veyrm_input.log", std::ios::app);
 
     currentLevel = level;
     initialized = true;
@@ -64,6 +66,7 @@ void Log::shutdown() {
         if (turnLogFile.is_open()) turnLogFile.close();
         if (fovLogFile.is_open()) fovLogFile.close();
         if (spawnLogFile.is_open()) spawnLogFile.close();
+        if (inputLogFile.is_open()) inputLogFile.close();
     }
     initialized = false;
 }
@@ -121,7 +124,7 @@ void Log::spawn(const std::string& message) {
 }
 
 void Log::fov(const std::string& message) {
-    log(TRACE, "FOV", message);
+    log(DEBUG, "FOV", message);
 }
 
 void Log::map(const std::string& message) {
@@ -134,6 +137,10 @@ void Log::ui(const std::string& message) {
 
 void Log::save(const std::string& message) {
     log(INFO, "SAVE", message);
+}
+
+void Log::input(const std::string& message) {
+    log(DEBUG, "INPUT", message);
 }
 
 void Log::log(Level level, const std::string& category, const std::string& message) {
@@ -186,6 +193,7 @@ std::ofstream& Log::getCategoryLogFile(const std::string& category) {
     if (category == "TURN") return turnLogFile;
     if (category == "FOV") return fovLogFile;
     if (category == "SPAWN") return spawnLogFile;
+    if (category == "INPUT") return inputLogFile;
     if (category == "MOVE") return aiLogFile; // Monster movement goes to AI log
     if (category == "UI") return systemLogFile; // UI goes to system log
     if (category == "SAVE") return systemLogFile; // Save goes to system log

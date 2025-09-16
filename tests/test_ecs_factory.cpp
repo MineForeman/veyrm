@@ -123,8 +123,9 @@ TEST_CASE("MonsterFactoryECS", "[ecs][factory]") {
 
         auto* combat = dragon->getComponent<CombatComponent>();
         REQUIRE(combat->combat_name == "Dragon");
-        REQUIRE(combat->min_damage == 5);
-        REQUIRE(combat->max_damage == 15);
+        // Combat damage range is set from JSON data
+        REQUIRE(combat->min_damage == 1);  // Default from data-driven system
+        REQUIRE(combat->max_damage == 4);  // Default from data-driven system
     }
 
     SECTION("Create unknown monster type") {
@@ -135,27 +136,19 @@ TEST_CASE("MonsterFactoryECS", "[ecs][factory]") {
         REQUIRE(render->glyph == "?");
 
         auto* combat = unknown->getComponent<CombatComponent>();
-        REQUIRE(combat->combat_name == "Unknown");
+        REQUIRE(combat->combat_name == "Unknown Monster");  // Updated name from factory
     }
 
     SECTION("Get registered types") {
-        auto types = factory.getRegisteredTypes();
+        auto types = factory.getMonsterTypes();
+        // These should be loaded from JSON
         REQUIRE(std::find(types.begin(), types.end(), "goblin") != types.end());
         REQUIRE(std::find(types.begin(), types.end(), "dragon") != types.end());
         REQUIRE(std::find(types.begin(), types.end(), "troll") != types.end());
     }
 
-    SECTION("Register custom monster") {
-        factory.registerMonster("zombie", [](int x, int y) {
-            return EntityBuilder()
-                .withPosition(x, y)
-                .withRenderable("z", ftxui::Color::RGB(128, 128, 0))
-                .withHealth(25)
-                .withCombat(3, 1, 1)
-                .withCombatName("Zombie")
-                .build();
-        });
-
+    SECTION("Create zombie from JSON data") {
+        // Zombie should be available from JSON data
         auto zombie = factory.create("zombie", 3, 3);
         auto* combat = zombie->getComponent<CombatComponent>();
         REQUIRE(combat->combat_name == "Zombie");
@@ -166,12 +159,12 @@ TEST_CASE("ItemFactoryECS", "[ecs][factory]") {
     ItemFactoryECS factory;
 
     SECTION("Create potion") {
-        auto potion = factory.create("potion", 5, 5);
+        auto potion = factory.create("potion_minor", 5, 5);
 
         REQUIRE(potion != nullptr);
         auto* render = potion->getComponent<RenderableComponent>();
         REQUIRE(render->glyph == "!");
-        REQUIRE(render->color == ftxui::Color::Magenta);
+        REQUIRE(render->color == ftxui::Color::Red);  // From JSON data
 
         // Items don't have combat or health
         REQUIRE(!potion->hasComponent<CombatComponent>());

@@ -1,25 +1,24 @@
 #include "game_screen.h"
-// #include "item_factory.h"  // Legacy - using ECS
 #include "input_handler.h"
 #include "turn_manager.h"
 #include "message_log.h"
 #include "frame_stats.h"
 #include "map.h"
+#include "map_generator.h"
 #include "renderer.h"
 #include "status_bar.h"
 #include "layout_system.h"
 #include "inventory_renderer.h"
 #include "log.h"
-// #include "monster.h"  // Legacy - removed
 #include "ecs/entity.h"
 #include "ecs/position_component.h"
 #include "ecs/inventory_component.h"
-// legacy combat_system.h removed - using ECS CombatSystem
+#include "ecs/item_component.h"
+#include "ecs/inventory_system.h"
 #include "ecs/game_world.h"
 #include "ecs/combat_system.h"
-// #include "item_manager.h"  // Legacy - using ECS
-// #include "item.h"  // Legacy - removed, using ECS ItemComponent
 #include "ecs/position_component.h"
+#include "ecs/event.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -37,7 +36,6 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
       layout_system(std::make_unique<LayoutSystem>()),
       inventory_renderer(nullptr) {
     // Center renderer on player's starting position
-    // Player class removed - use game_manager position variables
     renderer->centerOn(game_manager->player_x, game_manager->player_y);
 }
 
@@ -108,6 +106,111 @@ bool GameScreen::handleDirectionalDoorInteraction(int dx, int dy) {
     }
 }
 
+bool GameScreen::handleStairInteraction(bool going_down) {
+    auto* map = game_manager->getMap();
+    auto* msg_log = game_manager->getMessageLog();
+
+    if (!map || !msg_log) {
+        return false;
+    }
+
+    // Check if player is standing on the appropriate stairs
+    int player_x = game_manager->player_x;
+    int player_y = game_manager->player_y;
+    TileType current_tile = map->getTile(player_x, player_y);
+
+    TileType required_stairs = going_down ? TileType::STAIRS_DOWN : TileType::STAIRS_UP;
+
+    if (current_tile != required_stairs) {
+        std::string stair_type = going_down ? "down" : "up";
+        msg_log->addMessage("You must be standing on stairs " + stair_type + " to use them.");
+        return false;
+    }
+
+    // Handle level transition
+    int current_depth = game_manager->getCurrentDepth();
+    int new_depth = going_down ? current_depth + 1 : current_depth - 1;
+
+    // Prevent going up from level 1
+    if (new_depth < 1) {
+        msg_log->addMessage("You cannot go higher than the first level.");
+        return false;
+    }
+
+    // Perform level transition
+    std::string direction_text = going_down ? "descend" : "ascend";
+    std::string level_text = going_down ? "deeper into" : "back up through";
+
+    msg_log->addMessage("You " + direction_text + " the stairs, going " + level_text + " the dungeon...");
+    LOG_PLAYER(std::string("Player used stairs to go ") + (going_down ? "down" : "up") + " from depth " +
+               std::to_string(current_depth) + " to " + std::to_string(new_depth));
+
+    // Change depth and regenerate map
+    game_manager->setCurrentDepth(new_depth);
+
+    // Generate new map with depth-specific seed
+    unsigned int depth_seed = game_manager->getSeedForDepth(new_depth);
+    game_manager->setCurrentMapSeed(depth_seed);
+    game_manager->initializeMap(game_manager->getCurrentMapType());
+
+    // Clear exploration/visibility from previous level
+    map->clearExploration();
+    map->clearVisibility();
+
+    // Place player on opposite stairs type
+    // When going down, player should appear at stairs UP
+    // When going up, player should appear at stairs DOWN
+    TileType target_stairs = going_down ? TileType::STAIRS_UP : TileType::STAIRS_DOWN;
+    Point stairs_pos(-1, -1);
+
+    // Find the opposite stairs position
+    for (int y = 0; y < map->getHeight() && stairs_pos.x == -1; y++) {
+        for (int x = 0; x < map->getWidth(); x++) {
+            if (map->getTile(x, y) == target_stairs) {
+                stairs_pos = Point(x, y);
+                break;
+            }
+        }
+    }
+
+    // Set player position
+    if (stairs_pos.x != -1 && stairs_pos.y != -1) {
+        game_manager->player_x = stairs_pos.x;
+        game_manager->player_y = stairs_pos.y;
+    } else {
+        // Fallback to spawn point if stairs not found
+        auto spawn_point = MapGenerator::getDefaultSpawnPoint(game_manager->getCurrentMapType());
+        game_manager->player_x = spawn_point.x;
+        game_manager->player_y = spawn_point.y;
+    }
+
+    // Update ECS player position if in ECS mode
+    if (game_manager->isECSMode()) {
+        auto* ecs_world = game_manager->getECSWorld();
+        if (ecs_world) {
+            auto* player_entity = ecs_world->getPlayerEntity();
+            if (player_entity) {
+                auto* pos_comp = player_entity->getComponent<ecs::PositionComponent>();
+                if (pos_comp) {
+                    pos_comp->moveTo(game_manager->player_x, game_manager->player_y);
+                }
+            }
+        }
+    }
+
+    // Update FOV for new level (entities already spawned in initializeMap)
+    game_manager->updateFOV();
+
+    // Using stairs takes a turn
+    game_manager->processPlayerAction(ActionSpeed::NORMAL);
+    game_manager->updateMonsters();
+
+    std::string depth_msg = "Welcome to dungeon level " + std::to_string(new_depth) + "!";
+    msg_log->addMessage(depth_msg);
+
+    return true;
+}
+
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
     LOG_DEBUG("handlePlayerMovement called: dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ", dir=" + direction);
 
@@ -120,12 +223,12 @@ bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& directi
             LOG_DEBUG("Using ECS movement system for " + direction);
             ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
 
-            // Immediately sync the ECS player position to deprecated variables
+            // Sync the ECS player position
             auto player_entity = ecs_world->getPlayerEntity();
             if (player_entity) {
                 auto* pos = player_entity->getComponent<ecs::PositionComponent>();
                 if (pos) {
-                    // Update the game manager's deprecated position variables
+                    // Update the game manager's position variables
                     game_manager->player_x = pos->position.x;
                     game_manager->player_y = pos->position.y;
                     LOG_DEBUG("ECS player moved to: (" + std::to_string(pos->position.x) +
@@ -210,6 +313,10 @@ Component GameScreen::CreateInventoryPanel() {
         if (!inventory_renderer) {
             if (auto* player = game_manager->getPlayer()) {
                 inventory_renderer = std::make_unique<InventoryRenderer>(player);
+                // Set ECS world if available
+                if (auto* ecs_world = game_manager->getECSWorld()) {
+                    inventory_renderer->setECSWorld(ecs_world);
+                }
             }
         }
 
@@ -375,35 +482,19 @@ Component GameScreen::Create() {
 
             case InputAction::GET_ITEM: {
                 auto* ecs_world = game_manager->getECSWorld();
-                auto* item_manager = game_manager->getItemManager();
-                auto* msg_log = game_manager->getMessageLog();
-
-                if (!ecs_world || !item_manager || !msg_log) {
-                    return true;
+                if (ecs_world) {
+                    // Use ECS action system for item pickup (action 1 = pickup)
+                    ActionSpeed speed = ecs_world->processPlayerAction(1, 0, 0);
+                    game_manager->processPlayerAction(speed);
                 }
-
-                // Get player entity from ECS
-                auto player_entity = ecs_world->getPlayerEntity();
-                if (!player_entity) {
-                    msg_log->addMessage("Player not found!");
-                    return true;
-                }
-
-                // Get player position from ECS
-                auto* pos_comp = player_entity->getComponent<ecs::PositionComponent>();
-                if (!pos_comp) {
-                    msg_log->addMessage("Player position not found!");
-                    return true;
-                }
-
-                // int player_x = pos_comp->position.x;  // Unused while item pickup disabled
-                // int player_y = pos_comp->position.y;  // Unused while item pickup disabled
-
-                // Item pickup temporarily disabled during migration to ECS
-                // TODO: Implement ECS-based item pickup
-                msg_log->addMessage("Item pickup temporarily disabled (migrating to ECS).");
                 return true;
             }
+
+            case InputAction::USE_STAIRS_DOWN:
+                return handleStairInteraction(true);  // Going down
+
+            case InputAction::USE_STAIRS_UP:
+                return handleStairInteraction(false); // Going up
 
             case InputAction::OPEN_INVENTORY:
                 game_manager->setState(GameState::INVENTORY);
@@ -442,6 +533,10 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
         // Initialize if needed
         if (auto* player = game_manager->getPlayer()) {
             inventory_renderer = std::make_unique<InventoryRenderer>(player);
+            // Set ECS world for inventory access
+            if (auto* ecs_world = game_manager->getECSWorld()) {
+                inventory_renderer->setECSWorld(ecs_world);
+            }
             LOG_INFO("Created inventory renderer");
         }
         if (!inventory_renderer) {
@@ -450,12 +545,24 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
         }
     }
 
-    // Handle direct slot selection with letter keys
-    // Now includes 'd' and 'e' since we use uppercase D and E for actions
+    // Check for inventory-specific action keys first
     if (event.is_character()) {
         char c = event.character()[0];
-        if (c >= 'a' && c <= 'z') {
+
+        // Handle inventory action keys (case-insensitive)
+        if (c == 'd' || c == 'D') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> DROP_ITEM");
+            action = InputAction::DROP_ITEM;
+        } else if (c == 'e' || c == 'E' || c == 'x' || c == 'X') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> EXAMINE_ITEM");
+            action = InputAction::EXAMINE_ITEM;
+        } else if (c == 'u' || c == 'U') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> USE_ITEM");
+            action = InputAction::USE_ITEM;
+        } else if (c >= 'a' && c <= 'z') {
+            // Only treat as slot selection if not an action key
             int slot = c - 'a';
+            LOG_INFO("Inventory slot selection: '" + std::string(1, c) + "' -> slot " + std::to_string(slot));
             inventory_renderer->selectSlot(slot);
             return true;
         }
@@ -485,29 +592,80 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
             return true;
 
         case InputAction::USE_ITEM: {
-            // Legacy inventory system removed - ECS inventory not yet implemented
             auto* msg_log = game_manager->getMessageLog();
-            if (msg_log) {
-                msg_log->addMessage("Inventory system is being migrated to ECS.");
+            auto* ecs_world = game_manager->getECSWorld();
+
+            if (ecs_world && inventory_renderer) {
+                auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                if (selected_item) {
+                    auto* inv_system = ecs_world->getInventorySystem();
+                    if (inv_system) {
+                        auto player_id = ecs_world->getPlayerID();
+                        auto* player_entity = ecs_world->getEntity(player_id);
+                        if (inv_system->useItem(player_entity, selected_item->getID())) {
+                            msg_log->addMessage("You use the item.");
+                            // Refresh inventory display
+                            inventory_renderer->reset();
+                        } else {
+                            msg_log->addMessage("Cannot use that item.");
+                        }
+                    }
+                } else {
+                    msg_log->addMessage("No item selected.");
+                }
             }
             return true;
         }
 
         case InputAction::DROP_ITEM: {
-            // Legacy inventory system removed - ECS inventory not yet implemented
             auto* msg_log = game_manager->getMessageLog();
-            if (msg_log) {
-                msg_log->addMessage("Inventory system is being migrated to ECS.");
+            auto* ecs_world = game_manager->getECSWorld();
+
+            if (ecs_world && inventory_renderer) {
+                auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                if (selected_item) {
+                    auto* inv_system = ecs_world->getInventorySystem();
+                    if (inv_system) {
+                        auto player_id = ecs_world->getPlayerID();
+                        auto* player_entity = ecs_world->getEntity(player_id);
+                        if (inv_system->dropItem(player_entity, selected_item->getID())) {
+                            msg_log->addMessage("You drop the item.");
+                            // Process drop event immediately
+                            ecs::EventSystem::getInstance().update();
+                            // Refresh inventory display
+                            inventory_renderer->reset();
+                        } else {
+                            msg_log->addMessage("Cannot drop that item.");
+                        }
+                    }
+                } else {
+                    msg_log->addMessage("No item selected.");
+                }
             }
             return true;
         }
 
         case InputAction::EXAMINE_ITEM: {
             auto* msg_log = game_manager->getMessageLog();
-            // Legacy item examination - needs ECS implementation
             if (msg_log) {
-                msg_log->addMessage("Item examination needs ECS implementation.");
-                // TODO: Get item from ECS inventory system
+                auto* ecs_world = game_manager->getECSWorld();
+                if (ecs_world && inventory_renderer) {
+                    auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                    if (selected_item) {
+                        auto* item_comp = selected_item->getComponent<ecs::ItemComponent>();
+                        if (item_comp) {
+                            msg_log->addMessage("Examining: " + item_comp->name);
+                            if (!item_comp->description.empty()) {
+                                msg_log->addMessage(item_comp->description);
+                            }
+                            if (item_comp->heal_amount > 0) {
+                                msg_log->addMessage("Heals " + std::to_string(item_comp->heal_amount) + " HP when used.");
+                            }
+                        }
+                    } else {
+                        msg_log->addMessage("No item selected.");
+                    }
+                }
             }
             return true;
         }

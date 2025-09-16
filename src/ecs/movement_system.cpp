@@ -22,9 +22,20 @@ void MovementSystem::processQueue(const std::vector<std::unique_ptr<Entity>>& en
         move_queue.pop();
 
         Entity* entity = findEntity(entities, cmd.entity_id);
-        if (entity && entity->hasComponent<PositionComponent>()) {
-            moveEntity(*entity, cmd.dx, cmd.dy, cmd.forced);
+        if (!entity || !entity->hasComponent<PositionComponent>()) {
+            continue;
         }
+
+        auto* pos = entity->getComponent<PositionComponent>();
+        int new_x = pos->position.x + cmd.dx;
+        int new_y = pos->position.y + cmd.dy;
+
+        // Check if position is valid (includes entity collision)
+        if (!cmd.forced && !isValidPosition(new_x, new_y, entities, entity)) {
+            continue;
+        }
+
+        moveEntity(*entity, cmd.dx, cmd.dy, cmd.forced);
     }
 }
 
@@ -49,6 +60,10 @@ bool MovementSystem::moveEntityTo(Entity& entity, int x, int y, bool forced) {
         if (!game_map || !game_map->inBounds(x, y) || !game_map->isWalkable(x, y)) {
             return false;
         }
+
+        // Check for blocking entities at destination
+        // This needs access to all entities, which we don't have here
+        // We'll need to check this in processQueue instead
     }
 
     // Update position
@@ -79,12 +94,11 @@ Entity* MovementSystem::getBlockingEntity(int x, int y,
         if (!pos || !pos->isAt(x, y)) continue;
 
         // Check if entity blocks movement
-        // An entity blocks if it has a combat component (creature) or
-        // if its renderable component indicates it blocks
+        // Only creatures (entities with combat components) block movement
+        // Items and other non-combat entities can be walked over
         auto* combat = entity->getComponent<CombatComponent>();
-        auto* render = entity->getComponent<RenderableComponent>();
 
-        if (combat || (render && render->blocks_sight)) {
+        if (combat) {
             return entity.get();
         }
     }

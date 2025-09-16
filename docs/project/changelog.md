@@ -5,6 +5,25 @@ All notable changes to Veyrm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-09-16
+
+### Added
+- **Input Logging System** - Complete keystroke logging for debugging
+  - All keystrokes logged with action mapping
+  - Input-specific log file (veyrm_input.log)
+  - Context-aware inventory key bindings (d/D for drop, e/E/x/X for examine)
+
+### Fixed
+- **Drop Event Processing** - Items now properly appear on map when dropped
+  - Added immediate event processing after drop action
+  - Restored position component to dropped items
+  - Fixed event subscription for drop events in GameWorld
+- **Duplicate Combat Messages** - Removed redundant combat logging
+- **Combat After Death** - Dead entities no longer continue attacking
+- **Movement System Lockup** - Fixed player action processing on blocked moves
+- **FOV Rendering** - Fixed invisible monsters in corridors
+  - RenderSystem FOV now properly updated when FOV is calculated
+
 ## [v1.0.0-MVP] - 2025-09-14
 
 ### 🎉 MVP Complete!

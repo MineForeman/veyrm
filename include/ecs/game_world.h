@@ -13,6 +13,7 @@
 #include <string>
 
 #include "system_manager.h"
+#include "health_component.h"
 // Bridge classes removed - no longer needed in full ECS mode
 #include "../game_state.h"
 
@@ -30,6 +31,8 @@ class MovementSystem;
 class RenderSystem;
 class CombatSystem;
 class AISystem;
+class InventorySystem;
+class HealthComponent;
 
 /**
  * @class GameWorld
@@ -62,6 +65,12 @@ public:
      * @param delta_time Time since last update (seconds)
      */
     void update(double delta_time);
+
+    /**
+     * @brief Update only render system for visual updates
+     * @note Used to update rendering without triggering AI or other turn-based systems
+     */
+    void updateRenderSystem();
 
     /**
      * @brief Create player entity using ECS
@@ -97,19 +106,20 @@ public:
     Entity* getEntity(EntityID id);
 
     /**
+     * @brief Get entities at position
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @return Vector of entities at position
+     */
+    std::vector<Entity*> getEntitiesAt(int x, int y);
+
+    /**
      * @brief Remove entity by ID
      * @param id Entity ID to remove
      * @return true if entity was removed
      */
     bool removeEntity(EntityID id);
 
-    /**
-     * @brief Get all entities at position
-     * @param x X coordinate
-     * @param y Y coordinate
-     * @return Vector of entities at position
-     */
-    std::vector<Entity*> getEntitiesAt(int x, int y);
 
     /**
      * @brief Process player action
@@ -173,6 +183,12 @@ public:
      */
     AISystem* getAISystem() { return native_ai_system; }
 
+    /**
+     * @brief Get inventory system
+     * @return Inventory system pointer
+     */
+    InventorySystem* getInventorySystem();
+
     // Renderer bridge removed - no longer needed in full ECS mode
 
     /**
@@ -211,6 +227,17 @@ public:
      */
     Entity* getPlayerEntity() { return getEntity(player_id); }
 
+    /**
+     * @brief Check if player is dead
+     * @return true if player health is 0 or below
+     */
+    bool isPlayerDead() const {
+        Entity* player = const_cast<GameWorld*>(this)->getEntity(player_id);
+        if (!player) return false;
+        auto* health = player->getComponent<HealthComponent>();
+        return health && health->hp <= 0;
+    }
+
 private:
     World world;                                          ///< ECS world container
     // Bridge members removed - no longer needed in full ECS mode
@@ -225,6 +252,7 @@ private:
     Map* game_map;                   ///< Game map
 
     EntityID player_id = 0;  ///< Player entity ID
+    bool player_died = false;  ///< Flag set when player dies
 
     /**
      * @brief Initialize ECS systems

@@ -11,8 +11,8 @@
 
 namespace ecs {
 
-CombatSystem::CombatSystem(MessageLog* message_log)
-    : message_log(message_log)
+CombatSystem::CombatSystem(ILogger* logger)
+    : logger(logger)
     , rng(std::random_device{}()) {
 }
 
@@ -24,10 +24,7 @@ void CombatSystem::update(const std::vector<std::unique_ptr<Entity>>& entities, 
 
         if (attacker && defender) {
             auto result = processAttack(attacker, defender);
-            // Log the result if we have a message log
-            if (message_log && !result.message.empty()) {
-                message_log->addMessage(result.message);
-            }
+            // Result message is already logged in processAttack
         }
     }
 
@@ -66,10 +63,20 @@ CombatResult CombatSystem::processAttack(std::shared_ptr<Entity> attacker,
     // Calculate hit
     result.hit = calculateHit(*attacker_combat, *defender_combat);
 
+    if (logger) {
+        logger->logCombat("Attack from " + std::to_string(attacker->getID()) +
+                         " to " + std::to_string(defender->getID()) +
+                         " - Hit: " + (result.hit ? "true" : "false"));
+    }
+
     if (result.hit) {
         // Calculate and apply damage
         int base_damage = calculateDamage(*attacker_combat);
         result.damage = applyDamage(defender, base_damage);
+
+        if (logger) {
+            logger->logCombat("Damage dealt: " + std::to_string(result.damage));
+        }
 
         // Fire damage event
         EventSystem::getInstance().emit(
@@ -104,9 +111,9 @@ CombatResult CombatSystem::processAttack(std::shared_ptr<Entity> attacker,
         result.message = attacker_name + " misses " + defender_name + ".";
     }
 
-    // Log the message
-    if (message_log && !result.message.empty()) {
-        message_log->addCombatMessage(result.message);
+    // Log the final message once
+    if (logger && !result.message.empty()) {
+        logger->logCombat(result.message);
     }
 
     return result;

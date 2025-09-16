@@ -1,5 +1,8 @@
 #include "input_handler.h"
+#include "log.h"
 #include <sstream>
+#include <chrono>
+#include <iomanip>
 
 InputHandler::InputHandler() {
     initializeDefaultBindings();
@@ -28,6 +31,8 @@ void InputHandler::initializeDefaultBindings() {
     keyBindings["."] = InputAction::WAIT;
     keyBindings["o"] = InputAction::OPEN_DOOR;
     keyBindings["g"] = InputAction::GET_ITEM;
+    keyBindings[">"] = InputAction::USE_STAIRS_DOWN;  // Go down stairs
+    keyBindings["<"] = InputAction::USE_STAIRS_UP;    // Go up stairs
     keyBindings["Return"] = InputAction::CONFIRM;
     keyBindings["Escape"] = InputAction::CANCEL;
     keyBindings["q"] = InputAction::QUIT;
@@ -52,12 +57,22 @@ void InputHandler::initializeDefaultBindings() {
 
 InputAction InputHandler::processEvent(const ftxui::Event& event) {
     std::string key = eventToKey(event);
-    
+
+    // Log the keystroke
+    std::stringstream log_msg;
+    log_msg << "[INPUT] Key: '" << key << "'";
+
     auto it = keyBindings.find(key);
     if (it != keyBindings.end()) {
+        // Log the action that this key maps to
+        std::string action_name = actionToString(it->second);
+        log_msg << " -> " << action_name;
+        Log::input(log_msg.str());
         return it->second;
     }
-    
+
+    log_msg << " -> UNMAPPED";
+    Log::input(log_msg.str());
     return InputAction::NONE;
 }
 
@@ -93,4 +108,35 @@ std::string InputHandler::eventToKey(const ftxui::Event& event) const {
     
     // Default case
     return "";
+}
+
+std::string InputHandler::actionToString(InputAction action) const {
+    switch (action) {
+        case InputAction::MOVE_UP: return "MOVE_UP";
+        case InputAction::MOVE_DOWN: return "MOVE_DOWN";
+        case InputAction::MOVE_LEFT: return "MOVE_LEFT";
+        case InputAction::MOVE_RIGHT: return "MOVE_RIGHT";
+        case InputAction::MOVE_UP_LEFT: return "MOVE_UP_LEFT";
+        case InputAction::MOVE_UP_RIGHT: return "MOVE_UP_RIGHT";
+        case InputAction::MOVE_DOWN_LEFT: return "MOVE_DOWN_LEFT";
+        case InputAction::MOVE_DOWN_RIGHT: return "MOVE_DOWN_RIGHT";
+        case InputAction::WAIT: return "WAIT";
+        case InputAction::QUIT: return "QUIT";
+        case InputAction::CONFIRM: return "CONFIRM";
+        case InputAction::CANCEL: return "CANCEL";
+        case InputAction::OPEN_DOOR: return "OPEN_DOOR";
+        case InputAction::GET_ITEM: return "GET_ITEM";
+        case InputAction::USE_STAIRS_DOWN: return "USE_STAIRS_DOWN";
+        case InputAction::USE_STAIRS_UP: return "USE_STAIRS_UP";
+        case InputAction::OPEN_INVENTORY: return "OPEN_INVENTORY";
+        case InputAction::OPEN_HELP: return "OPEN_HELP";
+        case InputAction::USE_ITEM: return "USE_ITEM";
+        case InputAction::DROP_ITEM: return "DROP_ITEM";
+        case InputAction::EXAMINE_ITEM: return "EXAMINE_ITEM";
+        case InputAction::OPEN_SAVE_MENU: return "OPEN_SAVE_MENU";
+        case InputAction::OPEN_LOAD_MENU: return "OPEN_LOAD_MENU";
+        case InputAction::DEBUG_TOGGLE: return "DEBUG_TOGGLE";
+        case InputAction::NONE: return "NONE";
+        default: return "UNKNOWN";
+    }
 }

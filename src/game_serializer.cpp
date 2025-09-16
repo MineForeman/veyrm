@@ -1,10 +1,7 @@
 #include "game_serializer.h"
 #include "game_state.h"
 #include "map.h"
-// #include "item_manager.h"  // Legacy - using ECS
 #include "message_log.h"
-// #include "monster.h"  // Legacy - removed
-// #include "item.h"  // Legacy - removed
 #include "log.h"
 #include "turn_manager.h"
 #include <fstream>
@@ -116,19 +113,17 @@ json GameSerializer::serializePlayer() const {
     // Player class removed - use ECS data from game_manager
     json player_data;
 
-    // Use deprecated player position variables that are synced from ECS
     player_data["x"] = game_manager->player_x;
     player_data["y"] = game_manager->player_y;
     player_data["name"] = "Player";
 
-    // Use deprecated player health variables that are synced from ECS
     player_data["hp"] = game_manager->player_hp;
     player_data["max_hp"] = game_manager->player_max_hp;
     player_data["attack"] = 6;  // Default values for now
     player_data["defense"] = 2;
     player_data["gold"] = 0;
 
-    // TODO: Serialize inventory from ECS when implemented
+    // Inventory will be serialized from ECS
 
     return player_data;
 }
@@ -137,19 +132,14 @@ json GameSerializer::serializeEntities() const {
     // EntityManager removed - using ECS
     json entities = json::array();
 
-    // TODO: Serialize ECS entities when needed
+    // ECS entities will be serialized here
 
     return entities;
 }
 
 json GameSerializer::serializeItems() const {
-    // ItemManager removed - using ECS
-    // ItemManager* im = game_manager->getItemManager();
-    // if (!im) return json::array();
-
     json items = json::array();
-
-    // TODO: Serialize items from ECS world
+    // Items will be serialized from ECS world
 
     return items;
 }

@@ -15,14 +15,15 @@
 #include "system.h"
 #include "entity.h"
 #include "position_component.h"
+#include "logger_interface.h"
 #include "../map.h"
-#include "../message_log.h"
 
 namespace ecs {
 
 // Forward declarations
 class MovementSystem;
 class CombatSystem;
+class ILogger;
 
 /**
  * @enum AIBehavior
@@ -77,12 +78,12 @@ public:
      * @param map Game map for pathfinding
      * @param movement_system Movement system for issuing move commands
      * @param combat_system Combat system for issuing attacks
-     * @param message_log Message log for AI messages
+     * @param logger Logger for AI messages and debug output
      */
     AISystem(Map* map,
              MovementSystem* movement_system,
              CombatSystem* combat_system,
-             MessageLog* message_log);
+             ILogger* logger);
 
     ~AISystem() = default;
 
@@ -118,7 +119,7 @@ private:
     Map* map;                           ///< Game map
     MovementSystem* movement_system;    ///< Movement system
     CombatSystem* combat_system;       ///< Combat system
-    [[maybe_unused]] MessageLog* message_log;            ///< Message log
+    ILogger* logger;                                    ///< Logger for messages and debug output
     EntityID player_id = 0;             ///< Player entity ID
     std::mt19937 rng;                  ///< Random number generator
 

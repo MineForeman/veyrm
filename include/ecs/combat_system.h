@@ -12,7 +12,7 @@
 #include "combat_component.h"
 #include "health_component.h"
 #include "position_component.h"
-#include "../message_log.h"
+#include "logger_interface.h"
 #include <memory>
 #include <random>
 #include <string>
@@ -38,9 +38,9 @@ class CombatSystem : public System<CombatSystem> {
 public:
     /**
      * @brief Construct combat system
-     * @param message_log Message log for combat messages
+     * @param logger Logger for combat messages and debug output
      */
-    explicit CombatSystem(MessageLog* message_log);
+    explicit CombatSystem(ILogger* logger);
 
     ~CombatSystem() = default;
 
@@ -113,7 +113,7 @@ public:
     int getPriority() const override { return 50; } // Mid priority
 
 private:
-    MessageLog* message_log;                     ///< Message log for combat messages
+    ILogger* logger;                            ///< Logger for combat messages and debug output
     std::mt19937 rng;                           ///< Random number generator
 
     // Pending attacks to process

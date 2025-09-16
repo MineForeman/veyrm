@@ -28,6 +28,7 @@ All log files are stored in the `logs/` directory, which is automatically create
 | `veyrm_turn.log` | TURN | Turn system events |
 | `veyrm_fov.log` | FOV | Field of view updates |
 | `veyrm_spawn.log` | SPAWN | Monster spawning events |
+| `veyrm_input.log` | INPUT | Keystroke logging with action mapping |
 
 ## Log Levels
 
@@ -59,6 +60,7 @@ LOG_COMBAT("Player hit monster for 5 damage");
 LOG_AI("Monster decided to flee");
 LOG_ENV("Door opened at (10, 20)");
 LOG_MAP("Generated room at (50, 50)");
+LOG_INPUT("[INPUT] Key: 'ArrowDown' -> MOVE_DOWN");
 ```
 
 ### Direct API Usage

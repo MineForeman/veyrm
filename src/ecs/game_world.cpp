@@ -15,10 +15,6 @@
 
 #include "ecs/game_world.h"
 #include "ecs/entity_factory.h"
-// EntityAdapter removed - using direct conversion
-// Legacy includes removed - using ECS only
-// #include "monster.h"  // Legacy - removed
-// #include "item.h"  // Legacy - removed
 #include "ecs/movement_system.h"
 #include "ecs/render_system.h"
 #include "ecs/combat_system.h"
@@ -28,9 +24,6 @@
 #include "ecs/event.h"
 #include "ecs/experience_component.h"
 #include "ecs/loot_component.h"
-// Legacy combat_system.h removed - using ECS CombatSystem
-// #include "monster.h"  // Legacy - removed
-// #include "item.h"  // Legacy - removed
 #include "turn_manager.h"
 #include "message_log_adapter.h"
 
@@ -69,12 +62,12 @@ void GameWorld::initializeSystems() {
     world.registerSystem<RenderSystem>(game_map);
 
     // Register native ECS combat system
-    native_combat_system = &world.registerSystem<CombatSystem>(message_log);
+    native_combat_system = &world.registerSystem<CombatSystem>(logger.get());
 
     // Register AI system with dependencies
     native_ai_system = &world.registerSystem<AISystem>(game_map, &movement,
                                                         native_combat_system,
-                                                        message_log);
+                                                        logger.get());
 
     // Register inventory system
     world.registerSystem<InventorySystem>(game_map, logger.get());
@@ -86,13 +79,41 @@ void GameWorld::initializeSystems() {
     if (native_ai_system && player_id != 0) {
         native_ai_system->setPlayerId(player_id);
     }
+
+    // Subscribe to drop events to restore item position when dropped
+    EventSystem::getInstance().subscribe(EventType::DROP,
+        [this](const BaseEvent& e) {
+            if (logger) {
+                logger->logSystem("Drop event received: item_id=" + std::to_string(e.target_id) +
+                                " at (" + std::to_string(e.value1) + "," + std::to_string(e.value2) + ")");
+            }
+
+            Entity* item = getEntity(e.target_id);
+            if (item) {
+                // Restore position component to dropped item
+                item->addComponent<PositionComponent>(e.value1, e.value2);
+
+                // Also ensure the item has its RenderableComponent enabled
+                auto* render = item->getComponent<RenderableComponent>();
+                if (render) {
+                    render->is_visible = true;
+                }
+
+                if (logger) {
+                    logger->logSystem("Item position restored successfully");
+                }
+            } else {
+                if (logger) {
+                    logger->logSystem("ERROR: Could not find item entity " + std::to_string(e.target_id));
+                }
+            }
+        });
 }
 
 void GameWorld::migrateExistingEntities() {
-    // Legacy entity migration removed - no longer needed
-    return;
+    return;  // Migration not needed
 
-    /* Old migration code disabled:
+    /* Migration code removed:
     for (const auto& legacy_entity : all_entities) {
         if (!legacy_entity) continue;
 
@@ -218,6 +239,14 @@ void GameWorld::update(double delta_time) {
     syncToLegacy();
 }
 
+void GameWorld::updateRenderSystem() {
+    // Update only the render system to refresh visual display
+    auto* render_system = getRenderSystem();
+    if (render_system) {
+        render_system->update(world.getEntities(), 0.0);
+    }
+}
+
 EntityID GameWorld::createPlayer(int x, int y) {
 
     // Create player using factory
@@ -333,10 +362,10 @@ ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
                 // Move if no combat
                 auto* movement = world.getSystem<MovementSystem>();
                 if (movement) {
-                    auto player_ptr = std::shared_ptr<Entity>(player, [](Entity*){});
-                    if (movement->moveEntity(*player_ptr, dx, dy)) {
-                        speed = ActionSpeed::NORMAL;
-                    }
+                    movement->queueMove(player_id, dx, dy);
+                    // Process the queued movement immediately for player
+                    movement->update(world.getEntities(), 0.0);
+                    speed = ActionSpeed::NORMAL;
                 }
             }
             break;
@@ -377,14 +406,36 @@ ActionSpeed GameWorld::processPlayerAction(int action, int dx, int dy) {
             break;
     }
 
+    // Process any queued combat actions from player action
+    if (native_combat_system) {
+        native_combat_system->update(world.getEntities(), 0.0);
+        // Remove dead entities immediately after combat
+        removeDeadEntities();
+    }
+
     return speed;
 }
 
 void GameWorld::processMonsterAI() {
-    // AI system handles this automatically in update loop
-    // Just ensure player ID is set
+    // Update AI system for one turn
     if (native_ai_system && player_id != 0) {
         native_ai_system->setPlayerId(player_id);
+        // Run the AI system update manually for turn-based behavior
+        native_ai_system->update(world.getEntities(), 0.0);
+
+        // Process any queued movements from AI decisions
+        auto* movement_system = getMovementSystem();
+        if (movement_system) {
+            movement_system->update(world.getEntities(), 0.0);
+        }
+
+        // Process any queued combat actions
+        if (native_combat_system) {
+            native_combat_system->update(world.getEntities(), 0.0);
+        }
+
+        // Remove dead entities immediately after combat to prevent ghost actions
+        removeDeadEntities();
     }
 }
 
@@ -400,6 +451,12 @@ void GameWorld::updateFOV(const std::vector<std::vector<bool>>& fov) {
                 renderable->is_visible = fov[pos->position.x][pos->position.y];
             }
         }
+    }
+
+    // Also update the render system's FOV for proper visibility checks
+    auto* render_system = getRenderSystem();
+    if (render_system) {
+        render_system->setFOV(fov);
     }
 }
 
@@ -417,6 +474,10 @@ MovementSystem* GameWorld::getMovementSystem() {
 
 RenderSystem* GameWorld::getRenderSystem() {
     return world.getSystem<RenderSystem>();
+}
+
+InventorySystem* GameWorld::getInventorySystem() {
+    return world.getSystem<InventorySystem>();
 }
 
 bool GameWorld::isPositionBlocked(int x, int y) const {
@@ -444,7 +505,17 @@ void GameWorld::removeDeadEntities() {
 
     for (const auto& entity : world.getEntities()) {
         auto* health = entity->getComponent<HealthComponent>();
-        if (health && health->hp <= 0 && entity->getID() != player_id) {
+        if (health && health->hp <= 0) {
+            // Special handling for player death
+            if (entity->getID() == player_id) {
+                // Player died - log it
+                if (logger) {
+                    logger->logCombat("You die!");
+                }
+                // Set a flag that game manager can check
+                player_died = true;
+                continue;  // Don't remove the player entity
+            }
             to_remove.push_back(entity->getID());
 
             // Drop items on death

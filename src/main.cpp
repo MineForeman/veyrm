@@ -27,6 +27,9 @@
 #include "save_load_screen.h"
 #include "test_input.h"
 #include "game_loop.h"
+#include "ecs/game_world.h"
+#include "ecs/health_component.h"
+#include "ecs/stats_component.h"
 #include "frame_stats.h"
 #include "map_generator.h"
 #include "config.h"
@@ -489,31 +492,58 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                     separator(),
                     text("Press ESC to return to game") | dim
                 }) | border | size(WIDTH, EQUAL, 60);
-            case GameState::DEATH:
+            case GameState::DEATH: {
+                // Get player stats from ECS
+                std::string player_stats = "Lvl 1 | Turn " + std::to_string(game_manager.getDeathTurn());
+                std::string hp_info = "Final HP: 0";
+                std::string cause_info = "Cause: " + game_manager.getDeathCause();
+
+                // Get additional stats if ECS world is available
+                if (auto* ecs_world = game_manager.getECSWorld()) {
+                    if (auto* player = ecs_world->getPlayerEntity()) {
+                        if (auto* health = player->getComponent<ecs::HealthComponent>()) {
+                            hp_info = "Final HP: " + std::to_string(health->hp) + "/" + std::to_string(health->max_hp);
+                        }
+                        if (auto* stats = player->getComponent<ecs::StatsComponent>()) {
+                            // Use a calculated level or just show stats
+                            int player_level = 1; // Default level
+                            player_stats = "Lvl " + std::to_string(player_level) + " | STR:" + std::to_string(stats->strength) + " | Turn " + std::to_string(game_manager.getDeathTurn());
+                        }
+                    }
+                }
+
                 return vbox({
                     text("") | size(WIDTH, EQUAL, 1),
                     hbox({
-                        text("                 "),
+                        text("         "),
                         vbox({
-                            text("╔═══════════════════════════════════════╗") | color(Color::Red),
-                            text("║                                       ║") | color(Color::Red),
-                            text("║            Y O U   D I E D            ║") | color(Color::Red) | bold,
-                            text("║                                       ║") | color(Color::Red),
-                            text("║  Your adventure has come to an end.   ║") | color(Color::White),
-                            text("║                                       ║") | color(Color::Red),
-                            text("║  The darkness claims another soul...  ║") | color(Color::White),
-                            text("║                                       ║") | color(Color::Red),
-                            text("╠═══════════════════════════════════════╣") | color(Color::Red),
-                            text("║                                       ║") | color(Color::Red),
-                            text("║    [R] Return to Main Menu            ║") | color(Color::Yellow),
-                            text("║    [Q] Quit Game                      ║") | color(Color::Yellow),
-                            text("║                                       ║") | color(Color::Red),
-                            text("╚═══════════════════════════════════════╝") | color(Color::Red)
+                            text("╔═══════════════════════════════════════════════════╗") | color(Color::Red),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("║                Y O U   D I E D                    ║") | color(Color::Red) | bold,
+                            text("║                                                   ║") | color(Color::Red),
+                            text("║     Your adventure has come to an end...         ║") | color(Color::White),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("╠═══════════════════════════════════════════════════╣") | color(Color::Red),
+                            text("║  " + player_stats + std::string(49 - player_stats.length(), ' ') + "║") | color(Color::Yellow),
+                            text("║  " + hp_info + std::string(49 - hp_info.length(), ' ') + "║") | color(Color::Cyan),
+                            text("║  " + cause_info + std::string(49 - cause_info.length(), ' ') + "║") | color(Color::Magenta),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("║  The darkness claims another soul in the depths  ║") | color(Color::White),
+                            text("║  of Veyrmspire. Your bones join countless        ║") | color(Color::White),
+                            text("║  others in the Spiral Vaults...                  ║") | color(Color::White),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("╠═══════════════════════════════════════════════════╣") | color(Color::Red),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("║      [R] Return to Main Menu                      ║") | color(Color::Yellow),
+                            text("║      [Q] Quit Game                                ║") | color(Color::Yellow),
+                            text("║                                                   ║") | color(Color::Red),
+                            text("╚═══════════════════════════════════════════════════╝") | color(Color::Red)
                         }),
-                        text("                 ")
+                        text("         ")
                     }) | center,
                     text("") | size(WIDTH, EQUAL, 1)
-                }) | center | size(HEIGHT, EQUAL, 20);
+                }) | center | size(HEIGHT, EQUAL, 25);
+            }
             case GameState::QUIT:
                 screen.ExitLoopClosure()();
                 return text("Exiting...");

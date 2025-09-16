@@ -116,6 +116,7 @@ bool InventorySystem::pickupItem(Entity* picker, Entity* item) {
             std::stringstream msg;
             msg << getEntityName(picker) << " picks up " << item_comp->name;
             logger->logSystem(msg.str());
+            logger->logInventory("PICKUP: " + getEntityName(picker) + " -> " + item_comp->name);
         }
 
         // Fire pickup event
@@ -157,6 +158,8 @@ bool InventorySystem::dropItem(Entity* dropper, EntityID item_id) {
 
         if (logger) {
             logger->logSystem("Item dropped");
+            logger->logInventory("DROP: " + getEntityName(dropper) + " -> item #" + std::to_string(item_id) +
+                               " at (" + std::to_string(dropper_pos->position.x) + "," + std::to_string(dropper_pos->position.y) + ")");
         }
 
         return true;
@@ -180,6 +183,11 @@ bool InventorySystem::useItem(Entity* user, EntityID item_id, Entity* target) {
     EventSystem::getInstance().emit(
         UseItemEvent(user->getID(), item_id, target ? target->getID() : user->getID())
     );
+
+    if (logger) {
+        std::string target_name = target ? getEntityName(target) : "self";
+        logger->logInventory("USE: " + getEntityName(user) + " uses item #" + std::to_string(item_id) + " on " + target_name);
+    }
 
     return true;
 }

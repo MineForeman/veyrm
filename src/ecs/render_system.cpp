@@ -4,6 +4,7 @@
  */
 
 #include "../../include/ecs/render_system.h"
+#include "../../include/log.h"
 #include <algorithm>
 
 namespace ecs {

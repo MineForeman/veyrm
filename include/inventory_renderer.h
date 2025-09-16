@@ -9,13 +9,20 @@
 
 #include <ftxui/dom/elements.hpp>
 #include <memory>
+#include <vector>
 
-// Legacy Item class removed - ECS inventory not yet implemented
-// class Item;
+namespace ecs {
+    class GameWorld;
+    class Entity;
+}
+
 
 class InventoryRenderer {
 public:
     explicit InventoryRenderer(void* unused_player = nullptr);  // Player removed, parameter kept for compatibility
+
+    // Set ECS world for inventory access
+    void setECSWorld(ecs::GameWorld* world) { ecs_world = world; }
 
     // Main render method
     ftxui::Element render();
@@ -42,6 +49,8 @@ public:
 
 private:
     void* unused_player;  // Player class removed
+    ecs::GameWorld* ecs_world = nullptr;
+    std::vector<ecs::Entity*> inventory_items;
     int selected_slot;
     int scroll_offset;
 

@@ -21,11 +21,11 @@ namespace ecs {
 AISystem::AISystem(Map* map,
                    MovementSystem* movement_system,
                    CombatSystem* combat_system,
-                   MessageLog* message_log)
+                   ILogger* logger)
     : map(map)
     , movement_system(movement_system)
     , combat_system(combat_system)
-    , message_log(message_log)
+    , logger(logger)
     , rng(std::random_device{}()) {
 }
 
@@ -51,6 +51,9 @@ void AISystem::processEntityAI(std::shared_ptr<Entity> entity,
 
     // Update AI state based on player visibility
     if (canSeeEntity(entity, player)) {
+        if (!ai->has_seen_player && logger) {
+            logger->logAI("Entity " + std::to_string(entity->getID()) + " spotted player");
+        }
         ai->has_seen_player = true;
         ai->turns_since_player_seen = 0;
         auto* player_pos = player->getComponent<PositionComponent>();
@@ -59,6 +62,9 @@ void AISystem::processEntityAI(std::shared_ptr<Entity> entity,
         }
     } else {
         ai->turns_since_player_seen++;
+        if (ai->turns_since_player_seen == 10 && logger) {
+            logger->logAI("Entity " + std::to_string(entity->getID()) + " lost track of player");
+        }
     }
 
     // Execute behavior based on AI type
@@ -70,6 +76,7 @@ void AISystem::processEntityAI(std::shared_ptr<Entity> entity,
             handleWanderingBehavior(entity);
             break;
         case AIBehavior::AGGRESSIVE:
+            if (logger) logger->logAI("Entity " + std::to_string(entity->getID()) + " acting aggressively");
             handleAggressiveBehavior(entity, player);
             break;
         case AIBehavior::DEFENSIVE:
@@ -79,6 +86,7 @@ void AISystem::processEntityAI(std::shared_ptr<Entity> entity,
             handlePatrolBehavior(entity);
             break;
         case AIBehavior::FLEEING:
+            if (logger) logger->logAI("Entity " + std::to_string(entity->getID()) + " fleeing from threat");
             handleFleeingBehavior(entity, player);
             break;
         case AIBehavior::SUPPORT:

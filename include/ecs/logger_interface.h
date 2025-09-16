@@ -52,6 +52,49 @@ public:
      * @param message Warning message
      */
     virtual void logWarning(const std::string& message) { log("[WARNING] " + message); }
+
+    // Debug logging methods for different categories
+    /**
+     * @brief Log AI debug information
+     * @param message AI debug message
+     */
+    virtual void logAI([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log turn system debug information
+     * @param message Turn debug message
+     */
+    virtual void logTurn([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log movement debug information
+     * @param message Movement debug message
+     */
+    virtual void logMovement([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log inventory debug information
+     * @param message Inventory debug message
+     */
+    virtual void logInventory([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log field of view debug information
+     * @param message FOV debug message
+     */
+    virtual void logFOV([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log spawning debug information
+     * @param message Spawn debug message
+     */
+    virtual void logSpawn([[maybe_unused]] const std::string& message) {}
+
+    /**
+     * @brief Log environment debug information
+     * @param message Environment debug message
+     */
+    virtual void logEnvironment([[maybe_unused]] const std::string& message) {}
 };
 
 /**

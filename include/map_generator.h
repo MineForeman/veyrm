@@ -323,6 +323,17 @@ public:
      */
     static void placeStairs(Map& map, const Point& position);
 
+    /**
+     * @brief Update stairs placement based on dungeon depth
+     * @param map Map to modify
+     * @param depth Current dungeon depth (1-based)
+     *
+     * Places appropriate stairs based on depth:
+     * - Depth 1: Only stairs down
+     * - Depth 2+: Both stairs up and stairs down
+     */
+    static void updateStairsForDepth(Map& map, int depth);
+
     // Get spawn point for last generated map
 
     /**

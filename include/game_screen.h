@@ -126,6 +126,13 @@ private:
     bool handleDirectionalDoorInteraction(int dx, int dy);
 
     /**
+     * @brief Handle stair usage for level transitions
+     * @param going_down true for down stairs, false for up stairs
+     * @return true if stair interaction occurred
+     */
+    bool handleStairInteraction(bool going_down);
+
+    /**
      * @brief Process inventory-related input
      * @param action The input action to process
      * @param event Raw FTXUI event data

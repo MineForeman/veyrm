@@ -120,6 +120,18 @@ void Map::setExplored(int x, int y, bool exp) {
     }
 }
 
+void Map::clearVisibility() {
+    for (auto& row : visible) {
+        std::fill(row.begin(), row.end(), false);
+    }
+}
+
+void Map::clearExploration() {
+    for (auto& row : explored) {
+        std::fill(row.begin(), row.end(), false);
+    }
+}
+
 std::string Map::getGlyph(int x, int y) const {
     TileType tile = getTile(x, y);
     auto it = tileProperties.find(tile);
