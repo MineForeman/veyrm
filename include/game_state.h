@@ -17,6 +17,7 @@
  */
 enum class GameState {
     MENU,       ///< Main menu screen
+    LOGIN,      ///< Login/Registration screen
     PLAYING,    ///< Active gameplay
     PAUSED,     ///< Game paused
     INVENTORY,  ///< Inventory management screen
@@ -281,7 +282,22 @@ private:
     std::string death_cause = "unknown";
     int death_turn = 0;
 
+    // Authentication state
+    int auth_user_id = 0;
+    std::string auth_session_token;
+    std::string auth_player_name = "Hero";
+
 public:
+    // Authentication methods
+    void setAuthenticationInfo(int user_id, const std::string& session_token,
+                              const std::string& player_name = "Hero") {
+        auth_user_id = user_id;
+        auth_session_token = session_token;
+        if (!player_name.empty()) auth_player_name = player_name;
+    }
+    int getAuthUserId() const { return auth_user_id; }
+    const std::string& getAuthSessionToken() const { return auth_session_token; }
+    const std::string& getAuthPlayerName() const { return auth_player_name; }
     // Map generation
     MapType getCurrentMapType() const { return current_map_type; }
     void setCurrentMapType(MapType type) { current_map_type = type; }

@@ -103,8 +103,13 @@ void GameManager::initializeMap(MapType type) {
     
     // Create player entity at spawn point
     if (use_ecs && ecs_world) {
-        // Create player using ECS only
-        [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
+        // Create player using ECS with authentication info if available
+        [[maybe_unused]] auto player_id = ecs_world->createPlayer(
+            spawn.x, spawn.y,
+            auth_user_id,
+            auth_session_token,
+            auth_player_name
+        );
 
         // Spawn monsters and items in rooms
         spawnEntities();

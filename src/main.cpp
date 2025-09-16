@@ -148,20 +148,48 @@ bool runSystemChecks() {
 /**
  * Create main menu component
  */
-ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive*) {
+ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive*,
+                               #ifdef ENABLE_DATABASE
+                               [[maybe_unused]] auth::AuthenticationService* auth_service,
+                               #endif
+                               int* user_id, std::string* session_token) {
     using namespace ftxui;
-    
+
     // Menu state
     static int selected = 0;
-    
-    // Menu options
-    static std::vector<std::string> menu_entries = {
-        "New Game",
-        "Continue",
-        "Settings",
-        "About",
-        "Quit"
-    };
+
+    // Check if user is authenticated
+    bool is_authenticated = (user_id && *user_id > 0);
+
+    // Menu options - dynamically adjust based on auth state
+    static std::vector<std::string> menu_entries;
+    menu_entries.clear();
+
+    if (is_authenticated) {
+        menu_entries = {
+            "New Game",
+            "Continue",
+            "Cloud Saves",
+            "Leaderboards",
+            "Settings",
+            "Profile",
+            "Logout",
+            "About",
+            "Quit"
+        };
+    } else {
+        menu_entries = {
+            "New Game (Guest)",
+            "Continue (Local)",
+            #ifdef ENABLE_DATABASE
+            "Login",
+            "Register",
+            #endif
+            "Settings",
+            "About",
+            "Quit"
+        };
+    }
     
     auto menu = Menu(&menu_entries, &selected);
     
@@ -207,9 +235,16 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
             });
         }
         
-        // Clean status line
+        // Clean status line with auth status
+        std::string auth_status;
+        if (is_authenticated && user_id && session_token) {
+            auth_status = " | Logged in (ID: " + std::to_string(*user_id) + ")";
+        } else {
+            auth_status = " | Playing as Guest";
+        }
+
         auto status = hbox({
-            text("[↑↓] Navigate  [Enter] Select  [Q] Quit") | dim,
+            text("[↑↓] Navigate  [Enter] Select  [Q] Quit" + auth_status) | dim,
         }) | center;
         
         // Combine all elements
@@ -227,22 +262,60 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     // Add event handling
     component |= CatchEvent([=](Event event) {
         if (event == Event::Return) {
-            switch(selected) {
-                case 0: // New Game
+            if (is_authenticated) {
+                // Authenticated menu
+                switch(selected) {
+                    case 0: // New Game
+                        game_manager->setState(GameState::PLAYING);
+                        break;
+                    case 1: // Continue
+                        game_manager->setState(GameState::SAVE_LOAD);
+                        break;
+                    case 2: // Cloud Saves
+                        // TODO: Cloud saves menu
+                        break;
+                    case 3: // Leaderboards
+                        // TODO: Leaderboards screen
+                        break;
+                    case 4: // Settings
+                        // TODO: Settings menu
+                        break;
+                    case 5: // Profile
+                        // TODO: Profile screen
+                        break;
+                    case 6: // Logout
+                        if (user_id) *user_id = 0;
+                        if (session_token) session_token->clear();
+                        break;
+                    case 7: // About
+                        // Toggle about is handled in renderer directly
+                        break;
+                    case 8: // Quit
+                        game_manager->setState(GameState::QUIT);
+                        break;
+                }
+            } else {
+                // Guest menu
+                int menu_index = 0;
+                if (selected == menu_index++) { // New Game (Guest)
                     game_manager->setState(GameState::PLAYING);
-                    break;
-                case 1: // Continue
-                    // TODO: Load save game
-                    break;
-                case 2: // Settings
+                } else if (selected == menu_index++) { // Continue (Local)
+                    game_manager->setState(GameState::SAVE_LOAD);
+                }
+                #ifdef ENABLE_DATABASE
+                else if (selected == menu_index++) { // Login
+                    game_manager->setState(GameState::LOGIN);
+                } else if (selected == menu_index++) { // Register
+                    game_manager->setState(GameState::LOGIN);  // Same screen, different tab
+                }
+                #endif
+                else if (selected == menu_index++) { // Settings
                     // TODO: Settings menu
-                    break;
-                case 3: // About
+                } else if (selected == menu_index++) { // About
                     // Toggle about is handled in renderer directly
-                    break;
-                case 4: // Quit
+                } else if (selected == menu_index++) { // Quit
                     game_manager->setState(GameState::QUIT);
-                    break;
+                }
             }
             return true;
         }
@@ -288,7 +361,14 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
     
     // Create components
     auto screen = ScreenInteractive::Fullscreen();
-    Component main_menu = createMainMenu(&game_manager, &screen);
+    // Dummy auth state for dump mode
+    int dump_user_id = 0;
+    std::string dump_session_token;
+    Component main_menu = createMainMenu(&game_manager, &screen,
+                                        #ifdef ENABLE_DATABASE
+                                        nullptr,  // No auth service in dump mode
+                                        #endif
+                                        &dump_user_id, &dump_session_token);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
     SaveLoadScreen save_load_screen(&game_manager);
@@ -307,6 +387,13 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             switch(game_manager.getState()) {
                 case GameState::MENU:
                     return main_menu->Render();
+                case GameState::LOGIN:
+                    return vbox({
+                        text("LOGIN SCREEN") | bold | center,
+                        separator(),
+                        text("Authentication not available in dump mode") | center,
+                        text("Press ESC to return") | center
+                    }) | border;
                 case GameState::PLAYING:
                     return game_component->Render();
                 case GameState::PAUSED:
@@ -372,6 +459,7 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
         std::cout << "State: ";
         switch(game_manager.getState()) {
             case GameState::MENU: std::cout << "MENU"; break;
+            case GameState::LOGIN: std::cout << "LOGIN"; break;
             case GameState::PLAYING: std::cout << "PLAYING"; break;
             case GameState::PAUSED: std::cout << "PAUSED"; break;
             case GameState::INVENTORY: std::cout << "INVENTORY"; break;
@@ -416,6 +504,12 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                     game_manager.returnToPreviousState();
                 }
                 break;
+            case GameState::LOGIN:
+                // In dump mode, just escape back to menu
+                if (event == Event::Escape) {
+                    game_manager.setState(GameState::MENU);
+                }
+                break;
             case GameState::DEATH:
                 if (event == Event::Character('r') || event == Event::Character('R')) {
                     game_manager.setState(GameState::MENU);
@@ -450,15 +544,48 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
     // Disable mouse tracking to prevent terminal artifacts
     screen.TrackMouse(false);
     GameManager game_manager(initial_map);
-    
+
     // Enable debug mode if requested
     const char* debug_env = std::getenv("VEYRM_DEBUG");
     if (debug_env && std::string(debug_env) == "1") {
         game_manager.setDebugMode(true);
     }
-    
+
+    // Authentication state
+    int user_id = 0;
+    std::string session_token;
+    std::string player_name = "Hero";
+
+    // Initialize authentication service if database is enabled
+    #ifdef ENABLE_DATABASE
+    std::unique_ptr<db::PlayerRepository> player_repo;
+    std::unique_ptr<auth::AuthenticationService> auth_service;
+    std::unique_ptr<LoginScreen> login_screen;
+    Component login_component;
+
+    if (db::DatabaseManager::getInstance().isInitialized()) {
+        player_repo = std::make_unique<db::PlayerRepository>(db::DatabaseManager::getInstance());
+        auth_service = std::make_unique<auth::AuthenticationService>(*player_repo, db::DatabaseManager::getInstance());
+        login_screen = std::make_unique<LoginScreen>(*auth_service);
+
+        // Set callback for successful login
+        login_screen->setOnLoginSuccess([&user_id, &session_token, &game_manager](int uid, const std::string& token) {
+            user_id = uid;
+            session_token = token;
+            // TODO: Get player name from database
+            game_manager.setState(GameState::MENU);
+        });
+
+        // Note: LoginScreen has its own internal rendering, we'll handle it differently
+    }
+    #endif
+
     // Create components
-    Component main_menu = createMainMenu(&game_manager, &screen);
+    Component main_menu = createMainMenu(&game_manager, &screen,
+                                        #ifdef ENABLE_DATABASE
+                                        auth_service.get(),
+                                        #endif
+                                        &user_id, &session_token);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
     SaveLoadScreen save_load_screen(&game_manager);
@@ -469,6 +596,23 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->Render();
+            case GameState::LOGIN:
+                #ifdef ENABLE_DATABASE
+                // LoginScreen handles its own rendering loop
+                // We'll show a placeholder here and handle the actual login separately
+                return vbox({
+                    text("Loading authentication screen...") | center,
+                    separator(),
+                    text("Please wait...") | center
+                }) | border | center;
+                #else
+                return vbox({
+                    text("Authentication not available") | center,
+                    text("Database support not enabled") | center,
+                    separator(),
+                    text("Press ESC to return") | center
+                }) | border | center;
+                #endif
             case GameState::PLAYING:
                 return game_component->Render();
             case GameState::PAUSED:
@@ -619,6 +763,22 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->OnEvent(event);
+            case GameState::LOGIN:
+                #ifdef ENABLE_DATABASE
+                // LoginScreen will need special handling - for now just return to menu
+                if (event == Event::Escape) {
+                    game_manager.setState(GameState::MENU);
+                    return true;
+                }
+                // Note: Full login screen integration requires running it as a separate loop
+                // This would be done by exiting the main loop and re-entering after login
+                #else
+                if (event == Event::Escape) {
+                    game_manager.setState(GameState::MENU);
+                    return true;
+                }
+                #endif
+                return false;
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory needs game_component events too
                 return game_component->OnEvent(event);

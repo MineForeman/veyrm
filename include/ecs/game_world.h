@@ -76,9 +76,14 @@ public:
      * @brief Create player entity using ECS
      * @param x Initial X position
      * @param y Initial Y position
+     * @param user_id Database user ID (0 for guest)
+     * @param session_token Authentication session token (empty for guest)
+     * @param player_name Player display name
      * @return Player entity ID
      */
-    EntityID createPlayer(int x, int y);
+    EntityID createPlayer(int x, int y, int user_id = 0,
+                         const std::string& session_token = "",
+                         const std::string& player_name = "Hero");
 
     /**
      * @brief Create monster entity using ECS

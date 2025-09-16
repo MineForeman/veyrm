@@ -41,6 +41,16 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
 
 GameScreen::~GameScreen() = default;
 
+void GameScreen::setAuthenticationInfo(int user_id, const std::string& session_token) {
+    auth_user_id = user_id;
+    auth_session_token = session_token;
+
+    // Also update the GameManager
+    if (game_manager) {
+        game_manager->setAuthenticationInfo(user_id, session_token);
+    }
+}
+
 bool GameScreen::handleDoorInteraction() {
     auto* msg_log = game_manager->getMessageLog();
     if (!msg_log) {

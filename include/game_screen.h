@@ -57,8 +57,18 @@ public:
      * @return Complete FTXUI component for game display
      */
     ftxui::Component Create();
-    
+
+    /**
+     * @brief Set authentication information for player creation
+     * @param user_id Database user ID (0 for guest)
+     * @param session_token Authentication session token
+     */
+    void setAuthenticationInfo(int user_id, const std::string& session_token);
+
 private:
+    // Authentication state
+    int auth_user_id = 0;
+    std::string auth_session_token;
     GameManager* game_manager;                              ///< Game state manager
     [[maybe_unused]] ftxui::ScreenInteractive* screen_ref; ///< Screen reference
     std::unique_ptr<MapRenderer> renderer;                  ///< Map rendering system
