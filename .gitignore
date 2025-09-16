@@ -170,3 +170,5 @@ temp/
 
 # Doxygen generated documentation
 docs/reference/api/generated/
+node_modules/
+package*.json

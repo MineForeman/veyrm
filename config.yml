@@ -143,6 +143,34 @@ development:
   # Auto-save interval (seconds, 0 to disable)
   autosave_interval: 300
 
+# Database Settings
+database:
+  # Enable database features (leaderboards, telemetry, cloud saves)
+  enabled: false
+
+  # Connection settings for PostgreSQL
+  connection:
+    host: "localhost"
+    port: 5432
+    database: "veyrm_db"
+    username: "veyrm_admin"
+    # Password should be set via environment variable VEYRM_DB_PASSWORD
+    # or stored in a secure config file not in version control
+    password: ""
+
+  # Connection pool settings
+  pool:
+    min_connections: 2
+    max_connections: 10
+    connection_timeout: 5000  # milliseconds
+
+  # Feature toggles
+  features:
+    leaderboards: true
+    cloud_saves: false
+    telemetry: false
+    achievements: true
+
 # Keybindings
 # Arrow keys and numpad are always supported for movement
 # These are additional key mappings

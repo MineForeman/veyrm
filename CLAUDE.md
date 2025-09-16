@@ -174,6 +174,33 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 ./build.sh dump '\n\u\u\r\r\q'
 ```
 
+## Database Configuration
+
+### PostgreSQL Docker Setup
+The project includes PostgreSQL database integration for persistent storage:
+
+**Docker Services:**
+- PostgreSQL 16 Alpine on port 5432
+- Database: `veyrm_db`
+- User: `veyrm_admin`
+- Container: `veyrm-postgres`
+- Optional PgAdmin on port 5050
+
+**Connection from C++:**
+```cpp
+// Connection string for local development
+"host=localhost port=5432 dbname=veyrm_db user=veyrm_admin password=changeme_to_secure_password"
+```
+
+**Quick Commands:**
+```bash
+docker-compose up -d          # Start PostgreSQL
+docker-compose logs postgres  # View logs
+docker-compose down          # Stop services
+```
+
+See `docs/database/postgres-setup.md` for full setup details.
+
 ## Common Tasks
 
 ### Adding a New Component
