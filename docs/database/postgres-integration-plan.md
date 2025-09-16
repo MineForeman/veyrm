@@ -57,6 +57,122 @@ This document outlines the comprehensive plan for integrating PostgreSQL into Ve
 
 ## Database Schema Design
 
+### Lookup Tables (Normalized Reference Data)
+
+#### 1. Tags Table
+```sql
+CREATE TABLE tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    category VARCHAR(50) NOT NULL, -- 'monster', 'item', 'achievement', 'effect'
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tags_name ON tags(name);
+CREATE INDEX idx_tags_category ON tags(category);
+
+-- Seed data examples
+INSERT INTO tags (name, category) VALUES
+    ('undead', 'monster'),
+    ('flying', 'monster'),
+    ('boss', 'monster'),
+    ('cursed', 'item'),
+    ('magical', 'item'),
+    ('quest', 'item');
+```
+
+#### 2. Colors Table
+```sql
+CREATE TABLE colors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(20) UNIQUE NOT NULL,
+    hex_code VARCHAR(7),
+    rgb_r SMALLINT,
+    rgb_g SMALLINT,
+    rgb_b SMALLINT,
+    terminal_code VARCHAR(10)
+);
+
+-- Seed data
+INSERT INTO colors (name, hex_code, rgb_r, rgb_g, rgb_b, terminal_code) VALUES
+    ('red', '#FF0000', 255, 0, 0, '\033[31m'),
+    ('green', '#00FF00', 0, 255, 0, '\033[32m'),
+    ('blue', '#0000FF', 0, 0, 255, '\033[34m');
+```
+
+#### 3. Item Categories Table
+```sql
+CREATE TABLE item_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    parent_id INTEGER REFERENCES item_categories(id),
+    glyph CHAR(1),
+    default_color_id INTEGER REFERENCES colors(id),
+    description TEXT
+);
+
+CREATE INDEX idx_item_cat_parent ON item_categories(parent_id);
+
+-- Hierarchical categories
+INSERT INTO item_categories (name, parent_id, glyph) VALUES
+    ('weapon', NULL, ')'),
+    ('sword', 1, ')'),
+    ('axe', 1, ')'),
+    ('armor', NULL, '['),
+    ('consumable', NULL, '!');
+```
+
+#### 4. Damage Types Table
+```sql
+CREATE TABLE damage_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(30) UNIQUE NOT NULL,
+    description TEXT
+);
+
+INSERT INTO damage_types (name) VALUES
+    ('physical'), ('fire'), ('ice'), ('lightning'),
+    ('poison'), ('holy'), ('dark'), ('psychic');
+```
+
+#### 5. Status Effects Table
+```sql
+CREATE TABLE status_effects (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    is_debuff BOOLEAN DEFAULT false,
+    default_duration INTEGER,
+    stackable BOOLEAN DEFAULT false,
+    max_stacks INTEGER DEFAULT 1
+);
+
+INSERT INTO status_effects (name, is_debuff, default_duration) VALUES
+    ('poisoned', true, 10),
+    ('blessed', false, 50),
+    ('stunned', true, 2);
+```
+
+#### 6. Equipment Slots Table
+```sql
+CREATE TABLE equipment_slots (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(30) UNIQUE NOT NULL,
+    display_order INTEGER NOT NULL
+);
+
+INSERT INTO equipment_slots (name, display_order) VALUES
+    ('main_hand', 1),
+    ('off_hand', 2),
+    ('head', 3),
+    ('chest', 4),
+    ('legs', 5),
+    ('feet', 6),
+    ('ring_left', 7),
+    ('ring_right', 8);
+```
+
 ### Core Tables
 
 #### 1. Players Table
@@ -164,7 +280,294 @@ CREATE TABLE player_achievements (
 );
 ```
 
-#### 6. Telemetry Table
+#### 7. Abilities Table (Shared Reference)
+```sql
+CREATE TABLE abilities (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    cooldown INTEGER DEFAULT 0,
+    damage_type_id INTEGER REFERENCES damage_types(id) ON DELETE RESTRICT,
+    damage_min INTEGER,
+    damage_max INTEGER,
+    range INTEGER DEFAULT 1,
+    mana_cost INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_abilities_code ON abilities(code);
+```
+
+#### 8. Monsters Table (Normalized)
+```sql
+CREATE TABLE monsters (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    glyph CHAR(1) NOT NULL,
+    color_id INTEGER REFERENCES colors(id) ON DELETE RESTRICT,
+    base_hp INTEGER NOT NULL,
+    base_attack INTEGER NOT NULL,
+    base_defense INTEGER NOT NULL,
+    base_speed INTEGER NOT NULL,
+    base_xp INTEGER NOT NULL,
+    threat_level CHAR(1) CHECK (threat_level IN ('a','b','c','d','e','f')),
+    spawn_depth_min INTEGER DEFAULT 1,
+    spawn_depth_max INTEGER DEFAULT 100,
+    spawn_weight INTEGER DEFAULT 100,
+    gold_drop_min INTEGER DEFAULT 0,
+    gold_drop_max INTEGER DEFAULT 0,
+    version VARCHAR(20) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_monsters_code ON monsters(code);
+CREATE INDEX idx_monsters_threat ON monsters(threat_level);
+CREATE INDEX idx_monsters_depth ON monsters(spawn_depth_min, spawn_depth_max);
+CREATE INDEX idx_monsters_active ON monsters(is_active);
+```
+
+#### 9. Monster Tags Junction Table
+```sql
+-- Junction table - no CASCADE on tag_id since tags are shared
+CREATE TABLE monster_tags (
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    tag_id INTEGER REFERENCES tags(id) ON DELETE RESTRICT,
+    PRIMARY KEY (monster_id, tag_id)
+);
+
+CREATE INDEX idx_monster_tags_monster ON monster_tags(monster_id);
+CREATE INDEX idx_monster_tags_tag ON monster_tags(tag_id);
+```
+
+#### 10. Monster Abilities Junction Table
+```sql
+-- Links monsters to shared abilities
+CREATE TABLE monster_abilities (
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    ability_id INTEGER REFERENCES abilities(id) ON DELETE RESTRICT,
+    PRIMARY KEY (monster_id, ability_id)
+);
+
+CREATE INDEX idx_monster_abilities_monster ON monster_abilities(monster_id);
+CREATE INDEX idx_monster_abilities_ability ON monster_abilities(ability_id);
+```
+
+#### 11. Monster Resistances Junction Table
+```sql
+CREATE TABLE monster_resistances (
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    damage_type_id INTEGER REFERENCES damage_types(id) ON DELETE RESTRICT,
+    resistance_percent INTEGER CHECK (resistance_percent BETWEEN -100 AND 100),
+    PRIMARY KEY (monster_id, damage_type_id)
+);
+
+CREATE INDEX idx_monster_resist_monster ON monster_resistances(monster_id);
+```
+
+#### 12. Items Table (Normalized)
+```sql
+CREATE TABLE items (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    category_id INTEGER REFERENCES item_categories(id) ON DELETE RESTRICT,
+    glyph CHAR(1) NOT NULL,
+    color_id INTEGER REFERENCES colors(id) ON DELETE RESTRICT,
+    base_value INTEGER DEFAULT 0,
+    weight DECIMAL(5,2) DEFAULT 1.0,
+    stackable BOOLEAN DEFAULT false,
+    max_stack INTEGER DEFAULT 1,
+    rarity VARCHAR(20) DEFAULT 'common',
+    min_depth INTEGER DEFAULT 1,
+    max_depth INTEGER DEFAULT 100,
+    version VARCHAR(20) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_items_code ON items(code);
+CREATE INDEX idx_items_category ON items(category_id);
+CREATE INDEX idx_items_rarity ON items(rarity);
+CREATE INDEX idx_items_depth ON items(min_depth, max_depth);
+CREATE INDEX idx_items_active ON items(is_active);
+```
+
+#### 13. Item Tags Junction Table
+```sql
+CREATE TABLE item_tags (
+    item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
+    tag_id INTEGER REFERENCES tags(id) ON DELETE RESTRICT,
+    PRIMARY KEY (item_id, tag_id)
+);
+
+CREATE INDEX idx_item_tags_item ON item_tags(item_id);
+CREATE INDEX idx_item_tags_tag ON item_tags(tag_id);
+```
+
+#### 14. Item Properties Table
+```sql
+-- Properties specific to each item instance
+CREATE TABLE item_properties (
+    id SERIAL PRIMARY KEY,
+    item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
+    property_type VARCHAR(50) NOT NULL,
+    property_value INTEGER NOT NULL,
+    damage_type_id INTEGER REFERENCES damage_types(id) ON DELETE RESTRICT,
+    status_effect_id INTEGER REFERENCES status_effects(id) ON DELETE RESTRICT,
+    effect_duration INTEGER,
+    effect_chance DECIMAL(3,2) DEFAULT 1.0
+);
+
+CREATE INDEX idx_item_props_item ON item_properties(item_id);
+CREATE INDEX idx_item_props_type ON item_properties(property_type);
+```
+
+#### 15. Item Requirements Table
+```sql
+CREATE TABLE item_requirements (
+    id SERIAL PRIMARY KEY,
+    item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
+    requirement_type VARCHAR(30) NOT NULL,
+    requirement_value INTEGER,
+    requirement_data VARCHAR(50)
+);
+
+CREATE INDEX idx_item_reqs_item ON item_requirements(item_id);
+```
+
+#### 16. Loot Tables (Normalized)
+```sql
+CREATE TABLE loot_tables (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    min_items INTEGER DEFAULT 1,
+    max_items INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE loot_table_entries (
+    id SERIAL PRIMARY KEY,
+    loot_table_id INTEGER REFERENCES loot_tables(id) ON DELETE CASCADE,
+    item_id INTEGER REFERENCES items(id) ON DELETE RESTRICT,
+    weight INTEGER DEFAULT 100,
+    quantity_min INTEGER DEFAULT 1,
+    quantity_max INTEGER DEFAULT 1,
+    depth_modifier DECIMAL(3,2) DEFAULT 1.0,
+    level_requirement INTEGER DEFAULT 0
+);
+
+CREATE INDEX idx_loot_entries_table ON loot_table_entries(loot_table_id);
+CREATE INDEX idx_loot_entries_item ON loot_table_entries(item_id);
+```
+
+#### 17. Monster Loot Assignment
+```sql
+CREATE TABLE monster_loot (
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    loot_table_id INTEGER REFERENCES loot_tables(id) ON DELETE RESTRICT,
+    drop_chance DECIMAL(3,2) DEFAULT 1.0,
+    PRIMARY KEY (monster_id, loot_table_id)
+);
+
+CREATE INDEX idx_monster_loot_monster ON monster_loot(monster_id);
+CREATE INDEX idx_monster_loot_table ON monster_loot(loot_table_id);
+```
+
+#### 18. Character Inventory Table (Normalized)
+```sql
+CREATE TABLE character_inventory (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    character_id UUID REFERENCES characters(id) ON DELETE CASCADE,
+    item_id INTEGER REFERENCES items(id) ON DELETE RESTRICT,
+    slot_letter CHAR(1),
+    quantity INTEGER DEFAULT 1,
+    is_equipped BOOLEAN DEFAULT false,
+    equipment_slot_id INTEGER REFERENCES equipment_slots(id) ON DELETE RESTRICT,
+    durability_current INTEGER,
+    durability_max INTEGER,
+    is_identified BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(character_id, slot_letter)
+);
+
+CREATE INDEX idx_inventory_character ON character_inventory(character_id);
+CREATE INDEX idx_inventory_equipped ON character_inventory(character_id, is_equipped);
+CREATE INDEX idx_inventory_item ON character_inventory(item_id);
+CREATE INDEX idx_inventory_slot ON character_inventory(equipment_slot_id);
+```
+
+#### 19. Enchantments Table (Shared Reference)
+```sql
+CREATE TABLE enchantments (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    description TEXT,
+    prefix VARCHAR(30),
+    suffix VARCHAR(30),
+    value_modifier DECIMAL(3,2) DEFAULT 1.5,
+    is_active BOOLEAN DEFAULT true
+);
+
+CREATE TABLE inventory_enchantments (
+    inventory_id UUID REFERENCES character_inventory(id) ON DELETE CASCADE,
+    enchantment_id INTEGER REFERENCES enchantments(id) ON DELETE RESTRICT,
+    power_level INTEGER DEFAULT 1,
+    PRIMARY KEY (inventory_id, enchantment_id)
+);
+```
+
+#### 20. Monster Encounters Table
+```sql
+CREATE TABLE monster_encounters (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    character_id UUID REFERENCES characters(id) ON DELETE CASCADE,
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE SET NULL,
+    monster_code VARCHAR(50) NOT NULL, -- Store code in case monster is deleted
+    monster_name VARCHAR(100), -- Store name for historical record
+    encounter_depth INTEGER NOT NULL,
+    damage_dealt INTEGER DEFAULT 0,
+    damage_taken INTEGER DEFAULT 0,
+    was_killed BOOLEAN DEFAULT false,
+    killed_by_player BOOLEAN DEFAULT false,
+    encounter_duration INTEGER,
+    turn_count INTEGER,
+    experience_gained INTEGER DEFAULT 0,
+    gold_dropped INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_encounters_character ON monster_encounters(character_id);
+CREATE INDEX idx_encounters_monster ON monster_encounters(monster_id);
+CREATE INDEX idx_encounters_date ON monster_encounters(created_at);
+```
+
+#### 21. Encounter Drops Table
+```sql
+CREATE TABLE encounter_drops (
+    id SERIAL PRIMARY KEY,
+    encounter_id UUID REFERENCES monster_encounters(id) ON DELETE CASCADE,
+    item_id INTEGER REFERENCES items(id) ON DELETE SET NULL,
+    item_code VARCHAR(50) NOT NULL, -- Store code for historical record
+    quantity INTEGER DEFAULT 1,
+    was_picked_up BOOLEAN DEFAULT false
+);
+
+CREATE INDEX idx_drops_encounter ON encounter_drops(encounter_id);
+CREATE INDEX idx_drops_item ON encounter_drops(item_id);
+```
+
+#### 22. Telemetry Table
 ```sql
 CREATE TABLE telemetry (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
