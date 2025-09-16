@@ -141,7 +141,7 @@ public:
         return Result(PQexec(conn, query.c_str()));
     }
 
-    // Execute with parameters
+    // Execute with parameters (vector version)
     Result execParams(const std::string& query,
                      const std::vector<std::string>& params) {
         if (!isValid()) throw std::runtime_error("Invalid connection");
@@ -159,6 +159,20 @@ public:
                                   nullptr,  // param lengths
                                   nullptr,  // param formats
                                   0));      // result format (text)
+    }
+
+    // Execute with parameters (array version)
+    Result execParams(const std::string& query, int nParams, const char* const* params) {
+        if (!isValid()) throw std::runtime_error("Invalid connection");
+        updateLastUsed();
+        return Result(PQexecParams(conn, query.c_str(), nParams, nullptr, params, nullptr, nullptr, 0));
+    }
+
+    // Get number of affected rows
+    std::string cmdTuples(PGresult* res) const {
+        if (!res) return "";
+        const char* tuples = PQcmdTuples(res);
+        return tuples ? std::string(tuples) : "";
     }
 
     // Escape string for safe inclusion in queries

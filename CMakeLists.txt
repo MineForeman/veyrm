@@ -85,6 +85,18 @@ else()
     set(ENABLE_DATABASE OFF)
 endif()
 
+# OpenSSL for authentication (password hashing)
+message(STATUS "Configuring OpenSSL...")
+find_package(OpenSSL QUIET)
+if(OpenSSL_FOUND)
+    message(STATUS "Found OpenSSL: ${OPENSSL_VERSION}")
+    message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+    set(ENABLE_AUTH ON)
+else()
+    message(WARNING "OpenSSL not found - authentication features will be limited")
+    set(ENABLE_AUTH OFF)
+endif()
+
 # Make dependencies available
 FetchContent_MakeAvailable(ftxui json Catch2 ryml)
 
@@ -177,6 +189,7 @@ add_library(veyrm_core STATIC
     src/inventory_renderer.cpp
     src/game_serializer.cpp
     src/save_load_screen.cpp
+    src/login_screen.cpp
     src/ecs/entity.cpp
     src/ecs/movement_system.cpp
     src/ecs/render_system.cpp
@@ -201,7 +214,15 @@ add_library(veyrm_core STATIC
 if(ENABLE_DATABASE)
     target_sources(veyrm_core PRIVATE
         src/db/database_manager.cpp
+        src/db/player_repository.cpp
     )
+
+    # Authentication requires both database and OpenSSL
+    if(ENABLE_AUTH)
+        target_sources(veyrm_core PRIVATE
+            src/auth/authentication_service.cpp
+        )
+    endif()
 endif()
 
 # Link libraries to core
@@ -227,6 +248,22 @@ if(ENABLE_DATABASE)
     target_compile_definitions(veyrm_core
         PUBLIC
             ENABLE_DATABASE
+    )
+endif()
+
+# Link OpenSSL if available
+if(ENABLE_AUTH)
+    target_link_libraries(veyrm_core
+        PUBLIC
+            ${OPENSSL_LIBRARIES}
+    )
+    target_include_directories(veyrm_core
+        PUBLIC
+            ${OPENSSL_INCLUDE_DIR}
+    )
+    target_compile_definitions(veyrm_core
+        PUBLIC
+            ENABLE_AUTH
     )
 endif()
 

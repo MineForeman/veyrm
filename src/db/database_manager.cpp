@@ -435,7 +435,95 @@ bool DatabaseManager::createTables() {
                     version INTEGER PRIMARY KEY,
                     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     description TEXT
-                ))"
+                ))",
+
+                // === PHASE 2: AUTHENTICATION TABLES ===
+
+                // Users table for authentication
+                R"(CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    salt VARCHAR(255) NOT NULL,
+                    email_verified BOOLEAN DEFAULT FALSE,
+                    account_locked BOOLEAN DEFAULT FALSE,
+                    failed_login_attempts INTEGER DEFAULT 0,
+                    last_failed_login TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                ))",
+
+                // User sessions table
+                R"(CREATE TABLE IF NOT EXISTS user_sessions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    session_token VARCHAR(255) UNIQUE NOT NULL,
+                    refresh_token VARCHAR(255) UNIQUE,
+                    expires_at TIMESTAMP NOT NULL,
+                    refresh_expires_at TIMESTAMP,
+                    ip_address INET,
+                    user_agent TEXT,
+                    remember_me BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    revoked BOOLEAN DEFAULT FALSE,
+                    revoked_at TIMESTAMP
+                ))",
+
+                // User profiles table
+                R"(CREATE TABLE IF NOT EXISTS user_profiles (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+                    display_name VARCHAR(100),
+                    avatar_url TEXT,
+                    timezone VARCHAR(50) DEFAULT 'UTC',
+                    language VARCHAR(10) DEFAULT 'en',
+                    theme VARCHAR(20) DEFAULT 'auto',
+                    privacy_settings JSONB DEFAULT '{}',
+                    game_settings JSONB DEFAULT '{}',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ))",
+
+                // Password reset tokens table
+                R"(CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    token VARCHAR(255) UNIQUE NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    used BOOLEAN DEFAULT FALSE,
+                    used_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ))",
+
+                // Email verification tokens table
+                R"(CREATE TABLE IF NOT EXISTS email_verification_tokens (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    token VARCHAR(255) UNIQUE NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    used BOOLEAN DEFAULT FALSE,
+                    used_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ))",
+
+                // User login history table
+                R"(CREATE TABLE IF NOT EXISTS user_login_history (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    ip_address INET,
+                    user_agent TEXT,
+                    success BOOLEAN NOT NULL,
+                    failure_reason VARCHAR(100),
+                    session_id INTEGER REFERENCES user_sessions(id) ON DELETE SET NULL
+                ))",
+
+                // Update save_games to link with users
+                R"(ALTER TABLE save_games
+                   ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE)"
             };
 
             for (const auto& sql : table_sqls) {

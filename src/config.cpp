@@ -1,8 +1,10 @@
 #include "config.h"
+#include "db/database_manager.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 
 Config& Config::getInstance() {
     static Config instance;
@@ -152,6 +154,28 @@ bool Config::loadFromFile(const std::string& filename) {
             }
         }
         
+        // Database settings
+        if (root.has_child("database")) {
+            auto db = root["database"];
+            if (db.has_child("enabled")) {
+                db["enabled"] >> database_enabled;
+            }
+            if (db.has_child("connection")) {
+                auto conn = db["connection"];
+                if (conn.has_child("host")) conn["host"] >> db_host;
+                if (conn.has_child("port")) conn["port"] >> db_port;
+                if (conn.has_child("database")) conn["database"] >> db_name;
+                if (conn.has_child("username")) conn["username"] >> db_username;
+                if (conn.has_child("password")) conn["password"] >> db_password;
+            }
+            if (db.has_child("pool")) {
+                auto pool = db["pool"];
+                if (pool.has_child("min_connections")) pool["min_connections"] >> db_min_connections;
+                if (pool.has_child("max_connections")) pool["max_connections"] >> db_max_connections;
+                if (pool.has_child("connection_timeout")) pool["connection_timeout"] >> db_connection_timeout;
+            }
+        }
+
         // Development settings
         if (root.has_child("development")) {
             auto dev = root["development"];
@@ -162,7 +186,10 @@ bool Config::loadFromFile(const std::string& filename) {
                 dev["autosave_interval"] >> autosave_interval;
             }
         }
-        
+
+        // Load environment variables after config file (env overrides config)
+        loadEnvironmentVariables();
+
         return true;
     } catch (const std::exception& e) {
         std::cerr << "Error loading config file: " << e.what() << std::endl;
@@ -207,4 +234,93 @@ std::string Config::mapTypeToString(MapType type) const {
         case MapType::STRESS_TEST: return "stress";
         default: return "procedural";
     }
+}
+
+std::string Config::getEnvironmentVariable(const std::string& name, const std::string& default_value) const {
+    const char* value = std::getenv(name.c_str());
+    return value ? std::string(value) : default_value;
+}
+
+void Config::loadEnvironmentVariables() {
+    // Database environment variables (these override config.yml values)
+
+    // Database connection settings
+    std::string env_host = getEnvironmentVariable("DB_HOST");
+    if (!env_host.empty()) {
+        db_host = env_host;
+    }
+
+    std::string env_port = getEnvironmentVariable("DB_PORT");
+    if (!env_port.empty()) {
+        try {
+            db_port = std::stoi(env_port);
+        } catch (const std::exception&) {
+            std::cerr << "Warning: Invalid DB_PORT environment variable, using config value" << std::endl;
+        }
+    }
+
+    std::string env_name = getEnvironmentVariable("DB_NAME");
+    if (!env_name.empty()) {
+        db_name = env_name;
+    }
+
+    std::string env_user = getEnvironmentVariable("DB_USER");
+    if (!env_user.empty()) {
+        db_username = env_user;
+    }
+
+    // Database password - prioritize specific env vars
+    std::string env_password = getEnvironmentVariable("DB_PASS");
+    if (env_password.empty()) {
+        env_password = getEnvironmentVariable("VEYRM_DB_PASSWORD");
+    }
+    if (env_password.empty()) {
+        env_password = getEnvironmentVariable("POSTGRES_PASSWORD");
+    }
+    if (!env_password.empty()) {
+        db_password = env_password;
+    }
+
+    // Alternative PostgreSQL environment variables (for compatibility)
+    std::string pg_host = getEnvironmentVariable("PGHOST");
+    if (!pg_host.empty()) {
+        db_host = pg_host;
+    }
+
+    std::string pg_port = getEnvironmentVariable("PGPORT");
+    if (!pg_port.empty()) {
+        try {
+            db_port = std::stoi(pg_port);
+        } catch (const std::exception&) {
+            std::cerr << "Warning: Invalid PGPORT environment variable, using config value" << std::endl;
+        }
+    }
+
+    std::string pg_database = getEnvironmentVariable("PGDATABASE");
+    if (!pg_database.empty()) {
+        db_name = pg_database;
+    }
+
+    std::string pg_user = getEnvironmentVariable("PGUSER");
+    if (!pg_user.empty()) {
+        db_username = pg_user;
+    }
+
+    std::string pg_password = getEnvironmentVariable("PGPASSWORD");
+    if (!pg_password.empty()) {
+        db_password = pg_password;
+    }
+}
+
+db::DatabaseConfig Config::getDatabaseConfig() const {
+    db::DatabaseConfig config;
+    config.host = db_host;
+    config.port = db_port;
+    config.database = db_name;
+    config.username = db_username;
+    config.password = db_password;
+    config.min_connections = db_min_connections;
+    config.max_connections = db_max_connections;
+    config.connection_timeout = std::chrono::milliseconds(db_connection_timeout);
+    return config;
 }

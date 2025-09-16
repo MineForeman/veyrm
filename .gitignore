@@ -149,6 +149,9 @@ saves/
 *.log
 logs/
 
+# Environment variables (contains passwords)
+.env
+
 # Temporary files
 *.tmp
 *.temp

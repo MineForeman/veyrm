@@ -36,6 +36,14 @@ add_executable(veyrm_tests
     test_data_loader.cpp
 )
 
+# Add authentication tests if database is enabled
+if(ENABLE_DATABASE AND ENABLE_AUTH)
+    target_sources(veyrm_tests PRIVATE
+        test_authentication.cpp
+        test_database.cpp
+    )
+endif()
+
 # Link with Catch2 and other dependencies
 target_link_libraries(veyrm_tests
     PRIVATE

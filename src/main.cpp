@@ -25,14 +25,23 @@
 #include "game_state.h"
 #include "game_screen.h"
 #include "save_load_screen.h"
+#include "login_screen.h"
 #include "test_input.h"
 #include "game_loop.h"
 #include "ecs/game_world.h"
 #include "ecs/health_component.h"
 #include "ecs/stats_component.h"
+#include "ecs/player_component.h"
 #include "frame_stats.h"
 #include "map_generator.h"
 #include "config.h"
+
+// Database and authentication
+#ifdef ENABLE_DATABASE
+#include "db/database_manager.h"
+#include "db/player_repository.h"
+#include "auth/authentication_service.h"
+#endif
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS

@@ -144,9 +144,21 @@ int main() {
 EOF
 }
 
+# Load environment variables from .env file
+load_env() {
+    if [ -f "${PROJECT_ROOT}/.env" ]; then
+        echo -e "${BLUE}Loading environment variables from .env...${NC}"
+        export $(grep -v '^#' "${PROJECT_ROOT}/.env" | xargs)
+    else
+        echo -e "${YELLOW}Warning: .env file not found. Using default values.${NC}"
+        echo -e "${YELLOW}Copy .env.example to .env and customize for your setup.${NC}"
+    fi
+}
+
 # Database command functions
 db_create() {
     echo -e "${YELLOW}Creating database tables...${NC}"
+    load_env
     create_db_program
 
     # Compile the database manager
@@ -160,12 +172,12 @@ db_create() {
             return 1
         }
 
-        # Run with environment variables
+        # Use environment variables from .env or defaults
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" create
     else
@@ -176,6 +188,7 @@ db_create() {
 
 db_clear() {
     echo -e "${YELLOW}Clearing database data...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -190,9 +203,9 @@ db_clear() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" clear
     else
@@ -203,6 +216,7 @@ db_clear() {
 
 db_load() {
     echo -e "${YELLOW}Loading initial database data...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -217,9 +231,9 @@ db_load() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" load
     else
@@ -230,6 +244,7 @@ db_load() {
 
 db_status() {
     echo -e "${YELLOW}Checking database status...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -244,9 +259,9 @@ db_status() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" status
     else

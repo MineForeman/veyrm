@@ -189,6 +189,48 @@ Entity system implemented with Player class, EntityManager, and movement integra
 ./build.sh clean build
 ```
 
+### Database Setup (PostgreSQL)
+
+Veyrm supports PostgreSQL for persistent game data (save games, leaderboards, telemetry).
+
+#### Quick Setup
+
+1. **Copy environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit database credentials in `.env`:**
+   ```bash
+   # PostgreSQL Configuration
+   POSTGRES_DB=veyrm_db
+   POSTGRES_USER=veyrm_admin
+   POSTGRES_PASSWORD=changeme_to_secure_password  # ← Change this!
+   ```
+
+3. **Database management commands:**
+   ```bash
+   # Create database tables
+   ./build.sh db create
+
+   # Load initial data (colors, abilities, tags)
+   ./build.sh db load
+
+   # Check database status
+   ./build.sh db status
+
+   # Reset database (clear + reload)
+   ./build.sh db reset
+   ```
+
+#### Docker Setup (Recommended)
+
+See [PostgreSQL Setup Guide](docs/database/postgres-setup.md) for complete Docker setup with PgAdmin.
+
+#### Without Database
+
+The game works perfectly without PostgreSQL - all features gracefully degrade to local file storage.
+
 ### Testing
 
 ```bash

@@ -14,6 +14,11 @@
 #include <c4/format.hpp>
 #include "map_generator.h"  // For MapType enum
 
+// Forward declarations
+namespace db {
+    struct DatabaseConfig;
+}
+
 /**
  * @class Config
  * @brief Singleton configuration manager for game settings
@@ -209,6 +214,41 @@ public:
      */
     bool isDataDirValid() const;
     
+    // === Database Settings ===
+
+    /** @brief Check if database features are enabled @return Database enabled state */
+    bool isDatabaseEnabled() const { return database_enabled; }
+
+    /** @brief Get database host @return Database hostname */
+    std::string getDatabaseHost() const { return db_host; }
+
+    /** @brief Get database port @return Database port number */
+    int getDatabasePort() const { return db_port; }
+
+    /** @brief Get database name @return Database name */
+    std::string getDatabaseName() const { return db_name; }
+
+    /** @brief Get database username @return Database username */
+    std::string getDatabaseUsername() const { return db_username; }
+
+    /** @brief Get database password @return Database password */
+    std::string getDatabasePassword() const { return db_password; }
+
+    /** @brief Get minimum database connections @return Min connections */
+    int getDatabaseMinConnections() const { return db_min_connections; }
+
+    /** @brief Get maximum database connections @return Max connections */
+    int getDatabaseMaxConnections() const { return db_max_connections; }
+
+    /** @brief Get database connection timeout @return Timeout in milliseconds */
+    int getDatabaseConnectionTimeout() const { return db_connection_timeout; }
+
+    /**
+     * @brief Create DatabaseConfig struct from current settings
+     * @return DatabaseConfig object with current database settings
+     */
+    db::DatabaseConfig getDatabaseConfig() const;
+
     // === Performance Settings ===
 
     /** @brief Get target frames per second @return Target FPS */
@@ -268,6 +308,17 @@ private:
     // Performance
     int target_fps = 60;                ///< Target frames per second
 
+    // Database settings
+    bool database_enabled = false;      ///< Database features enabled
+    std::string db_host = "localhost";  ///< Database host
+    int db_port = 5432;                 ///< Database port
+    std::string db_name = "veyrm_db";   ///< Database name
+    std::string db_username = "veyrm_admin"; ///< Database username
+    std::string db_password = "";       ///< Database password (loaded from env)
+    int db_min_connections = 2;         ///< Minimum database connections
+    int db_max_connections = 10;        ///< Maximum database connections
+    int db_connection_timeout = 5000;   ///< Connection timeout in milliseconds
+
     // Development
     bool verbose_logging = false;       ///< Enable verbose logging
     int autosave_interval = 300;        ///< Autosave interval in seconds
@@ -285,6 +336,20 @@ private:
      * @return String representation
      */
     std::string mapTypeToString(MapType type) const;
+
+    /**
+     * @brief Get environment variable with optional default
+     * @param name Environment variable name
+     * @param default_value Default value if not set
+     * @return Environment variable value or default
+     */
+    std::string getEnvironmentVariable(const std::string& name, const std::string& default_value = "") const;
+
+    /**
+     * @brief Load environment variables into configuration
+     * This loads database credentials and other sensitive settings from environment
+     */
+    void loadEnvironmentVariables();
 
     // Singleton pattern
     Config() = default;                  ///< Private constructor
