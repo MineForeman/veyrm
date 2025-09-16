@@ -3,6 +3,7 @@
 ## 🎯 **What Needs to Be Done for Phase 2: Authentication**
 
 ### Overview
+
 Phase 2 builds secure user authentication on top of the PostgreSQL foundation from Phase 1. This enables cloud saves, leaderboards, and social features while maintaining game accessibility.
 
 ---
@@ -10,6 +11,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 ## ✅ **Requirements Checklist**
 
 ### 1. **Database Schema Design**
+
 - [ ] Design `players` table with secure user data storage
 - [ ] Create `player_sessions` table for session management
 - [ ] Add `password_reset_tokens` and `email_verification_tokens` tables
@@ -18,6 +20,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Create database migration scripts
 
 ### 2. **PlayerRepository Implementation**
+
 - [ ] Create `Player` model with JSON serialization
 - [ ] Implement `PlayerRepository` class extending `RepositoryBase<Player>`
 - [ ] Add user-specific methods: `findByUsername()`, `findByEmail()`
@@ -25,6 +28,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Add account management methods: `updatePassword()`, `verifyEmail()`
 
 ### 3. **Authentication Service**
+
 - [ ] Create `AuthenticationService` class with secure password hashing
 - [ ] Implement user registration with input validation
 - [ ] Add secure login functionality with rate limiting
@@ -33,6 +37,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Implement Argon2id password hashing (or bcrypt as fallback)
 
 ### 4. **Session Management System**
+
 - [ ] Create `PlayerSession` model for session data
 - [ ] Implement `SessionRepository` for session CRUD operations
 - [ ] Design secure session token generation and validation
@@ -41,6 +46,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Add session security features (IP validation, user agent tracking)
 
 ### 5. **UI Components**
+
 - [ ] Create `AuthenticationScreen` component with FTXUI
 - [ ] Design login form with username/email + password fields
 - [ ] Build registration form with validation and confirmation
@@ -49,6 +55,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Implement real-time form validation and error display
 
 ### 6. **Remember Me Functionality**
+
 - [ ] Implement long-lived refresh tokens (30-90 days)
 - [ ] Add automatic login check on game startup
 - [ ] Create token rotation system for security
@@ -56,6 +63,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Implement "Log Out All Devices" functionality
 
 ### 7. **Security Implementation**
+
 - [ ] Add rate limiting for login attempts and registration
 - [ ] Implement input validation and sanitization
 - [ ] Create secure random token generation
@@ -64,6 +72,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 - [ ] Add session security measures (token expiration, rotation)
 
 ### 8. **Testing & Quality Assurance**
+
 - [ ] Write unit tests for `PlayerRepository` CRUD operations
 - [ ] Test `AuthenticationService` registration and login flows
 - [ ] Create integration tests for end-to-end authentication
@@ -76,6 +85,7 @@ Phase 2 builds secure user authentication on top of the PostgreSQL foundation fr
 ## 🛠️ **Technical Implementation Details**
 
 ### **Database Schema**
+
 ```sql
 -- Key tables to implement:
 players (id, username, email, password_hash, salt, ...)
@@ -85,6 +95,7 @@ email_verification_tokens (id, player_id, token, expires_at, ...)
 ```
 
 ### **Core Classes**
+
 ```cpp
 class Player { /* User account model */ };
 class PlayerRepository : public RepositoryBase<Player> { /* User CRUD */ };
@@ -95,6 +106,7 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 ```
 
 ### **Security Requirements**
+
 - **Password Hashing**: Argon2id with proper parameters
 - **Session Tokens**: Cryptographically secure random tokens
 - **Rate Limiting**: Max 5 login attempts per IP/username
@@ -102,6 +114,7 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 - **Token Expiration**: Sessions 4 hours, refresh tokens 30 days
 
 ### **UI Flow**
+
 1. **Main Menu** → Add "Login" and "Create Account" options
 2. **Login Screen** → Username/email + password + "Remember Me"
 3. **Registration Screen** → Username + email + password + confirm password
@@ -113,6 +126,7 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 ## 📋 **Build System Integration**
 
 ### **New Build Commands**
+
 ```bash
 ./build.sh db migrate-auth    # Run authentication schema migration
 ./build.sh db create-admin    # Create test admin user
@@ -121,6 +135,7 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 ```
 
 ### **Configuration**
+
 - Add authentication settings to `config.yml`
 - Environment variables for JWT secrets, session lifetimes
 - Password requirements configuration
@@ -131,16 +146,19 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 ## 🔄 **Integration with Existing Systems**
 
 ### **ECS Integration**
+
 - Link `save_games` table to authenticated users via `player_id`
 - Update `PersistenceSystem` to handle user-specific saves
 - Add player authentication checks in save/load operations
 
 ### **UI Integration**
+
 - Extend main menu to include authentication options
 - Add user profile display in game UI
 - Show authentication status in status bar
 
 ### **Data Migration**
+
 - Migrate existing anonymous save files to authenticated users
 - Preserve local saves for offline play
 - Handle conflicts between local and cloud saves
@@ -150,18 +168,21 @@ class AuthenticationScreen : public ftxui::ComponentBase { /* UI component */ };
 ## ⚠️ **Important Considerations**
 
 ### **User Experience**
+
 - **Optional Authentication**: Game remains fully playable without accounts
 - **Offline Mode**: All features work offline, sync when available
 - **Simple Registration**: Minimal required fields, clear benefits
 - **Error Recovery**: Clear password reset and account recovery flows
 
 ### **Security**
+
 - **No Plaintext Passwords**: All passwords properly hashed with salt
 - **Secure Sessions**: Proper token generation and expiration
 - **Rate Limiting**: Prevent brute force and abuse
 - **Input Validation**: Protect against injection and XSS attacks
 
 ### **Performance**
+
 - **Database Indexes**: Optimize queries with proper indexing
 - **Session Cleanup**: Regular cleanup of expired sessions
 - **Connection Pooling**: Reuse database connections efficiently

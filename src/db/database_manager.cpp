@@ -3,8 +3,6 @@
 #include <thread>
 #include <algorithm>
 
-#ifdef ENABLE_DATABASE
-
 namespace db {
 
 std::unique_ptr<DatabaseManager> DatabaseManager::instance = nullptr;
@@ -166,8 +164,20 @@ void DatabaseManager::initialize(const DatabaseConfig& cfg) {
         pool = std::make_unique<ConnectionPool>(config);
         pool->initialize();
 
-        // Test connection
-        if (!testConnection()) {
+        // Test connection directly without using testConnection() method
+        // which requires initialized to be true
+        bool connection_ok = false;
+        try {
+            auto conn_opt = pool->acquire(config.connection_timeout);
+            if (conn_opt) {
+                auto result = conn_opt->get()->exec("SELECT 1");
+                connection_ok = result.isOk();
+            }
+        } catch (const std::exception& e) {
+            Log::error("Connection test failed: " + std::string(e.what()));
+        }
+
+        if (!connection_ok) {
             throw ConnectionException("Failed to connect to database");
         }
 
@@ -294,6 +304,23 @@ bool DatabaseManager::createTables() {
         return executeTransaction([](Connection& conn) {
             // Create the initial schema based on our integration plan
             std::vector<std::string> table_sqls = {
+                // === PHASE 2: AUTHENTICATION TABLES (must be created first) ===
+                // Users table for authentication
+                R"(CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    salt VARCHAR(255) NOT NULL,
+                    email_verified BOOLEAN DEFAULT FALSE,
+                    account_locked BOOLEAN DEFAULT FALSE,
+                    failed_login_attempts INTEGER DEFAULT 0,
+                    last_failed_login TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                ))",
+
                 // Colors table
                 R"(CREATE TABLE IF NOT EXISTS colors (
                     id SERIAL PRIMARY KEY,
@@ -395,20 +422,56 @@ bool DatabaseManager::createTables() {
                     PRIMARY KEY (item_id, tag_id)
                 ))",
 
-                // Save games table
+                // Enhanced save games table for cloud saves (Phase 3)
                 R"(CREATE TABLE IF NOT EXISTS save_games (
-                    id SERIAL PRIMARY KEY,
-                    character_id VARCHAR(100) UNIQUE NOT NULL,
-                    player_id VARCHAR(100),
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    slot_number INTEGER NOT NULL,
                     character_name VARCHAR(100),
-                    level INTEGER DEFAULT 1,
-                    experience INTEGER DEFAULT 0,
-                    gold INTEGER DEFAULT 0,
-                    current_depth INTEGER DEFAULT 1,
-                    game_state JSONB NOT NULL,
+                    character_level INTEGER,
+                    map_depth INTEGER,
+                    play_time INTEGER,
+                    turn_count INTEGER,
+                    save_data JSONB NOT NULL,
+                    save_version VARCHAR(20) NOT NULL,
+                    game_version VARCHAR(20) NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    device_id VARCHAR(100),
+                    device_name VARCHAR(100),
+                    sync_status VARCHAR(20) DEFAULT 'synced',
+                    UNIQUE(user_id, slot_number)
                 ))",
+
+                // Create indexes for save_games
+                R"(CREATE INDEX IF NOT EXISTS idx_saves_user ON save_games(user_id))",
+                R"(CREATE INDEX IF NOT EXISTS idx_saves_slot ON save_games(user_id, slot_number))",
+                R"(CREATE INDEX IF NOT EXISTS idx_saves_updated ON save_games(updated_at))",
+
+                // Save conflicts table for sync resolution
+                R"(CREATE TABLE IF NOT EXISTS save_conflicts (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    save_id UUID REFERENCES save_games(id) ON DELETE CASCADE,
+                    conflicting_data JSONB NOT NULL,
+                    device_id VARCHAR(100),
+                    device_name VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    resolved BOOLEAN DEFAULT FALSE,
+                    resolution_type VARCHAR(50)
+                ))",
+
+                // Save backups table
+                R"(CREATE TABLE IF NOT EXISTS save_backups (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    save_id UUID REFERENCES save_games(id) ON DELETE CASCADE,
+                    backup_data JSONB NOT NULL,
+                    backup_reason VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ))",
+
+                // Create index for backups
+                R"(CREATE INDEX IF NOT EXISTS idx_backup_save ON save_backups(save_id, created_at DESC))",
 
                 // Leaderboards table
                 R"(CREATE TABLE IF NOT EXISTS leaderboards (
@@ -437,23 +500,7 @@ bool DatabaseManager::createTables() {
                     description TEXT
                 ))",
 
-                // === PHASE 2: AUTHENTICATION TABLES ===
-
-                // Users table for authentication
-                R"(CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    salt VARCHAR(255) NOT NULL,
-                    email_verified BOOLEAN DEFAULT FALSE,
-                    account_locked BOOLEAN DEFAULT FALSE,
-                    failed_login_attempts INTEGER DEFAULT 0,
-                    last_failed_login TIMESTAMP,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_login TIMESTAMP
-                ))",
+                // === PHASE 2: ADDITIONAL AUTHENTICATION TABLES ===
 
                 // User sessions table
                 R"(CREATE TABLE IF NOT EXISTS user_sessions (
@@ -521,9 +568,7 @@ bool DatabaseManager::createTables() {
                     session_id INTEGER REFERENCES user_sessions(id) ON DELETE SET NULL
                 ))",
 
-                // Update save_games to link with users
-                R"(ALTER TABLE save_games
-                   ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE)"
+                // Note: save_games table now has user_id column built-in (Phase 3 update)
             };
 
             for (const auto& sql : table_sqls) {
@@ -689,5 +734,3 @@ void DatabaseManager::ensureDataLoaded() {
 }
 
 } // namespace db
-
-#endif // ENABLE_DATABASE

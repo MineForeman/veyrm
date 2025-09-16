@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <ctime>
 
-#ifdef ENABLE_DATABASE
-
 namespace db {
 
 PlayerRepository::PlayerRepository(DatabaseManager& db_manager)
@@ -847,5 +845,3 @@ std::chrono::system_clock::time_point PlayerRepository::stringToTimestamp(const 
 }
 
 } // namespace db
-
-#endif // ENABLE_DATABASE

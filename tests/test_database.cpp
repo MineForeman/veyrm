@@ -1,6 +1,4 @@
 #include <catch2/catch_test_macros.hpp>
-
-#ifdef ENABLE_DATABASE
 #include "db/database_manager.h"
 #include "ecs/persistence_system.h"
 #include "ecs/system_manager.h"
@@ -168,15 +166,3 @@ TEST_CASE("Database schema operations", "[database][schema]") {
 
     db.shutdown();
 }
-
-#else
-
-TEST_CASE("Database disabled tests", "[database]") {
-    SECTION("Database support not compiled") {
-        // When database support is disabled, tests should still pass
-        REQUIRE(true);
-        WARN("Database support not compiled in this build");
-    }
-}
-
-#endif // ENABLE_DATABASE

@@ -37,11 +37,9 @@
 #include "config.h"
 
 // Database and authentication
-#ifdef ENABLE_DATABASE
 #include "db/database_manager.h"
 #include "db/player_repository.h"
 #include "auth/authentication_service.h"
-#endif
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -145,23 +143,25 @@ bool runSystemChecks() {
     return allPassed;
 }
 
+// Menu state - needs to be accessible from input handler
+static int menu_selected = 0;
+
 /**
  * Create main menu component
  */
-ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive*,
-                               #ifdef ENABLE_DATABASE
+ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive* screen,
                                [[maybe_unused]] auth::AuthenticationService* auth_service,
-                               #endif
-                               int* user_id, std::string* session_token) {
+                               LoginScreen* login_screen,
+                               int* user_id, std::string* session_token, std::string* username) {
     using namespace ftxui;
 
-    // Menu state
-    static int selected = 0;
+    // Use global menu state
+    int& selected = menu_selected;
 
     // Check if user is authenticated
     bool is_authenticated = (user_id && *user_id > 0);
 
-    // Menu options - dynamically adjust based on auth state
+    // Menu options - authentication required
     static std::vector<std::string> menu_entries;
     menu_entries.clear();
 
@@ -178,14 +178,10 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
             "Quit"
         };
     } else {
+        // If not authenticated, only show login options
         menu_entries = {
-            "New Game (Guest)",
-            "Continue (Local)",
-            #ifdef ENABLE_DATABASE
             "Login",
             "Register",
-            #endif
-            "Settings",
             "About",
             "Quit"
         };
@@ -194,7 +190,8 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     auto menu = Menu(&menu_entries, &selected);
     
     // Create the main component with renderer
-    auto component = Renderer(menu, [=] {
+    // Capture pointers by value so they remain valid
+    auto component = Renderer(menu, [user_id, session_token, username, menu] {
         // ANSI art title - properly centered
         auto title = vbox({
             text(""),
@@ -219,7 +216,7 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
         
         // Clean about box
         Element about_box = emptyElement();
-        if (selected == 3) {  // Show about when About is selected
+        if (menu_selected == 3) {  // Show about when About is selected
             about_box = vbox({
                 text(""),
                 window(text(" About ") | bold, vbox({
@@ -236,9 +233,15 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
         }
         
         // Clean status line with auth status
+        // Re-check authentication state since it might have changed
+        bool is_currently_authenticated = (user_id && *user_id > 0);
         std::string auth_status;
-        if (is_authenticated && user_id && session_token) {
-            auth_status = " | Logged in (ID: " + std::to_string(*user_id) + ")";
+        if (is_currently_authenticated && user_id && session_token) {
+            if (username && !username->empty()) {
+                auth_status = " | Logged in as: " + *username;
+            } else {
+                auth_status = " | Logged in (ID: " + std::to_string(*user_id) + ")";
+            }
         } else {
             auth_status = " | Playing as Guest";
         }
@@ -260,11 +263,15 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     });
     
     // Add event handling
-    component |= CatchEvent([=](Event event) {
+    // Capture pointers explicitly
+    component |= CatchEvent([game_manager, screen, login_screen,
+                            user_id, session_token, username](Event event) {
+        // Re-check authentication state
+        bool is_authenticated = (user_id && *user_id > 0);
         if (event == Event::Return) {
             if (is_authenticated) {
                 // Authenticated menu
-                switch(selected) {
+                switch(menu_selected) {
                     case 0: // New Game
                         game_manager->setState(GameState::PLAYING);
                         break;
@@ -286,6 +293,7 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
                     case 6: // Logout
                         if (user_id) *user_id = 0;
                         if (session_token) session_token->clear();
+                        if (username) username->clear();
                         break;
                     case 7: // About
                         // Toggle about is handled in renderer directly
@@ -295,26 +303,82 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
                         break;
                 }
             } else {
-                // Guest menu
-                int menu_index = 0;
-                if (selected == menu_index++) { // New Game (Guest)
-                    game_manager->setState(GameState::PLAYING);
-                } else if (selected == menu_index++) { // Continue (Local)
-                    game_manager->setState(GameState::SAVE_LOAD);
-                }
-                #ifdef ENABLE_DATABASE
-                else if (selected == menu_index++) { // Login
-                    game_manager->setState(GameState::LOGIN);
-                } else if (selected == menu_index++) { // Register
-                    game_manager->setState(GameState::LOGIN);  // Same screen, different tab
-                }
-                #endif
-                else if (selected == menu_index++) { // Settings
-                    // TODO: Settings menu
-                } else if (selected == menu_index++) { // About
-                    // Toggle about is handled in renderer directly
-                } else if (selected == menu_index++) { // Quit
-                    game_manager->setState(GameState::QUIT);
+                // Unauthenticated menu - only login/register/about/quit
+                switch(menu_selected) {
+                    case 0: // Login
+                        LOG_INFO("Login option selected");
+                        if (login_screen) {
+                            login_screen->setMode(LoginScreen::Mode::LOGIN);
+                            LOG_INFO("Launching LoginScreen in LOGIN mode");
+
+                            // Run the login screen synchronously
+                            auto result = login_screen->run();
+                            if (result == LoginScreen::Result::SUCCESS) {
+                                *user_id = login_screen->getUserId();
+                                *session_token = login_screen->getSessionToken();
+                                // Get username from database
+                                try {
+                                    *username = db::DatabaseManager::getInstance().executeQuery([user_id](db::Connection& conn) {
+                                        auto result = conn.execParams(
+                                            "SELECT username FROM users WHERE id = $1",
+                                            {std::to_string(*user_id)}
+                                        );
+                                        if (result.isOk() && result.numRows() > 0) {
+                                            return result.getValue(0, 0);
+                                        }
+                                        return std::string("");
+                                    });
+                                } catch (const std::exception& e) {
+                                    LOG_ERROR("Failed to get username: " + std::string(e.what()));
+                                }
+                                LOG_INFO("User authenticated successfully: " + *username + " (ID=" + std::to_string(*user_id) + ")");
+                                // Force menu refresh
+                                if (screen) screen->PostEvent(Event::Custom);
+                            }
+                        } else {
+                            LOG_ERROR("LoginScreen not initialized - check database connection");
+                        }
+                        break;
+                    case 1: // Register
+                        LOG_INFO("Register option selected");
+                        if (login_screen) {
+                            login_screen->setMode(LoginScreen::Mode::REGISTER);
+                            LOG_INFO("Launching LoginScreen in REGISTER mode");
+
+                            // Run the login screen synchronously
+                            auto result = login_screen->run();
+                            if (result == LoginScreen::Result::SUCCESS) {
+                                *user_id = login_screen->getUserId();
+                                *session_token = login_screen->getSessionToken();
+                                // Get username from database
+                                try {
+                                    *username = db::DatabaseManager::getInstance().executeQuery([user_id](db::Connection& conn) {
+                                        auto result = conn.execParams(
+                                            "SELECT username FROM users WHERE id = $1",
+                                            {std::to_string(*user_id)}
+                                        );
+                                        if (result.isOk() && result.numRows() > 0) {
+                                            return result.getValue(0, 0);
+                                        }
+                                        return std::string("");
+                                    });
+                                } catch (const std::exception& e) {
+                                    LOG_ERROR("Failed to get username: " + std::string(e.what()));
+                                }
+                                LOG_INFO("User registered and authenticated successfully: " + *username + " (ID=" + std::to_string(*user_id) + ")");
+                                // Force menu refresh
+                                if (screen) screen->PostEvent(Event::Custom);
+                            }
+                        } else {
+                            LOG_ERROR("LoginScreen not initialized - check database connection");
+                        }
+                        break;
+                    case 2: // About
+                        // Toggle about is handled in renderer directly
+                        break;
+                    case 3: // Quit
+                        game_manager->setState(GameState::QUIT);
+                        break;
                 }
             }
             return true;
@@ -364,11 +428,11 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
     // Dummy auth state for dump mode
     int dump_user_id = 0;
     std::string dump_session_token;
+    std::string dump_username;
     Component main_menu = createMainMenu(&game_manager, &screen,
-                                        #ifdef ENABLE_DATABASE
                                         nullptr,  // No auth service in dump mode
-                                        #endif
-                                        &dump_user_id, &dump_session_token);
+                                        nullptr,  // No login screen in dump mode
+                                        &dump_user_id, &dump_session_token, &dump_username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
     SaveLoadScreen save_load_screen(&game_manager);
@@ -554,65 +618,86 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
     // Authentication state
     int user_id = 0;
     std::string session_token;
+    std::string username;  // Store the logged-in username
     std::string player_name = "Hero";
 
-    // Initialize authentication service if database is enabled
-    #ifdef ENABLE_DATABASE
+    // Initialize authentication service (always required)
     std::unique_ptr<db::PlayerRepository> player_repo;
     std::unique_ptr<auth::AuthenticationService> auth_service;
     std::unique_ptr<LoginScreen> login_screen;
     Component login_component;
 
-    if (db::DatabaseManager::getInstance().isInitialized()) {
-        player_repo = std::make_unique<db::PlayerRepository>(db::DatabaseManager::getInstance());
-        auth_service = std::make_unique<auth::AuthenticationService>(*player_repo, db::DatabaseManager::getInstance());
-        login_screen = std::make_unique<LoginScreen>(*auth_service);
-
-        // Set callback for successful login
-        login_screen->setOnLoginSuccess([&user_id, &session_token, &game_manager](int uid, const std::string& token) {
-            user_id = uid;
-            session_token = token;
-            // TODO: Get player name from database
-            game_manager.setState(GameState::MENU);
-        });
-
-        // Note: LoginScreen has its own internal rendering, we'll handle it differently
+    if (!db::DatabaseManager::getInstance().isInitialized()) {
+        LOG_ERROR("Database not initialized - cannot continue");
+        std::cerr << "Error: Database connection required. Please ensure PostgreSQL is running.\n";
+        return;
     }
-    #endif
+
+    player_repo = std::make_unique<db::PlayerRepository>(db::DatabaseManager::getInstance());
+    auth_service = std::make_unique<auth::AuthenticationService>(*player_repo, db::DatabaseManager::getInstance());
+    login_screen = std::make_unique<LoginScreen>(*auth_service);
+
+    // Set callback for successful login
+    login_screen->setOnLoginSuccess([&user_id, &session_token, &game_manager](int uid, const std::string& token) {
+        user_id = uid;
+        session_token = token;
+        // TODO: Get player name from database
+        game_manager.setState(GameState::MENU);
+    });
+
+    // Check if user needs to authenticate first
+    if (user_id == 0 && !test_input) {
+        // Not authenticated and not in test mode - go directly to login
+        LOG_INFO("No authenticated user - launching login screen");
+        auto result = login_screen->run();
+        if (result == LoginScreen::Result::SUCCESS) {
+            user_id = login_screen->getUserId();
+            session_token = login_screen->getSessionToken();
+            // Get username from database
+            try {
+                username = db::DatabaseManager::getInstance().executeQuery([&user_id](db::Connection& conn) {
+                    auto result = conn.execParams(
+                        "SELECT username FROM users WHERE id = $1",
+                        {std::to_string(user_id)}
+                    );
+                    if (result.isOk() && result.numRows() > 0) {
+                        return result.getValue(0, 0);
+                    }
+                    return std::string("");
+                });
+            } catch (const std::exception& e) {
+                LOG_ERROR("Failed to get username: " + std::string(e.what()));
+            }
+            LOG_INFO("User authenticated at startup: " + username + " (ID=" + std::to_string(user_id) + ")");
+        } else {
+            LOG_INFO("Login cancelled or failed - exiting");
+            return;  // Exit if user cancels login
+        }
+    }
 
     // Create components
     Component main_menu = createMainMenu(&game_manager, &screen,
-                                        #ifdef ENABLE_DATABASE
                                         auth_service.get(),
-                                        #endif
-                                        &user_id, &session_token);
+                                        login_screen.get(),
+                                        &user_id, &session_token, &username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
     SaveLoadScreen save_load_screen(&game_manager);
     Component save_load_component = save_load_screen.create();
-    
+
     // State-based renderer
     auto main_renderer = Renderer([&] {
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->Render();
             case GameState::LOGIN:
-                #ifdef ENABLE_DATABASE
-                // LoginScreen handles its own rendering loop
-                // We'll show a placeholder here and handle the actual login separately
+                // LoginScreen will be handled separately
+                // Show a transitional message
                 return vbox({
-                    text("Loading authentication screen...") | center,
+                    text("Launching authentication screen...") | center,
                     separator(),
                     text("Please wait...") | center
                 }) | border | center;
-                #else
-                return vbox({
-                    text("Authentication not available") | center,
-                    text("Database support not enabled") | center,
-                    separator(),
-                    text("Press ESC to return") | center
-                }) | border | center;
-                #endif
             case GameState::PLAYING:
                 return game_component->Render();
             case GameState::PAUSED:
@@ -764,20 +849,47 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
             case GameState::MENU:
                 return main_menu->OnEvent(event);
             case GameState::LOGIN:
-                #ifdef ENABLE_DATABASE
-                // LoginScreen will need special handling - for now just return to menu
-                if (event == Event::Escape) {
-                    game_manager.setState(GameState::MENU);
-                    return true;
+                // Launch login screen when we first enter LOGIN state
+                {
+                    static bool login_launched = false;
+                    if (!login_launched && login_screen) {
+                        login_launched = true;
+
+                        // Determine mode based on which menu item was selected
+                        bool is_register = (menu_selected == 1);  // Register is 2nd item (index 1) in unauthenticated menu
+                        login_screen->setMode(is_register ? LoginScreen::Mode::REGISTER : LoginScreen::Mode::LOGIN);
+
+                        // Stop the refresh thread
+                        refresh_running = false;
+                        refresh_thread.join();
+
+                        // Exit the current screen
+                        screen.ExitLoopClosure()();
+
+                        // Run the login screen
+                        LOG_INFO("Running LoginScreen...");
+                        auto result = login_screen->run();
+
+                        if (result == LoginScreen::Result::SUCCESS) {
+                            user_id = login_screen->getUserId();
+                            session_token = login_screen->getSessionToken();
+                            LOG_INFO("Authentication successful: ID=" + std::to_string(user_id));
+                        }
+
+                        // Reset state
+                        login_launched = false;
+                        game_manager.setState(GameState::MENU);
+
+                        // Restart everything
+                        return true;
+                    }
+
+                    if (event == Event::Escape) {
+                        login_launched = false;
+                        game_manager.setState(GameState::MENU);
+                        return true;
+                    }
                 }
-                // Note: Full login screen integration requires running it as a separate loop
-                // This would be done by exiting the main loop and re-entering after login
-                #else
-                if (event == Event::Escape) {
-                    game_manager.setState(GameState::MENU);
-                    return true;
-                }
-                #endif
                 return false;
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory needs game_component events too
@@ -861,6 +973,48 @@ int main(int argc, char* argv[]) {
     // Load configuration file
     Config& config = Config::getInstance();
     config.loadFromFile("config.yml");
+
+    // Initialize database (REQUIRED)
+    {
+        LOG_INFO("Initializing database connection...");
+        db::DatabaseConfig db_config;
+
+        // Try environment variables first
+        const char* db_host = std::getenv("DB_HOST");
+        const char* db_port = std::getenv("DB_PORT");
+        const char* db_name = std::getenv("DB_NAME");
+        const char* db_user = std::getenv("DB_USER");
+        const char* db_pass = std::getenv("DB_PASS");  // Changed from DB_PASSWORD to match .env
+
+        // Use environment variables or defaults
+        db_config.host = db_host ? db_host : "localhost";
+        db_config.port = db_port ? std::stoi(db_port) : 5432;
+        db_config.database = db_name ? db_name : "veyrm_db";
+        db_config.username = db_user ? db_user : "veyrm_admin";
+        db_config.password = db_pass ? db_pass : "changeme_to_secure_password";
+
+        LOG_INFO("Attempting database connection with:");
+        LOG_INFO("  Host: " + db_config.host);
+        LOG_INFO("  Port: " + std::to_string(db_config.port));
+        LOG_INFO("  Database: " + db_config.database);
+        LOG_INFO("  Username: " + db_config.username);
+        LOG_INFO("  Password: " + std::string(db_config.password.empty() ? "NOT SET" : "SET"));
+
+        try {
+            db::DatabaseManager::getInstance().initialize(db_config);
+            LOG_INFO("Database connection established successfully");
+
+            // Create tables if they don't exist
+            if (db::DatabaseManager::getInstance().createTables()) {
+                LOG_INFO("Database tables verified/created");
+            }
+        } catch (const std::exception& e) {
+            LOG_ERROR("Database initialization failed: " + std::string(e.what()));
+            std::cerr << "Error: Database connection required. Please ensure PostgreSQL is running.\n";
+            std::cerr << "Error details: " << e.what() << "\n";
+            return 1;  // Exit if database is not available
+        }
+    }
     
     // Get default map type from config
     MapType map_type = config.getDefaultMapType();

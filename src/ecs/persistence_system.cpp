@@ -18,7 +18,6 @@ PersistenceSystem::PersistenceSystem() {
 }
 
 bool PersistenceSystem::initialize() {
-#ifdef ENABLE_DATABASE
     db = &db::DatabaseManager::getInstance();
     enabled = db->isInitialized();
 
@@ -29,10 +28,6 @@ bool PersistenceSystem::initialize() {
     } else {
         Log::warn("PersistenceSystem: Database not initialized, persistence disabled");
     }
-#else
-    Log::info("PersistenceSystem: Database support not compiled, persistence disabled");
-    enabled = false;
-#endif
     return enabled;
 }
 
@@ -43,7 +38,6 @@ void PersistenceSystem::update(float /* deltaTime */, World& /* world */) {
 
 bool PersistenceSystem::saveCharacter(World& world, Entity& player_entity,
                                      const std::string& character_id) {
-#ifdef ENABLE_DATABASE
     if (!enabled) return false;
 
     try {
@@ -103,14 +97,10 @@ bool PersistenceSystem::saveCharacter(World& world, Entity& player_entity,
         Log::error("PersistenceSystem: Failed to save character: " + std::string(e.what()));
         return false;
     }
-#else
-    return false;
-#endif
 }
 
 std::optional<Entity*> PersistenceSystem::loadCharacter(World& world,
                                                        const std::string& character_id) {
-#ifdef ENABLE_DATABASE
     if (!enabled) return std::nullopt;
 
     try {
@@ -178,13 +168,9 @@ std::optional<Entity*> PersistenceSystem::loadCharacter(World& world,
         Log::error("PersistenceSystem: Failed to load character: " + std::string(e.what()));
         return std::nullopt;
     }
-#else
-    return std::nullopt;
-#endif
 }
 
 bool PersistenceSystem::saveMonsterTemplate(const nlohmann::json& monster_data) {
-#ifdef ENABLE_DATABASE
     if (!enabled) return false;
 
     try {
@@ -224,13 +210,9 @@ bool PersistenceSystem::saveMonsterTemplate(const nlohmann::json& monster_data) 
         Log::error("PersistenceSystem: Failed to save monster template: " + std::string(e.what()));
         return false;
     }
-#else
-    return false;
-#endif
 }
 
 bool PersistenceSystem::submitScore(const LeaderboardEntry& entry) {
-#ifdef ENABLE_DATABASE
     if (!enabled) return false;
 
     try {
@@ -259,16 +241,12 @@ bool PersistenceSystem::submitScore(const LeaderboardEntry& entry) {
         Log::error("PersistenceSystem: Failed to submit score: " + std::string(e.what()));
         return false;
     }
-#else
-    return false;
-#endif
 }
 
 std::vector<PersistenceSystem::LeaderboardEntry>
 PersistenceSystem::getLeaderboard(int limit, int offset) {
     std::vector<LeaderboardEntry> entries;
 
-#ifdef ENABLE_DATABASE
     if (!enabled) return entries;
 
     try {
@@ -301,14 +279,12 @@ PersistenceSystem::getLeaderboard(int limit, int offset) {
     } catch (const std::exception& e) {
         Log::error("PersistenceSystem: Failed to get leaderboard: " + std::string(e.what()));
     }
-#endif
 
     return entries;
 }
 
 void PersistenceSystem::logEvent(const std::string& event_type,
                                 const nlohmann::json& event_data) {
-#ifdef ENABLE_DATABASE
     if (!enabled) return;
 
     try {
@@ -323,7 +299,6 @@ void PersistenceSystem::logEvent(const std::string& event_type,
     } catch (const std::exception& e) {
         // Don't log errors for telemetry to avoid spam
     }
-#endif
 }
 
 nlohmann::json PersistenceSystem::serializeEntity(World& world, EntityID entity_id) {

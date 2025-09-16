@@ -20,12 +20,27 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
+# Coverage configuration
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "Coverage reporting enabled")
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type forced to Debug for coverage" FORCE)
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    else()
+        message(WARNING "Coverage is only supported with GCC/Clang")
+        set(ENABLE_COVERAGE OFF)
+    endif()
+endif()
+
 message(STATUS "========================================")
 message(STATUS "Veyrm Build Configuration")
 message(STATUS "========================================")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "Coverage: ${ENABLE_COVERAGE}")
 
 # ========================================
 # FetchContent for dependencies
@@ -71,19 +86,13 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# PostgreSQL database support (using libpq directly)
+# PostgreSQL database support (REQUIRED)
 message(STATUS "Configuring PostgreSQL...")
-find_package(PostgreSQL QUIET)
-if(PostgreSQL_FOUND)
-    message(STATUS "Found PostgreSQL: ${PostgreSQL_VERSION}")
-    message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")
-    message(STATUS "PostgreSQL include dirs: ${PostgreSQL_INCLUDE_DIRS}")
-    message(STATUS "Using libpq directly for database connectivity")
-    set(ENABLE_DATABASE ON)
-else()
-    message(WARNING "PostgreSQL not found - database features will be disabled")
-    set(ENABLE_DATABASE OFF)
-endif()
+find_package(PostgreSQL REQUIRED)
+message(STATUS "Found PostgreSQL: ${PostgreSQL_VERSION}")
+message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")
+message(STATUS "PostgreSQL include dirs: ${PostgreSQL_INCLUDE_DIRS}")
+message(STATUS "Using libpq directly for database connectivity")
 
 # OpenSSL for authentication (password hashing)
 message(STATUS "Configuring OpenSSL...")
@@ -208,21 +217,23 @@ add_library(veyrm_core STATIC
     src/ecs/entity_factory.cpp
     src/ecs/data_loader.cpp
     src/ecs/persistence_system.cpp
+    # UI components
+    src/ui/cloud_save_indicator.cpp
 )
 
-# Database source files (conditional)
-if(ENABLE_DATABASE)
-    target_sources(veyrm_core PRIVATE
-        src/db/database_manager.cpp
-        src/db/player_repository.cpp
-    )
+# Database source files (always included)
+target_sources(veyrm_core PRIVATE
+    src/db/database_manager.cpp
+    src/db/player_repository.cpp
+    src/db/save_game_repository.cpp
+    src/services/cloud_save_service.cpp
+)
 
-    # Authentication requires both database and OpenSSL
-    if(ENABLE_AUTH)
-        target_sources(veyrm_core PRIVATE
-            src/auth/authentication_service.cpp
-        )
-    endif()
+# Authentication requires OpenSSL
+if(ENABLE_AUTH)
+    target_sources(veyrm_core PRIVATE
+        src/auth/authentication_service.cpp
+    )
 endif()
 
 # Link libraries to core
@@ -235,21 +246,15 @@ target_link_libraries(veyrm_core
         ryml::ryml
 )
 
-# Link PostgreSQL if available
-if(ENABLE_DATABASE)
-    target_link_libraries(veyrm_core
-        PUBLIC
-            ${PostgreSQL_LIBRARIES}
-    )
-    target_include_directories(veyrm_core
-        PUBLIC
-            ${PostgreSQL_INCLUDE_DIRS}
-    )
-    target_compile_definitions(veyrm_core
-        PUBLIC
-            ENABLE_DATABASE
-    )
-endif()
+# Link PostgreSQL (always required)
+target_link_libraries(veyrm_core
+    PUBLIC
+        ${PostgreSQL_LIBRARIES}
+)
+target_include_directories(veyrm_core
+    PUBLIC
+        ${PostgreSQL_INCLUDE_DIRS}
+)
 
 # Link OpenSSL if available
 if(ENABLE_AUTH)
@@ -316,6 +321,8 @@ install(DIRECTORY data/ DESTINATION share/veyrm/data)
 message(STATUS "========================================")
 message(STATUS "Veyrm Configuration Summary:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Coverage enabled: ${ENABLE_COVERAGE}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "  Executable: ${CMAKE_BINARY_DIR}/bin/veyrm")
 message(STATUS "  Dependencies:")

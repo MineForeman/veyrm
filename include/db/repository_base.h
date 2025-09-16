@@ -59,7 +59,6 @@ protected:
         return uuid;
     }
 
-#ifdef ENABLE_DATABASE
     // Helper to check if table exists
     bool tableExists(const std::string& tableName) {
         return db.executeQuery([&tableName](Connection& conn) {
@@ -88,7 +87,6 @@ protected:
         nlohmann::json j = obj;
         return j.dump();
     }
-#endif
 };
 
 } // namespace db

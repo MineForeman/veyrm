@@ -14,6 +14,7 @@ Phase 2 builds on the foundation established in Phase 1 to add user authenticati
 ## Requirements Overview
 
 ### Phase 2: Authentication (Week 3)
+
 - [ ] **Database Schema**: Design user authentication tables
 - [ ] **PlayerRepository**: Implement user account CRUD operations
 - [ ] **AuthenticationService**: Create authentication service with password hashing
@@ -111,6 +112,7 @@ CREATE INDEX IF NOT EXISTS idx_save_games_player_id ON save_games(player_id);
 ### 2. PlayerRepository Implementation
 
 #### Interface Design
+
 ```cpp
 class PlayerRepository : public RepositoryBase<Player> {
 public:
@@ -138,6 +140,7 @@ public:
 ```
 
 #### Player Model
+
 ```cpp
 struct Player {
     std::string id;
@@ -163,12 +166,14 @@ struct Player {
 ### 3. AuthenticationService Implementation
 
 #### Core Features
+
 - **Password Hashing**: Use Argon2id (recommended) or bcrypt
 - **Session Management**: Secure session tokens with expiration
 - **Rate Limiting**: Prevent brute force attacks
 - **Input Validation**: Secure username/email/password validation
 
 #### Interface Design
+
 ```cpp
 class AuthenticationService {
 private:
@@ -241,12 +246,14 @@ private:
 ### 4. Session Management System
 
 #### Session Storage Strategy
+
 - **In-Memory Cache**: Redis-like cache for active sessions (future)
 - **Database Persistence**: PostgreSQL for session durability
 - **Token Security**: Cryptographically secure random tokens
 - **Expiration Handling**: Automatic cleanup of expired sessions
 
 #### Session Model
+
 ```cpp
 struct PlayerSession {
     std::string id;
@@ -264,6 +271,7 @@ struct PlayerSession {
 ```
 
 #### Session Repository
+
 ```cpp
 class SessionRepository : public RepositoryBase<PlayerSession> {
 public:
@@ -280,6 +288,7 @@ public:
 ### 5. UI Components Implementation
 
 #### Main Menu Integration
+
 ```cpp
 class AuthenticationScreen : public ftxui::ComponentBase {
 public:
@@ -315,6 +324,7 @@ private:
 ```
 
 #### Screen Flow
+
 1. **Main Menu**: Add "Login" and "Create Account" options
 2. **Login Screen**: Username/email + password + remember me
 3. **Registration Screen**: Username + email + password + confirm password
@@ -322,6 +332,7 @@ private:
 5. **Forgot Password**: Email input for password reset
 
 #### UI Design Patterns
+
 - **Form Validation**: Real-time validation with clear error messages
 - **Loading States**: Show loading spinners during authentication
 - **Error Handling**: User-friendly error messages
@@ -330,12 +341,14 @@ private:
 ### 6. Remember Me Functionality
 
 #### Implementation Strategy
+
 - **Extended Sessions**: Longer-lived refresh tokens for "remember me"
 - **Secure Storage**: Store refresh tokens securely
 - **Automatic Login**: Check for valid refresh token on startup
 - **Security Limits**: Limit number of concurrent "remember me" sessions
 
 #### Token Management
+
 - **Session Tokens**: Short-lived (1-4 hours), for active sessions
 - **Refresh Tokens**: Long-lived (30-90 days), for "remember me"
 - **Token Rotation**: Refresh tokens are rotated on use
@@ -344,12 +357,14 @@ private:
 ### 7. Security Considerations
 
 #### Password Security
+
 - **Hashing**: Argon2id with appropriate parameters
 - **Salt**: Unique salt per password
 - **Strength Requirements**: Minimum length, complexity rules
 - **Breach Protection**: Secure storage, no plaintext passwords
 
 #### Session Security
+
 - **HTTPS Only**: All authentication over secure connections (future)
 - **Secure Tokens**: Cryptographically random, sufficient entropy
 - **IP Validation**: Optional IP address validation
@@ -357,6 +372,7 @@ private:
 - **CSRF Protection**: Anti-CSRF tokens for state-changing operations
 
 #### Rate Limiting
+
 - **Login Attempts**: Limit failed login attempts per IP/username
 - **Registration**: Limit account creation per IP
 - **Password Reset**: Limit password reset requests
@@ -364,6 +380,7 @@ private:
 ### 8. Configuration Management
 
 #### Environment Variables
+
 ```bash
 # Authentication settings
 AUTH_JWT_SECRET=<secure-random-key>
@@ -388,6 +405,7 @@ FROM_EMAIL=noreply@veyrm.game
 ```
 
 #### Configuration Class
+
 ```cpp
 struct AuthConfig {
     std::string jwtSecret;
@@ -410,6 +428,7 @@ struct AuthConfig {
 ### 9. Testing Strategy
 
 #### Unit Tests
+
 - **PlayerRepository**: CRUD operations, validation
 - **AuthenticationService**: Registration, login, password hashing
 - **SessionRepository**: Session management, cleanup
@@ -417,12 +436,14 @@ struct AuthConfig {
 - **Input Validation**: Username, email, password validation
 
 #### Integration Tests
+
 - **End-to-End Auth Flow**: Registration → login → session validation
 - **Password Reset Flow**: Request → token validation → password change
 - **Session Management**: Login → refresh → logout
 - **Security Tests**: Rate limiting, invalid inputs, SQL injection attempts
 
 #### Test Data
+
 - **Mock Users**: Test accounts with known credentials
 - **Invalid Data**: Test with invalid emails, weak passwords, etc.
 - **Edge Cases**: Empty fields, extremely long inputs, special characters
@@ -430,6 +451,7 @@ struct AuthConfig {
 ### 10. Build System Integration
 
 #### Database Commands Enhancement
+
 ```bash
 # Add to build.sh
 ./build.sh db migrate-auth    # Run authentication schema migration
@@ -439,6 +461,7 @@ struct AuthConfig {
 ```
 
 #### Conditional Compilation
+
 ```cpp
 #ifdef ENABLE_AUTHENTICATION
     // Authentication code
@@ -452,6 +475,7 @@ struct AuthConfig {
 ## Implementation Timeline
 
 ### Week 3: Phase 2 Implementation
+
 - **Day 1-2**: Database schema design and migration
 - **Day 3-4**: PlayerRepository and basic CRUD operations
 - **Day 5-7**: AuthenticationService with password hashing
@@ -462,6 +486,7 @@ struct AuthConfig {
 - **Day 20-21**: Documentation and polishing
 
 ### Dependencies
+
 - **Phase 1**: Must be complete (database foundation)
 - **External Libraries**:
   - Argon2 or bcrypt for password hashing
@@ -469,6 +494,7 @@ struct AuthConfig {
 - **Testing**: Extend existing test framework
 
 ### Success Criteria
+
 - [ ] Users can create accounts with secure passwords
 - [ ] Users can log in with username/email and password
 - [ ] Sessions are managed securely with proper expiration
@@ -483,17 +509,20 @@ struct AuthConfig {
 ## Future Enhancements (Phase 3+)
 
 ### Phase 3 Integration Points
+
 - **Cloud Saves**: Link save games to authenticated users
 - **Profile Management**: User preferences, avatar management
 - **Social Features**: Friend systems, shared leaderboards
 
 ### Security Enhancements
+
 - **Two-Factor Authentication**: TOTP support
 - **OAuth Integration**: Google, GitHub, Discord login
 - **Email Verification**: Complete email verification flow
 - **Account Recovery**: Secure account recovery options
 
 ### Advanced Features
+
 - **Admin Panel**: User management interface
 - **Audit Logging**: Track authentication events
 - **Advanced Session Management**: Device management, location tracking
@@ -504,18 +533,21 @@ struct AuthConfig {
 ## Risk Mitigation
 
 ### Security Risks
+
 - **Data Breaches**: Proper password hashing, secure token storage
 - **Session Hijacking**: Secure token generation, HTTPS enforcement
 - **Brute Force Attacks**: Rate limiting, account lockout
 - **SQL Injection**: Parameterized queries, input validation
 
 ### User Experience Risks
+
 - **Complex Registration**: Keep registration simple and optional
 - **Lost Passwords**: Clear password reset flow
 - **Account Lockout**: Fair rate limiting with clear recovery
 - **Offline Play**: Ensure game works without authentication
 
 ### Technical Risks
+
 - **Database Performance**: Proper indexing, query optimization
 - **Session Storage**: Efficient session cleanup, memory management
 - **Password Migration**: Secure migration of existing save files

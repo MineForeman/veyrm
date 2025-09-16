@@ -4,6 +4,7 @@
 #include "message_log.h"
 #include "log.h"
 #include "turn_manager.h"
+#include "services/cloud_save_service.h"
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -632,4 +633,71 @@ bool GameSerializer::deleteSave(const std::string& filename) {
 bool GameSerializer::deleteSave(int slot) {
     std::string filename = getSlotFilename(slot);
     return deleteSave(filename);
+}
+
+// === Cloud Save Integration ===
+
+bool GameSerializer::saveGameWithCloud(int slot, bool upload_to_cloud) {
+    // First save locally
+    if (!saveGame(slot)) {
+        LOG_ERROR("Failed to save game locally");
+        return false;
+    }
+
+    // Then upload to cloud if enabled and requested
+    if (upload_to_cloud && cloud_service && cloud_service->isAuthenticated()) {
+        if (!cloud_service->saveToCloud(slot, true)) {
+            LOG_INFO("Failed to upload save to cloud, but local save succeeded");
+            // Don't return false since local save worked
+        } else {
+            LOG_INFO("Save uploaded to cloud successfully");
+        }
+    }
+
+    return true;
+}
+
+bool GameSerializer::loadGameWithCloud(int slot, bool prefer_cloud) {
+    if (cloud_service && cloud_service->isAuthenticated()) {
+        // Try to load from cloud with preference setting
+        if (cloud_service->loadFromCloud(slot, prefer_cloud)) {
+            // Cloud load handles both cloud and local versions
+            return loadGame(slot);
+        }
+    }
+
+    // Fall back to local load
+    return loadGame(slot);
+}
+
+bool GameSerializer::syncWithCloud() {
+    if (!cloud_service) {
+        LOG_ERROR("Cloud service not initialized");
+        return false;
+    }
+
+    if (!cloud_service->isAuthenticated()) {
+        LOG_INFO("Not authenticated - cloud sync requires login");
+        return false;
+    }
+
+    auto result = cloud_service->syncAllSaves();
+    if (result.success) {
+        LOG_INFO("Cloud sync successful - " +
+                 std::to_string(result.saves_uploaded) + " uploaded, " +
+                 std::to_string(result.saves_downloaded) + " downloaded");
+    } else {
+        LOG_ERROR("Cloud sync failed with " +
+                 std::to_string(result.errors.size()) + " errors");
+    }
+
+    return result.success;
+}
+
+SyncStatus GameSerializer::getCloudSyncStatus(int slot) {
+    if (!cloud_service) {
+        return SyncStatus::OFFLINE;
+    }
+
+    return cloud_service->getSyncStatus(slot);
 }

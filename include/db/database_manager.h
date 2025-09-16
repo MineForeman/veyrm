@@ -10,9 +10,7 @@
 #include <chrono>
 #include <vector>
 
-#ifdef ENABLE_DATABASE
 #include <libpq-fe.h>
-#endif
 
 namespace db {
 
@@ -36,8 +34,6 @@ struct DatabaseConfig {
                " password=" + password;
     }
 };
-
-#ifdef ENABLE_DATABASE
 
 // RAII wrapper for PGresult
 class Result {
@@ -337,26 +333,5 @@ public:
     QueryException(const std::string& query, const std::string& error)
         : DatabaseException("Query failed: " + error + "\nQuery: " + query) {}
 };
-
-#else // !ENABLE_DATABASE
-
-// Stub implementation when database is disabled
-class DatabaseManager {
-public:
-    static DatabaseManager& getInstance() {
-        static DatabaseManager instance;
-        return instance;
-    }
-
-    void initialize(const DatabaseConfig&) {}
-    void shutdown() {}
-    bool isInitialized() const { return false; }
-    void runMigrations() {}
-    int getCurrentSchemaVersion() { return 0; }
-    bool testConnection() { return false; }
-    std::string getDatabaseVersion() { return "Database disabled"; }
-};
-
-#endif // ENABLE_DATABASE
 
 } // namespace db

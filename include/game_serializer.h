@@ -14,6 +14,7 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 #include "serializable.h"
+#include "services/sync_status.h"
 
 using json = nlohmann::json;
 
@@ -38,10 +39,12 @@ class MessageLog;
  * - Version compatibility checking
  * - Complete game state serialization
  * - Error handling and validation
+ * - Cloud save integration
  *
  * @see ISerializable
  * @see SaveInfo
  * @see SaveLoadScreen
+ * @see CloudSaveService
  */
 class GameSerializer {
 public:
@@ -75,6 +78,20 @@ public:
     // Version info
     static constexpr const char* SAVE_VERSION = "1.0.0";
     static constexpr const char* GAME_VERSION = "0.12.1";
+
+    // Cloud save integration
+    void setCloudSaveService(class CloudSaveService* service) { cloud_service = service; }
+    void setUserId(int user_id) { current_user_id = user_id; }
+    int getUserId() const { return current_user_id; }
+
+    // Enhanced save/load with cloud support
+    bool saveGameWithCloud(int slot, bool upload_to_cloud = true);
+    bool loadGameWithCloud(int slot, bool prefer_cloud = true);
+
+    // Sync operations
+    bool syncWithCloud();
+    SyncStatus getCloudSyncStatus(int slot);
+    bool isCloudSyncEnabled() const { return cloud_service != nullptr; }
 
 private:
     // Helper methods for serialization
@@ -113,4 +130,8 @@ private:
     // int auto_save_counter = 0;  // For future auto-save feature
     int current_auto_save_slot = -1;
     std::chrono::time_point<std::chrono::steady_clock> session_start_time;
+
+    // Cloud save support
+    class CloudSaveService* cloud_service = nullptr;
+    int current_user_id = 0;
 };

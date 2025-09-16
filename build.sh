@@ -19,6 +19,32 @@ BUILD_DIR="${PROJECT_ROOT}/build"
 EXECUTABLE="${BUILD_DIR}/bin/veyrm"
 TEST_EXECUTABLE="${BUILD_DIR}/bin/veyrm_tests"
 
+# Source .env file if it exists for database configuration
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+    set -a  # Export all variables
+    source "${PROJECT_ROOT}/.env"
+    set +a  # Stop exporting
+    echo -e "${GREEN}Loaded environment variables from .env${NC}"
+fi
+
+# Help CMake find PostgreSQL on macOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Check common PostgreSQL installation paths
+    if [ -d "/opt/homebrew/opt/postgresql@16" ]; then
+        export PostgreSQL_ROOT="/opt/homebrew/opt/postgresql@16"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/usr/local/opt/postgresql@16" ]; then
+        export PostgreSQL_ROOT="/usr/local/opt/postgresql@16"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/opt/homebrew/opt/postgresql" ]; then
+        export PostgreSQL_ROOT="/opt/homebrew/opt/postgresql"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/usr/local/opt/postgresql" ]; then
+        export PostgreSQL_ROOT="/usr/local/opt/postgresql"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    fi
+fi
+
 # Function to print header
 print_header() {
     echo -e "${CYAN}=========================================${NC}"
@@ -687,6 +713,75 @@ EOF
     fi
 }
 
+# Function to lint markdown files
+lint_markdown() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Markdown Linter${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if markdownlint is installed
+    if ! command -v markdownlint &> /dev/null; then
+        echo -e "${RED}markdownlint not found. Installing...${NC}"
+        npm install -g markdownlint-cli
+    fi
+
+    echo
+    echo -e "${BOLD}Markdown Lint Options:${NC}"
+    echo -e "${BLUE}1)${NC} Check all markdown files (no changes)"
+    echo -e "${BLUE}2)${NC} Fix all markdown files automatically"
+    echo -e "${BLUE}3)${NC} Check specific file"
+    echo -e "${BLUE}4)${NC} Fix specific file"
+    echo -e "${BLUE}5)${NC} Check CLAUDE.md"
+    echo -e "${BLUE}6)${NC} Fix CLAUDE.md"
+    echo -e "${BLUE}0)${NC} Back to main menu"
+    echo
+    read -p "Select option: " lint_option
+
+    case $lint_option in
+        1)
+            echo -e "${YELLOW}Checking all markdown files...${NC}"
+            markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        2)
+            echo -e "${YELLOW}Fixing all markdown files...${NC}"
+            markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        3)
+            read -p "Enter file path: " file_path
+            echo -e "${YELLOW}Checking ${file_path}...${NC}"
+            markdownlint "${file_path}" --config .markdownlint.json || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        4)
+            read -p "Enter file path: " file_path
+            echo -e "${YELLOW}Fixing ${file_path}...${NC}"
+            markdownlint "${file_path}" --config .markdownlint.json --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        5)
+            echo -e "${YELLOW}Checking CLAUDE.md...${NC}"
+            markdownlint "CLAUDE.md" --config .markdownlint.json || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        6)
+            echo -e "${YELLOW}Fixing CLAUDE.md...${NC}"
+            markdownlint "CLAUDE.md" --config .markdownlint.json --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        0)
+            return
+            ;;
+        *)
+            echo -e "${RED}Invalid option${NC}"
+            ;;
+    esac
+
+    echo
+    read -p "Press Enter to continue..."
+}
+
 # Function to create a release
 create_release() {
     echo -e "${CYAN}=========================================${NC}"
@@ -953,6 +1048,121 @@ run_tests() {
     fi
 }
 
+# Function to build with coverage
+build_coverage() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Building with Coverage${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Clean previous coverage data
+    echo -e "${YELLOW}Cleaning previous coverage data...${NC}"
+    find "${BUILD_DIR}" -name "*.gcda" -delete 2>/dev/null || true
+    find "${BUILD_DIR}" -name "*.gcno" -delete 2>/dev/null || true
+
+    # Configure with coverage enabled
+    echo -e "${YELLOW}Configuring with coverage enabled...${NC}"
+    cd "${BUILD_DIR}" || exit 1
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+
+    # Build the project
+    echo -e "${YELLOW}Building project...${NC}"
+    cmake --build . --parallel "${JOBS}"
+
+    # Run tests to generate coverage data
+    echo -e "${YELLOW}Running tests to generate coverage data...${NC}"
+    "${BUILD_DIR}/bin/veyrm_tests"
+
+    echo -e "${GREEN}Coverage build complete!${NC}"
+    echo -e "${YELLOW}Run './build.sh coverage-report' to generate HTML report${NC}"
+}
+
+# Function to generate coverage report
+generate_coverage_report() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Coverage Report Generation${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check for lcov
+    if ! command -v lcov &> /dev/null; then
+        echo -e "${RED}Error: lcov is not installed${NC}"
+        echo -e "${YELLOW}Install with:${NC}"
+        echo -e "${YELLOW}  macOS: brew install lcov${NC}"
+        echo -e "${YELLOW}  Linux: sudo apt install lcov${NC}"
+        exit 1
+    fi
+
+    # Check for genhtml
+    if ! command -v genhtml &> /dev/null; then
+        echo -e "${RED}Error: genhtml is not installed (part of lcov)${NC}"
+        exit 1
+    fi
+
+    # Check if coverage data exists
+    if ! find "${BUILD_DIR}" -name "*.gcda" 2>/dev/null | grep -q .; then
+        echo -e "${RED}No coverage data found!${NC}"
+        echo -e "${YELLOW}Run './build.sh coverage' first to build with coverage and run tests${NC}"
+        exit 1
+    fi
+
+    local COVERAGE_DIR="${BUILD_DIR}/coverage"
+    mkdir -p "${COVERAGE_DIR}"
+
+    echo -e "${YELLOW}Capturing coverage data...${NC}"
+    lcov --capture \
+         --directory "${BUILD_DIR}" \
+         --output-file "${COVERAGE_DIR}/coverage.info" \
+         --rc branch_coverage=1 \
+         --ignore-errors deprecated,mismatch,inconsistent,gcov,source,unsupported,format,count,path,empty
+
+    # Remove external libraries and test files from coverage
+    echo -e "${YELLOW}Filtering coverage data...${NC}"
+    lcov --remove "${COVERAGE_DIR}/coverage.info" \
+         '/usr/*' \
+         '/Applications/*' \
+         '*/build/_deps/*' \
+         '*/tests/*' \
+         '*/test_*.cpp' \
+         '*/v1/*' \
+         '*/_deps/*' \
+         '*/catch2/*' \
+         '*/ftxui/*' \
+         '*/json/*' \
+         '*/ryml/*' \
+         --output-file "${COVERAGE_DIR}/coverage_filtered.info" \
+         --rc branch_coverage=1 \
+         --ignore-errors deprecated,mismatch,inconsistent,source,format,unused,path
+
+    # Generate HTML report
+    echo -e "${YELLOW}Generating HTML report...${NC}"
+    genhtml "${COVERAGE_DIR}/coverage_filtered.info" \
+            --output-directory "${COVERAGE_DIR}/html" \
+            --branch-coverage \
+            --function-coverage \
+            --title "Veyrm Code Coverage Report" \
+            --legend \
+            --ignore-errors category,mismatch,inconsistent \
+            --show-details \
+            --highlight \
+            --demangle-cpp
+
+    # Print summary
+    echo -e "${GREEN}=========================================${NC}"
+    echo -e "${GREEN}Coverage report generated successfully!${NC}"
+    echo -e "${GREEN}=========================================${NC}"
+    lcov --summary "${COVERAGE_DIR}/coverage_filtered.info" --rc lcov_branch_coverage=1
+
+    echo
+    echo -e "${CYAN}HTML Report: ${COVERAGE_DIR}/html/index.html${NC}"
+
+    # Open in browser on macOS
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo -e "${YELLOW}Opening report in browser...${NC}"
+        open "${COVERAGE_DIR}/html/index.html"
+    else
+        echo -e "${YELLOW}Open ${COVERAGE_DIR}/html/index.html in your browser to view the report${NC}"
+    fi
+}
+
 # Function to run dump mode test
 run_dump_test() {
     # Don't interpret escape sequences - pass them as-is
@@ -1109,6 +1319,9 @@ show_menu() {
     echo -e "${BLUE}13)${NC} Generate Class Diagrams"
     echo -e "${BLUE}14)${NC} Generate Doxygen Docs"
     echo -e "${BLUE}15)${NC} Create Release"
+    echo -e "${BLUE}16)${NC} Lint Markdown Files"
+    echo -e "${BLUE}17)${NC} Build with Coverage"
+    echo -e "${BLUE}18)${NC} Generate Coverage Report"
     echo -e "${BLUE}q)${NC} Quit"
     echo
 }
@@ -1123,6 +1336,8 @@ show_help() {
     echo "  clean                  Clean build directory"
     echo "  run [map_type]         Run the game (optionally specify map)"
     echo "  test                   Run tests"
+    echo "  coverage               Build with coverage enabled and run tests"
+    echo "  coverage-report        Generate HTML coverage report"
     echo "  dump [keystrokes]      Run dump mode test (frame-by-frame)"
     echo "  keys <keystrokes>      Run game with automated keys"
     echo
@@ -1139,6 +1354,7 @@ show_help() {
     echo "  diagram                Generate class diagrams with graphviz"
     echo "  docs|doxygen           Generate API documentation with Doxygen"
     echo "  release [type]         Create a release (patch|minor|major|custom)"
+    echo "  lint|md [fix]          Check/fix markdown files (use 'fix' to auto-fix)"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -1156,6 +1372,9 @@ show_help() {
     echo "  $0 keys '\\n\\d\\d\\dq'    # Run game with automated keys (Enter, Down 3x, quit)"
     echo "  $0 gource             # Create Gource video"
     echo "  $0 reset              # Reset terminal"
+    echo "  $0 lint               # Check markdown files for issues"
+    echo "  $0 lint fix           # Auto-fix markdown issues"
+    echo "  $0 lint CLAUDE.md fix # Fix specific file"
     echo
 }
 
@@ -1202,6 +1421,14 @@ main() {
             print_header
             run_tests
             ;;
+        coverage)
+            print_header
+            build_coverage
+            ;;
+        coverage-report)
+            print_header
+            generate_coverage_report
+            ;;
         dump)
             print_header
             # Pass the keystrokes without interpreting escapes
@@ -1241,6 +1468,31 @@ main() {
         release)
             print_header
             create_release "${2}"
+            ;;
+        lint|markdown|md)
+            # Handle markdown linting
+            if [ "$2" = "fix" ] || [ "$2" = "--fix" ]; then
+                echo -e "${YELLOW}Fixing all markdown files...${NC}"
+                markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore --fix
+                echo -e "${GREEN}Auto-fix complete${NC}"
+            elif [ "$2" = "check" ] || [ "$2" = "--check" ] || [ -z "$2" ]; then
+                echo -e "${YELLOW}Checking all markdown files...${NC}"
+                markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore || true
+                echo -e "${GREEN}Check complete${NC}"
+            elif [ -f "$2" ]; then
+                # If second argument is a file, lint that file
+                if [ "$3" = "fix" ] || [ "$3" = "--fix" ]; then
+                    echo -e "${YELLOW}Fixing ${2}...${NC}"
+                    markdownlint "${2}" --config .markdownlint.json --fix
+                    echo -e "${GREEN}Auto-fix complete${NC}"
+                else
+                    echo -e "${YELLOW}Checking ${2}...${NC}"
+                    markdownlint "${2}" --config .markdownlint.json || true
+                    echo -e "${GREEN}Check complete${NC}"
+                fi
+            else
+                lint_markdown
+            fi
             ;;
         db)
             print_header
@@ -1334,6 +1586,15 @@ main() {
                         ;;
                     15)
                         create_release
+                        ;;
+                    16)
+                        lint_markdown
+                        ;;
+                    17)
+                        build_coverage
+                        ;;
+                    18)
+                        generate_coverage_report
                         ;;
                     q|Q)
                         echo -e "${GREEN}Goodbye!${NC}"

@@ -43,8 +43,6 @@ void loadEnvironment() {
     }
 }
 
-#ifdef ENABLE_DATABASE
-
 // Test fixture for authentication tests
 class AuthTestFixture {
 public:
@@ -650,12 +648,3 @@ TEST_CASE("Authentication Service - Input Validation", "[auth]") {
         REQUIRE(!valid_password.has_value());
     }
 }
-
-#else // !ENABLE_DATABASE
-
-TEST_CASE("Authentication tests skipped - database not enabled", "[auth][skip]") {
-    WARN("Authentication tests require database support. Enable PostgreSQL to run these tests.");
-    REQUIRE(true); // Dummy assertion to avoid empty test
-}
-
-#endif // ENABLE_DATABASE
