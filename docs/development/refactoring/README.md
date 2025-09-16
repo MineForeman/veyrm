@@ -19,6 +19,13 @@ Documentation of refactoring efforts and architectural improvements.
 - Created navigation structure
 - Updated all references
 
+## Current Refactoring
+
+### ECS Migration (In Progress)
+- [Legacy System Removal Plan](LEGACY_REMOVAL_PLAN.md) - Systematic removal of inheritance-based entity system
+- Branch: `refactor-optimize`
+- Status: Transitioning from legacy entities to pure ECS
+
 ## Future Refactoring
 
 ### Code Refactoring (Planned)

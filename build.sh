@@ -356,6 +356,111 @@ EOF
     fi
 }
 
+# Function to generate Doxygen documentation
+generate_doxygen() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Doxygen Documentation Generator${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if doxygen is installed
+    if ! command -v doxygen &> /dev/null; then
+        echo -e "${RED}Error: doxygen is not installed${NC}"
+        echo -e "${YELLOW}Install with: brew install doxygen (macOS)${NC}"
+        echo -e "${YELLOW}         or: sudo apt-get install doxygen (Linux)${NC}"
+        exit 1
+    fi
+
+    # Create docs directories if they don't exist
+    mkdir -p "${PROJECT_ROOT}/docs/reference/api/generated"
+
+    echo -e "${YELLOW}Creating Doxyfile configuration...${NC}"
+
+    # Create Doxyfile
+    cat > "${PROJECT_ROOT}/Doxyfile" << 'EOF'
+# Doxygen configuration for Veyrm
+
+# Project settings
+PROJECT_NAME           = "Veyrm"
+PROJECT_NUMBER         = "1.0.0"
+PROJECT_BRIEF          = "Modern C++ Roguelike Game"
+OUTPUT_DIRECTORY       = docs/reference/api/generated
+
+# Input settings
+INPUT                  = include src
+FILE_PATTERNS          = *.h *.hpp *.cpp *.cc
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */build/* */tests/*
+
+# Build settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+# Output settings
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+
+# HTML settings
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+HTML_TIMESTAMP         = YES
+HTML_DYNAMIC_SECTIONS  = YES
+
+# Graph settings (if graphviz is available)
+HAVE_DOT               = YES
+CLASS_DIAGRAMS         = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = YES
+TEMPLATE_RELATIONS     = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_TRANSPARENT        = YES
+
+# Quiet output
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+EOF
+
+    echo -e "${YELLOW}Generating documentation...${NC}"
+    cd "${PROJECT_ROOT}"
+    doxygen Doxyfile 2>&1 | grep -v "warning: .* is not documented" || true
+
+    if [ $? -eq 0 ] || [ -f "${PROJECT_ROOT}/docs/reference/api/generated/html/index.html" ]; then
+        echo
+        echo -e "${GREEN}Documentation generated successfully!${NC}"
+        echo -e "${CYAN}Output directory: ${PROJECT_ROOT}/docs/reference/api/generated/html${NC}"
+        echo
+
+        # Open in browser if on macOS
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            echo -e "${YELLOW}Opening documentation in browser...${NC}"
+            open "${PROJECT_ROOT}/docs/reference/api/generated/html/index.html"
+        else
+            echo -e "${YELLOW}Open in browser:${NC}"
+            echo "  file://${PROJECT_ROOT}/docs/reference/api/generated/html/index.html"
+        fi
+    else
+        echo -e "${RED}Failed to generate documentation${NC}"
+        exit 1
+    fi
+}
+
 # Function to create a release
 create_release() {
     echo -e "${CYAN}=========================================${NC}"
@@ -762,6 +867,7 @@ show_menu() {
     echo -e "${CYAN}═══════════════════════════════════════════════════════${NC}"
     echo
     echo -e "${BOLD}Main Menu:${NC}"
+    echo -e "${GREEN}Enter)${NC} Run Game ${GREEN}(default)${NC}"
     echo -e "${BLUE}1)${NC} Build (Debug)"
     echo -e "${BLUE}2)${NC} Build (Release)"
     echo -e "${BLUE}3)${NC} Clean Build (Debug)"
@@ -775,8 +881,9 @@ show_menu() {
     echo -e "${BLUE}11)${NC} Clear Logs"
     echo -e "${BLUE}12)${NC} Create Gource Video"
     echo -e "${BLUE}13)${NC} Generate Class Diagrams"
-    echo -e "${BLUE}14)${NC} Create Release"
-    echo -e "${BLUE}0)${NC} Exit"
+    echo -e "${BLUE}14)${NC} Generate Doxygen Docs"
+    echo -e "${BLUE}15)${NC} Create Release"
+    echo -e "${BLUE}q)${NC} Quit"
     echo
 }
 
@@ -796,8 +903,8 @@ show_help() {
     echo "  reset                  Reset terminal"
     echo "  clearlog               Clear all log files"
     echo "  gource [--clean]       Create Gource video (--clean deletes old videos)"
-    echo "  diagram                Generate class diagrams with Doxygen"
-    echo "  docs                   Generate API documentation with Doxygen"
+    echo "  diagram                Generate class diagrams with graphviz"
+    echo "  docs|doxygen           Generate API documentation with Doxygen"
     echo "  release [type]         Create a release (patch|minor|major|custom)"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
@@ -813,7 +920,7 @@ show_help() {
     echo "  $0 test               # Run tests"
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
-    echo "  $0 keys '\\njjjq'      # Run game with automated keys"
+    echo "  $0 keys '\\n\\d\\d\\dq'    # Run game with automated keys (Enter, Down 3x, quit)"
     echo "  $0 gource             # Create Gource video"
     echo "  $0 reset              # Reset terminal"
     echo
@@ -871,7 +978,7 @@ main() {
             if [ -z "$2" ]; then
                 echo -e "${RED}Error: keystrokes required${NC}"
                 echo "Usage: $0 keys <keystrokes>"
-                echo "Example: $0 keys '\\njjjq'"
+                echo "Example: $0 keys '\\n\\d\\d\\dq'"
                 exit 1
             fi
             print_header
@@ -894,19 +1001,9 @@ main() {
         diagram)
             class_diagram
             ;;
-        docs)
+        docs|doxygen)
             print_header
-            echo -e "${YELLOW}Generating Doxygen documentation...${NC}"
-            if command -v doxygen &> /dev/null; then
-                doxygen Doxyfile
-                echo -e "${GREEN}Documentation generated in docs/reference/api/generated/${NC}"
-                echo -e "${CYAN}Open docs/reference/api/generated/html/index.html to view${NC}"
-            else
-                echo -e "${RED}Error: Doxygen not installed${NC}"
-                echo -e "Install with: brew install doxygen graphviz (macOS)"
-                echo -e "         or: sudo apt-get install doxygen graphviz (Linux)"
-                exit 1
-            fi
+            generate_doxygen
             ;;
         release)
             print_header
@@ -920,8 +1017,12 @@ main() {
             print_header
             while true; do
                 show_menu
-                read -p "Select option: " choice
+                read -p "Select option (Enter to run game, q to quit): " choice
                 case $choice in
+                    "")
+                        # Default action: Run Game
+                        run_game
+                        ;;
                     1)
                         configure_project "Debug"
                         build_project
@@ -971,9 +1072,12 @@ main() {
                         class_diagram
                         ;;
                     14)
+                        generate_doxygen
+                        ;;
+                    15)
                         create_release
                         ;;
-                    0)
+                    q|Q)
                         echo -e "${GREEN}Goodbye!${NC}"
                         exit 0
                         ;;

@@ -4,23 +4,19 @@
 #include "message_log.h"
 #include "frame_stats.h"
 #include "map.h"
+#include "room.h"
 #include "color_scheme.h"
 #include "map_generator.h"
 #include "map_validator.h"
-#include "entity_manager.h"
-#include "player.h"
 #include "fov.h"
 #include "map_memory.h"
 #include "config.h"
-#include "spawn_manager.h"
-#include "monster_factory.h"
-#include "monster_ai.h"
-#include "monster.h"
-#include "combat_system.h"
 #include "log.h"
-#include "item_manager.h"
-#include "item_factory.h"
+#include "ecs/position_component.h"
+#include "ecs/data_loader.h"
+#include "ecs/health_component.h"
 #include "game_serializer.h"
+#include "ecs/game_world.h"
 #include <random>
 
 GameManager::GameManager(MapType initial_map) 
@@ -31,30 +27,25 @@ GameManager::GameManager(MapType initial_map)
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
-      entity_manager(std::make_unique<EntityManager>()),
-      spawn_manager(std::make_unique<SpawnManager>(this)),
-      monster_ai(std::make_unique<MonsterAI>()),
-      combat_system(std::make_unique<CombatSystem>(message_log.get())),
-      item_manager(std::make_unique<ItemManager>(map.get())),
       serializer(std::make_unique<GameSerializer>(this)),
       debug_mode(false) {
     
     // Initialize color scheme with auto-detection
     ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
     
-    // Load monster data
-    MonsterFactory::getInstance().loadFromFile(
-        Config::getInstance().getDataFilePath("monsters.json")
+    // Load ECS data (includes monsters and items)
+    ecs::DataLoader::getInstance().loadAllData(
+        Config::getInstance().getDataDir()
     );
 
-    // Load item data
-    ItemFactory::getInstance().loadFromJson(
-        Config::getInstance().getDataFilePath("items.json")
-    );
-    
-    // Initialize map with MapGenerator
+    // Item data is now loaded by ECS DataLoader in loadAllData()
+
+    // Initialize ECS system BEFORE map (so it exists when we create the player)
+    initializeECS(false);  // false = don't migrate existing entities yet
+
+    // Initialize map with MapGenerator (this creates the player)
     initializeMap(initial_map);
-    
+
     // Don't set anything visible initially - FOV will handle visibility
 }
 
@@ -76,7 +67,10 @@ void GameManager::initializeMap(MapType type) {
     } else {
         MapGenerator::generate(*map, type);
     }
-    
+
+    // Update stairs based on current depth
+    MapGenerator::updateStairsForDepth(*map, current_depth);
+
     // Validate the map
     auto validation = MapValidator::validate(*map);
     if (!validation.valid) {
@@ -91,9 +85,12 @@ void GameManager::initializeMap(MapType type) {
         message_log->addSystemMessage("Map Warning: " + warning);
     }
     
-    // Clear existing entities
-    entity_manager->clear();
-    
+    // Clear existing entities from previous level
+    if (use_ecs && ecs_world) {
+        ecs_world->clearEntities();
+        LOG_INFO("Cleared all entities for level transition");
+    }
+
     // Set player spawn point
     Point spawn = MapGenerator::getDefaultSpawnPoint(type);
     
@@ -105,62 +102,43 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Create player entity at spawn point
-    auto player = entity_manager->createPlayer(spawn.x, spawn.y);
-    
-    // Spawn initial monsters after player placement
-    spawn_manager->spawnInitialMonsters(*map, *entity_manager, player.get(), current_depth);
-    
-    // Update deprecated variables for compatibility
-    if (player) {
-        player_x = player->x;
-        player_y = player->y;
-        player_hp = player->hp;
-        player_max_hp = player->max_hp;
+    if (use_ecs && ecs_world) {
+        // Create player using ECS only
+        [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
+
+        // Spawn monsters and items in rooms
+        spawnEntities();
+    } else {
+        LOG_ERROR("Cannot create player without ECS enabled");
+    }
+
+    // Sync player position from ECS for compatibility
+    if (use_ecs && ecs_world) {
+        // Get player position from ECS
+        auto player_entity = ecs_world->getPlayerEntity();
+        if (player_entity) {
+            auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+            auto* health = player_entity->getComponent<ecs::HealthComponent>();
+            if (pos) {
+                player_x = pos->position.x;
+                player_y = pos->position.y;
+            }
+            if (health) {
+                player_hp = health->hp;
+                player_max_hp = health->max_hp;
+            }
+        }
+    } else {
+        player_x = 0;
+        player_y = 0;
+        player_hp = 0;
+        player_max_hp = 0;
     }
     
     // Log map statistics
     message_log->addSystemMessage("Map: " + std::to_string(validation.walkable_tiles) +
                                  " walkable tiles, " + std::to_string(validation.room_count) +
                                  " rooms");
-
-    // Spawn initial items
-    if (item_manager) {
-        item_manager->clear();  // Clear any existing items
-
-        // Spawn items in rooms
-        const auto& rooms = map->getRooms();
-        if (!rooms.empty()) {
-            // Spawn 5-10 random items
-            int item_count = 5 + (rand() % 6);
-            for (int i = 0; i < item_count; i++) {
-                const Room& room = rooms[rand() % rooms.size()];
-
-                // Find random position in room
-                int x = room.x + 1 + (rand() % (room.width - 2));
-                int y = room.y + 1 + (rand() % (room.height - 2));
-
-                // Make sure position is walkable and not occupied
-                if (map->isWalkable(x, y)) {
-                    item_manager->spawnRandomItem(x, y, current_depth);
-                }
-            }
-
-            // Spawn some gold piles
-            int gold_count = 3 + (rand() % 4);
-            for (int i = 0; i < gold_count; i++) {
-                const Room& room = rooms[rand() % rooms.size()];
-                int x = room.x + 1 + (rand() % (room.width - 2));
-                int y = room.y + 1 + (rand() % (room.height - 2));
-
-                if (map->isWalkable(x, y)) {
-                    int amount = 10 + (rand() % 41);  // 10-50 gold
-                    item_manager->spawnGold(x, y, amount);
-                }
-            }
-
-            LOG_INFO("Spawned " + std::to_string(item_manager->getItemCount()) + " items");
-        }
-    }
 
     // Calculate initial FOV from player position
     updateFOV();
@@ -184,16 +162,15 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
     turn_manager->executePlayerAction(speed);
     
     // After player acts, check for dynamic spawning
-    Player* player = getPlayer();
-    if (player && spawn_manager) {
-        spawn_manager->update(*map, *entity_manager, player, current_depth);
+    if (use_ecs) {
+        // ECS handles spawning
+    } else {
     }
 }
 
-Player* GameManager::getPlayer() {
-    if (entity_manager) {
-        auto player_ptr = entity_manager->getPlayer();
-        return player_ptr ? player_ptr.get() : nullptr;
+void* GameManager::getPlayer() {
+    if (ecs_world) {
+        return ecs_world->getPlayerEntity();
     }
     return nullptr;
 }
@@ -203,19 +180,48 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
     if (current_state != GameState::PLAYING) {
         return;
     }
-    
-    // Update all entities
-    if (entity_manager) {
-        entity_manager->updateAll(deltaTime);
+
+    // Update ECS if enabled (PRIMARY)
+    if (use_ecs && ecs_world) {
+        // Don't update AI every frame - only when updateMonsters() is called
+        // ecs_world->update(deltaTime);  // DISABLED - AI should be turn-based
+
+        // Update only render system for visual display
+        ecs_world->updateRenderSystem();
+
+        ecs_world->removeDeadEntities();
+
+        // Check for player death
+        if (ecs_world->isPlayerDead()) {
+            // Set death cause and turn
+            setDeathCause("combat");  // Default cause
+            if (turn_manager) {
+                setDeathTurn(turn_manager->getCurrentTurn());
+            }
+            setState(GameState::DEATH);
+            return;
+        }
+
+        // Sync player position from ECS
+        auto player_entity = ecs_world->getPlayerEntity();
+        if (player_entity) {
+            auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+            auto* health = player_entity->getComponent<ecs::HealthComponent>();
+            if (pos) {
+                player_x = pos->position.x;
+                player_y = pos->position.y;
+            }
+            if (health) {
+                player_hp = health->hp;
+                player_max_hp = health->max_hp;
+            }
+        }
+
+        // ECS is authoritative
+        return;
     }
-    
-    // Update deprecated player position variables
-    if (auto player = getPlayer()) {
-        player_x = player->x;
-        player_y = player->y;
-        player_hp = player->hp;
-        player_max_hp = player->max_hp;
-    }
+
+    // Player data comes from ECS
     
     // Update game systems
     // Future: Update animations, particles, etc.
@@ -228,20 +234,25 @@ void GameManager::processInput() {
 }
 
 void GameManager::updateFOV() {
-    if (!entity_manager || !map) return;
-    
-    Player* player = getPlayer();
-    if (!player) return;
-    
+    if (!map) return;
+
+    Point playerPos;
+
+    if (use_ecs && ecs_world) {
+        // Use ECS player position
+        playerPos = Point(player_x, player_y);  // These are synced from ECS
+    } else {
+        return;  // ECS is required
+    }
+
     // Calculate FOV from player position
-    Point playerPos(player->x, player->y);
     FOV::calculate(*map, playerPos, Config::getInstance().getFOVRadius(), current_fov);
     
     // Check if player entered a new room
-    Room* new_room = map->getRoomAt(playerPos);
+    const Room* new_room = map->getRoomAt(playerPos);
     if (new_room != current_room) {
         // Player entered a different room (or left a room)
-        Room* old_room = current_room;
+        const Room* old_room = current_room;
         current_room = new_room;
         
         // If entering a lit room, reveal it
@@ -303,91 +314,18 @@ void GameManager::updateFOV() {
             }
         }
     }
-    
-    // Update entity visibility based on FOV
-    if (entity_manager) {
-        entity_manager->updateEntityVisibility(current_fov);
+
+    // Update ECS FOV if enabled
+    if (use_ecs && ecs_world) {
+        ecs_world->updateFOV(current_fov);
     }
 }
 
 void GameManager::updateMonsters() {
-    if (!entity_manager || !monster_ai) {
-        return;
-    }
-
-    Player* player = getPlayer();
-    if (!player) {
-        return;
-    }
-
-    auto monsters = entity_manager->getMonsters();
-    for (auto& monster_ptr : monsters) {
-        if (!monster_ptr || !monster_ptr->canAct()) {
-            continue;
-        }
-
-        Monster* monster = dynamic_cast<Monster*>(monster_ptr.get());
-        if (!monster) {
-            continue;
-        }
-
-        // Update AI state
-        monster_ai->updateMonsterAI(*monster, *player, *map);
-
-        // Get next move from AI
-        Point next_pos = monster_ai->getNextMove(*monster, *player, *map);
-
-        LOG_AI("Monster " + monster->name + " AI suggests move from (" +
-               std::to_string(monster->x) + "," + std::to_string(monster->y) + ") to (" +
-               std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
-
-        // Check if the move is valid (not blocked by another entity)
-        if (next_pos != monster->getPosition()) {
-            bool blocked = false;
-
-            // Check if player is at target position (attack)
-            if (next_pos == player->getPosition()) {
-                LOG_AI("Monster " + monster->name + " at (" + std::to_string(monster->x) + "," + std::to_string(monster->y) + ") attacking player at (" + std::to_string(player->x) + "," + std::to_string(player->y) + ")");
-
-                // Use CombatSystem for attack resolution
-                auto result = combat_system->processAttack(*monster, *player);
-
-                LOG_AI("Attack result: hit=" + std::string(result.hit ? "true" : "false") +
-                      ", damage=" + std::to_string(result.damage) +
-                      ", critical=" + std::string(result.critical ? "true" : "false") +
-                      ", fatal=" + std::string(result.fatal ? "true" : "false"));
-
-                // Handle player death
-                if (result.fatal) {
-                    LOG_ERROR("=== PLAYER DEATH ===");
-                    LOG_ERROR("Player has been killed by " + monster->name + "!");
-                    LOG_ERROR("Final player HP: " + std::to_string(player->hp));
-                    LOG_ERROR("Game Over - Setting state to DEATH");
-                    LOG_ERROR("=== GAME OVER ===");
-                    setState(GameState::DEATH);
-                }
-
-                continue;
-            }
-
-            // Check if another monster is blocking
-            for (const auto& other : monsters) {
-                if (other.get() != monster && other->getPosition() == next_pos) {
-                    blocked = true;
-                    break;
-                }
-            }
-
-            // Move if not blocked
-            if (!blocked) {
-                LOG_MOVEMENT("Monster " + monster->name + " moving to (" + std::to_string(next_pos.x) + "," + std::to_string(next_pos.y) + ")");
-                monster->moveTo(next_pos.x, next_pos.y);
-            } else {
-                LOG_AI("Monster " + monster->name + " movement blocked");
-            }
-        } else {
-            LOG_AI("Monster " + monster->name + " AI returned current position - no movement");
-        }
+    // Update ECS AI system for one turn
+    if (use_ecs && ecs_world) {
+        // Only update the AI system, not the entire world
+        ecs_world->processMonsterAI();
     }
 }
 
@@ -421,5 +359,198 @@ bool GameManager::loadGame(int slot) {
         message_log->addMessage("Failed to load game!");
     }
     return success;
+}
+
+void GameManager::initializeECS(bool migrate_existing) {
+    // Create ECS world if not already created
+    if (!ecs_world) {
+        ecs_world = std::make_unique<ecs::GameWorld>(
+            message_log.get(),
+            map.get()
+        );
+    }
+
+    // Initialize the ECS world
+    ecs_world->initialize(migrate_existing);
+
+    // Update FOV in ECS
+    if (!current_fov.empty()) {
+        ecs_world->updateFOV(current_fov);
+    }
+
+    // Enable ECS mode
+    use_ecs = true;
+}
+
+void GameManager::spawnEntities() {
+    LOG_SPAWN("spawnEntities() called");
+    if (!map || !ecs_world) {
+        LOG_SPAWN("Early return - missing map or ecs_world");
+        return;
+    }
+
+    // Check if data is loaded
+    auto& data_loader = ecs::DataLoader::getInstance();
+    if (!data_loader.isLoaded()) {
+        LOG_SPAWN("DataLoader not loaded - attempting to load data");
+        if (!data_loader.loadAllData("data")) {
+            LOG_SPAWN("Failed to load data - cannot spawn entities");
+            return;
+        }
+    }
+
+    // Use the map seed for consistent spawning
+    std::mt19937 rng(current_map_seed != 0 ? current_map_seed : std::random_device{}());
+
+    const auto& rooms = map->getRooms();
+    LOG_SPAWN("Found " + std::to_string(rooms.size()) + " rooms for spawning");
+    if (rooms.empty()) {
+        LOG_SPAWN("No rooms found for spawning");
+        return;
+    }
+
+    // Get current depth (default to 1 for now)
+    int depth = getCurrentDepth();
+
+    // Monster spawn tables by depth
+    std::vector<std::pair<std::string, int>> depth_1_monsters = {
+        {"gutter_rat", 40},
+        {"cave_spider", 30},
+        {"goblin", 20},
+        {"zombie", 10}
+    };
+
+    std::vector<std::pair<std::string, int>> depth_2_monsters = {
+        {"gutter_rat", 20},
+        {"cave_spider", 25},
+        {"goblin", 30},
+        {"zombie", 15},
+        {"orc_rookling", 10}
+    };
+
+    // Item spawn tables - using IDs from items.json
+    std::vector<std::pair<std::string, int>> common_items = {
+        {"potion_minor", 40},
+        {"food_ration", 20},
+        {"gold", 30},
+        {"scroll_identify", 15},
+        {"dagger", 10}
+    };
+
+    // Select spawn table based on depth
+    auto& monster_table = (depth <= 1) ? depth_1_monsters : depth_2_monsters;
+
+    // Calculate total weights
+    int total_monster_weight = 0;
+    for (const auto& [type, weight] : monster_table) {
+        total_monster_weight += weight;
+    }
+
+    int total_item_weight = 0;
+    for (const auto& [type, weight] : common_items) {
+        total_item_weight += weight;
+    }
+
+    // Spawn monsters in rooms (skip first room where player spawns)
+    LOG_SPAWN("Starting spawn loop for " + std::to_string(rooms.size() - 1) + " rooms");
+    for (size_t i = 1; i < rooms.size(); ++i) {
+        const Room& room = rooms[i];
+        LOG_SPAWN("Processing room " + std::to_string(i) + " at (" + std::to_string(room.x) + "," + std::to_string(room.y) + ")");
+
+        // Determine number of monsters for this room (1-3 based on room size)
+        int room_area = room.width * room.height;
+        int max_monsters = std::min(3, std::max(1, room_area / 20));
+        std::uniform_int_distribution<> monster_count_dist(1, max_monsters);
+        int monster_count = monster_count_dist(rng);
+
+        // Spawn monsters in this room
+        for (int j = 0; j < monster_count; ++j) {
+            // Select monster type based on weighted probability
+            std::uniform_int_distribution<> weight_dist(0, total_monster_weight - 1);
+            int roll = weight_dist(rng);
+
+            std::string monster_type;
+            int cumulative = 0;
+            for (const auto& [type, weight] : monster_table) {
+                cumulative += weight;
+                if (roll < cumulative) {
+                    monster_type = type;
+                    break;
+                }
+            }
+
+            // Find random position in room
+            std::uniform_int_distribution<> x_dist(room.x + 1, room.x + room.width - 2);
+            std::uniform_int_distribution<> y_dist(room.y + 1, room.y + room.height - 2);
+
+            int attempts = 10;
+            while (attempts-- > 0) {
+                int x = x_dist(rng);
+                int y = y_dist(rng);
+
+                // Check if position is walkable and not occupied
+                if (map->isWalkable(x, y)) {
+                    ecs_world->createMonster(monster_type, x, y);
+                    break;
+                }
+            }
+        }
+
+        // Spawn items (100% chance for testing)
+        std::uniform_int_distribution<> item_chance(1, 100);
+        if (item_chance(rng) <= 100) {  // Guaranteed spawn for testing
+            // Select item type
+            std::uniform_int_distribution<> item_weight_dist(0, total_item_weight - 1);
+            int roll = item_weight_dist(rng);
+
+            std::string item_type;
+            int cumulative = 0;
+            for (const auto& [type, weight] : common_items) {
+                cumulative += weight;
+                if (roll < cumulative) {
+                    item_type = type;
+                    break;
+                }
+            }
+
+            // Find random position in room
+            std::uniform_int_distribution<> x_dist(room.x + 1, room.x + room.width - 2);
+            std::uniform_int_distribution<> y_dist(room.y + 1, room.y + room.height - 2);
+
+            int attempts = 10;
+            while (attempts-- > 0) {
+                int x = x_dist(rng);
+                int y = y_dist(rng);
+
+                if (map->isWalkable(x, y)) {
+                    ecs_world->createItem(item_type, x, y);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Log spawn summary
+    std::string spawn_msg = "Spawned monsters and items in " + std::to_string(rooms.size() - 1) + " rooms";
+    message_log->addSystemMessage(spawn_msg);
+    LOG_SPAWN(spawn_msg);
+}
+
+unsigned int GameManager::getSeedForDepth(int depth) const {
+    // Use a deterministic hash function to generate depth-specific seeds
+    // This ensures the same base seed always generates the same sequence of levels
+    const unsigned int DEPTH_MULTIPLIER = 0x9E3779B9; // Golden ratio based hash constant
+    const unsigned int BASE_OFFSET = 0x85EBCA6B;      // Large prime for mixing
+
+    unsigned int base = (current_map_seed == 0) ? 12345 : current_map_seed;
+
+    // Combine base seed with depth using multiplication and XOR for good distribution
+    unsigned int depth_seed = base;
+    depth_seed ^= (depth * DEPTH_MULTIPLIER) + BASE_OFFSET;
+    depth_seed ^= depth_seed >> 16;  // Mix upper and lower bits
+    depth_seed *= 0x45D9F3B;        // Multiply by another prime
+    depth_seed ^= depth_seed >> 16;  // Mix again
+
+    return depth_seed;
 }
 

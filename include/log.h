@@ -119,6 +119,9 @@ public:
     /** @brief Log save/load operations @param message Serialization details */
     static void save(const std::string& message);
 
+    /** @brief Log input events @param message Input keystroke details */
+    static void input(const std::string& message);
+
 private:
     /**
      * @brief Internal logging method
@@ -154,6 +157,7 @@ private:
     static std::ofstream turnLogFile;       ///< Turn processing log
     static std::ofstream fovLogFile;        ///< Field of view log
     static std::ofstream spawnLogFile;      ///< Monster spawning log
+    static std::ofstream inputLogFile;      ///< Input keystroke log
 
     static Level currentLevel;              ///< Current minimum log level
     static bool initialized;                ///< Whether logging is initialized
@@ -179,3 +183,4 @@ private:
 #define LOG_MAP(msg) Log::map(msg)
 #define LOG_UI(msg) Log::ui(msg)
 #define LOG_SAVE(msg) Log::save(msg)
+#define LOG_INPUT(msg) Log::input(msg)

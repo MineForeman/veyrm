@@ -2,156 +2,220 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Testing Requirements
+## Critical Requirements
 
-**IMPORTANT:** Tests must ALWAYS be created and run when implementing new features or fixing bugs. Follow these guidelines:
+**TESTING:** ALL tests must pass before marking any task complete. Run `./build.sh test` after every change.
 
-1. **Test-First Development**: Write tests before or alongside implementation
-2. **Run Tests**: Always run `./build.sh test` after changes to ensure nothing breaks
-3. **Coverage**: Each new class or function should have corresponding unit tests
-4. **Validation**: Never mark a task as complete without passing tests
-5. **Test Location**: Tests go in `tests/` directory with naming pattern `test_<component>.cpp`
-6. **All Tests Must Pass**: No new feature or bug fix is considered complete until ALL tests pass - both new tests and existing tests. A failing test suite means the work is incomplete.
+**EXECUTION:** Always run binaries from project root directory, never from build/.
 
-### Gameplay Testing
+**USER NOTES:** NEVER modify `docs/project/notes.md` - it's the user's personal scratchpad.
 
-**IMPORTANT:** Always test gameplay features using the build.sh dump and keys commands for automated verification:
-
-- `./build.sh dump` - Runs the game with frame dump output for visual debugging. Use this to verify rendering, map layout, and UI elements are displaying correctly.
-- `./build.sh keys '\njjjq'` - Runs the game with automated key inputs. Use this to test movement, input handling, and game flow without manual interaction.
-- `./build.sh dump '\njjjq'` - Combines dump mode with key sequences for frame-by-frame analysis.
-
-Example testing workflow:
-```bash
-# Test movement and rendering (no escaping needed)
-./build.sh keys '\njjjq'  # Enter to start, move down twice, quit
-
-# Test with frame dump for debugging
-./build.sh dump '\njjjlllq'  # Enter, down 3x, left 3x, quit
-
-# Available key codes:
-# \n = Enter, \u = Up, \d = Down, \l = Left, \r = Right
-# h/j/k/l = vi-style movement, q = quit
-```
-
-## Project Overview
-
-Veyrm is a modern C++ roguelike game inspired by Angband, using FTXUI for terminal UI. The game features a dark fantasy world where players descend through the Spiral Vaults beneath Veyrmspire to break the last shard of a dead god's crown.
-
-## Tech Stack
-
-- **Language:** C++23
-- **Build System:** CMake ≥ 3.25
-- **UI Framework:** FTXUI (terminal UI with Unicode, color, reactive rendering)
-- **JSON:** nlohmann/json for save games and content tables
-- **Testing:** Catch2
-- **RNG:** std::mt19937_64
-- **Target Platforms:** macOS, Linux, Windows (UTF-8 terminals)
-
-## Dependency Sources
-
-The source code for all dependencies is automatically downloaded by CMake and can be found in `build/_deps/` after building. For example:
-
-- **FTXUI source:** `build/_deps/ftxui-src/`
-- **nlohmann/json source:** `build/_deps/json-src/`
-- **Catch2 source:** `build/_deps/catch2-src/`
-
-This is useful for exploring the available APIs and understanding how the libraries work.
+**CONTROLS:** NEVER implement vi-style movement keys (hjkl/yubn). Use arrow keys and numpad only.
 
 ## Build Commands
 
-**IMPORTANT:** Always use `./build.sh` as the preferred way to build and run the game. It handles all build configurations, dependency management, and provides helpful utilities.
-
-### Execution Directory
-
-**CRITICAL:** All binaries (game and tests) must ALWAYS be executed from the project root directory, not from the build directory. This ensures that relative paths to data files (like data/monsters.json) work correctly. The build.sh script automatically handles this requirement.
-
-### Data Directory
-
-The game supports a configurable data directory via the `--data-dir` CLI flag:
-- Default: `./data` (relative to project root)
-- Usage: `./build/bin/veyrm --data-dir /path/to/data`
-- The data directory must contain game data files like monsters.json, items.json, etc.
-
-### One-Liner Operations
-
-**IMPORTANT:** Prefer combining multiple operations into single command lines when possible for efficiency:
-
-- **Git operations:** `git add -A && git commit -m "message" && git tag v1.0.0 && git push && git push --tags`
-- **Build and test:** `cmake --build build -j && ./build/bin/veyrm_tests`
-- **Clean rebuild:** `rm -rf build && mkdir build && cd build && cmake .. && make -j`
-- **Test specific features:** `./build/bin/veyrm --map procedural --dump "\\q" 2>&1 | head -30`
-- **Multiple file operations:** Use `&&` to chain commands rather than separate steps
-- **Grep and process:** `grep -n "pattern" file | head -10 | cut -d: -f1`
-
-This approach reduces round-trips, speeds up development, and makes operations more atomic.
-
 ```bash
-# Preferred method - using build.sh
-./build.sh build    # Build the game
-./build.sh run      # Run the game (with map selection menu)
-./build.sh test     # Run all tests
-./build.sh clean    # Clean build directory
-./build.sh dump     # Run with frame dump for debugging
+# Primary commands (always prefer ./build.sh)
+./build.sh            # Interactive menu with build status
+./build.sh build      # Build debug mode
+./build.sh run        # Run with map selection
+./build.sh test       # Run ALL tests (must pass)
+./build.sh clean      # Clean build directory
+./build.sh reset      # Reset terminal after crashes
 
-# Manual CMake commands (if needed)
-mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . -j
-./bin/veyrm
+# Testing commands
+./build.sh keys '\njjjq'   # Automated gameplay (Enter, down 2x, quit)
+./build.sh dump            # Frame-by-frame dump mode
+./build.sh dump '\njjjq'   # Dump with key sequence
 
-# Debug build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-cmake --build . -j
+# Advanced commands
+./build.sh gource         # Create development visualization video
+./build.sh diagram        # Generate class diagrams
+./build.sh release patch  # Create release (patch/minor/major)
+
+# Running specific tests
+./build/bin/veyrm_tests "[ecs]"        # ECS tests only
+./build/bin/veyrm_tests "[combat]"     # Combat tests only
+./build/bin/veyrm_tests "[validator]"  # Map validation tests
+./build/bin/veyrm_tests "[data]"       # Data loading tests
+./build/bin/veyrm_tests "[json]"       # JSON parsing tests
 ```
 
-## Architecture
+## Architecture Overview
 
-The codebase follows a component-based architecture with these core systems:
+The game is transitioning from legacy entity classes to a modern **ECS (Entity Component System)** architecture.
 
-- **Game** - World state management, message log, turn system
-- **Map** - Tile grid with visibility and memory (# wall, · floor, > stairs)
-- **DungeonGen** - Room and corridor generation with BFS-based connectivity
-- **FOV** - Symmetric shadowcasting field-of-view (8 octants)
-- **Entities** - Player, Monster, Item structs
-- **Systems** - Input handling, movement, combat (bump-to-attack), inventory, monster AI
-- **RendererTUI** - FTXUI-based layout for map, log, and status displays
-- **Data** - JSON-based configuration (monsters.json, items.json, save.json)
+### Current Branch: refactor-optimize
+- ✅ Bridge classes removed (monster_ai.h, spawn_manager.h deleted)
+- ✅ Legacy Entity, Item, and Inventory systems removed
+- ✅ ECS implementation consolidated
+- ✅ All rendering now ECS-only
 
-## Key Algorithms
+### Core ECS System (`include/ecs/`, `src/ecs/`)
+```
+game_world.h/cpp        # Central ECS world manager
+entity_factory.h        # Creates entities with components
+entity.h               # ECS entity (just an ID)
+component.h            # Base component class
+system.h               # Base system class
+```
 
-- **Map Generation:** Random room placement with overlap rejection, L-shaped corridors
-- **FOV:** Symmetric shadowcasting with exploration memory
-- **Pathfinding:** 4-directional BFS for monster movement
-- **Combat:** Simple bump-to-attack with damage rolls (player: 1d6, monsters: [min,max])
+### Components
+- **PositionComponent**: x, y coordinates
+- **HealthComponent**: current/max HP
+- **RenderableComponent**: glyph, color for display
+- **CombatComponent**: attack, defense stats
+- **AIComponent**: behavior state, target tracking
+- **InventoryComponent**: item storage
+- **StatsComponent**: level, experience, attributes
+- **PlayerComponent**: player-specific data
+- **ItemComponent**: item properties and type
+- **LootComponent**: loot drop configuration
+- **ExperienceComponent**: XP tracking and leveling
+- **EquipmentComponent**: equipped items
+- **EffectsComponent**: status effects and buffs
 
-## Game Data Format
+### Systems
+- **MovementSystem**: Handles entity movement and collision
+- **CombatSystem**: Bump-to-attack combat resolution
+- **AISystem**: Monster behavior and pathfinding
+- **RenderSystem**: Entity rendering to map
+- **InputSystem**: Player input processing
+- **LootSystem**: Item drops and pickups
+- **ExperienceSystem**: XP and leveling
+- **InventorySystem**: Item management and usage
+- **EquipmentSystem**: Equipment handling
+- **StatusEffectSystem**: Status effects and buffs
+- **SaveLoadSystem**: Game state persistence
 
-Monsters and items are defined in JSON:
+### Game Flow Architecture
+```
+GameManager (main loop)
+  ├── MainMenuScreen
+  ├── GameScreen (gameplay)
+  │    ├── GameWorld (ECS)
+  │    ├── Map (tiles)
+  │    ├── InputHandler
+  │    └── RendererTUI (FTXUI)
+  └── SaveLoadScreen
+```
 
+### Legacy Systems (Removed ✅)
+- ✅ `include/entity.h`: Old base entity class (removed)
+- ✅ `include/monster.h`, `include/player.h`: Replaced by ECS components
+- ✅ Bridge classes (monster_ai.h, spawn_manager.h) removed
+- ✅ Legacy Item and Inventory systems removed
+
+## Key Implementation Patterns
+
+### Creating Entities
+```cpp
+// Always use EntityFactory
+auto player = factory.createPlayer(x, y);
+auto monster = factory.createMonster("goblin", x, y);
+auto item = factory.createItem("potion_minor", x, y);
+```
+
+### System Processing
+```cpp
+// Systems process entities with matching components
+movementSystem.update(deltaTime, world);
+combatSystem.update(deltaTime, world);
+```
+
+### Component Access
+```cpp
+// Get component from entity
+if (auto* pos = world.getComponent<PositionComponent>(entity)) {
+    pos->x = newX;
+    pos->y = newY;
+}
+```
+
+## Data Files
+
+### Configuration
+- `config.yml`: Game settings, map generation parameters
+- `data/monsters.json`: Monster definitions
+- `data/items.json`: Item definitions
+- Save files: 9 slots with seed-based map regen
+
+### Monster Definition Example
 ```json
-// monsters.json
-[
-  { "id": "gutter_rat", "glyph": "r", "color": "grey", "hp": 3, "atk": [1,3], "def": 0, "speed": 100 }
-]
-
-// items.json
-[
-  { "id": "potion_minor", "glyph": "!", "color": "magenta", "heal": 6 }
-]
+{
+  "id": "goblin",
+  "glyph": "g",
+  "color": "green",
+  "hp": 10,
+  "atk": [2, 5],
+  "def": 1,
+  "speed": 100,
+  "xp": 15
+}
 ```
 
-## Controls
+## Testing Strategy
 
-- **Movement:** Arrow keys or numpad (1-9 including diagonals). **DO NOT implement vi-style keys (hjkl/yubn)**
-- **Actions:** g (get), i (inventory), u (use), D (drop), o (open/close doors), . (wait), q (quit), N (new game)
+### Unit Tests
+- Located in `tests/test_*.cpp`
+- Run with `./build.sh test`
+- Must cover new components/systems
 
-## World Context
+### Integration Tests
+- `test_ecs_integration.cpp`: Full ECS workflow
+- `test_monster_integration.cpp`: Monster behavior
+- `test_input_handler.cpp`: Input processing
 
-The game starts in Ring 1: Woundworks of the Spiral Vaults. The world documentation in DOC/WORLD/ provides narrative context and thematic guidance. The MVP documentation in DOC/MVP/ contains implementation specifications.
+### Gameplay Tests
+```bash
+# Test basic movement
+./build.sh keys '\njjjq'
 
-## Special Files
+# Test combat in arena
+./build.sh run arena
 
-### notes.md - User Notes
+# Debug rendering issues
+./build.sh dump '\n\u\u\r\r\q'
+```
 
-**IMPORTANT:** `docs/project/notes.md` contains the user's personal notes and should NOT be edited by Claude. This file should be checked into git when changes are made, but Claude should never modify its contents. It serves as the user's scratchpad and working notes for the project.
+## Common Tasks
+
+### Adding a New Component
+1. Create `include/ecs/<name>_component.h`
+2. Inherit from `ecs::Component`
+3. Add factory method in `entity_factory.cpp`
+4. Write tests in `tests/test_ecs.cpp`
+
+### Adding a New System
+1. Create `include/ecs/<name>_system.h`
+2. Inherit from `ecs::System`
+3. Register in `game_world.cpp`
+4. Write tests in `tests/test_ecs_systems.cpp`
+
+### Adding a New Monster
+1. Add to `data/monsters.json`
+2. Test with `./build.sh run arena`
+3. Verify spawning works
+
+### Debugging ECS Issues
+1. Check `GameWorld::getEntityAt()` for position queries
+2. Verify component registration in factory
+3. Ensure systems are added to world
+4. Use `./build.sh dump` to see frame-by-frame
+
+## Map Types for Testing
+
+- **procedural**: Random dungeon generation (default)
+- **arena**: Open combat testing area
+- **dungeon**: Fixed 5-room layout
+- **room**: Single 20x20 room
+- **corridor**: Long corridor test
+- **stress**: Large map performance test
+
+## Important Files
+
+- `game_screen.cpp`: Main gameplay logic and ECS integration point
+- `input_handler.cpp`: Keyboard mapping and input dispatch
+- `game_world.cpp`: ECS world implementation
+- `entity_factory.h`: All entity creation logic
+- `docs/project/notes.md`: User's notes (DO NOT EDIT)

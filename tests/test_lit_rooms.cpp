@@ -3,9 +3,10 @@
 #include "room.h"
 #include "map_generator.h"
 #include "game_state.h"
-#include "player.h"
-#include "entity_manager.h"
 #include "fov.h"
+#include "ecs/game_world.h"
+#include "ecs/position_component.h"
+#include "point.h"
 
 TEST_CASE("Lit Rooms", "[room][fov]") {
     SECTION("Room lit attribute") {
@@ -72,6 +73,10 @@ TEST_CASE("Lit Rooms", "[room][fov]") {
         map->clearRooms();
         Room lit_room(10, 10, 10, 10, Room::RoomType::NORMAL, true);
         map->addRoom(lit_room);
+
+        // Verify room was added
+        REQUIRE(map->getRooms().size() == 1);
+        REQUIRE(map->getRooms()[0].isLit() == true);
         
         // Place floor tiles in the room
         for (int y = 10; y < 20; y++) {
@@ -80,21 +85,39 @@ TEST_CASE("Lit Rooms", "[room][fov]") {
             }
         }
         
-        // Create player outside the room
-        EntityManager* em = game.getEntityManager();
-        em->clear();
-        auto player = em->createPlayer(5, 5);
-        
-        // Update FOV - player is outside lit room
+        // The GameManager constructor already creates a player
+        // First, ensure current_room is reset
+        game.setCurrentRoom(nullptr);
+
+        // Position player outside the room
+        game.player_x = 5;
+        game.player_y = 5;
+
+        // Update FOV - player is outside lit room, this should keep current_room as nullptr
         game.updateFOV();
-        
-        // Move player into the lit room
-        player->x = 15;
-        player->y = 15;
-        
-        // Update FOV - should detect entering lit room
+
+        // Verify player is not in a room
+        REQUIRE(game.getCurrentRoom() == nullptr);
+
+        // Now move player into the lit room
+        game.player_x = 15;
+        game.player_y = 15;
+
+        // Update FOV - should detect entering lit room (transition from nullptr to lit room)
         game.updateFOV();
-        
+
+        // Verify player is now in the lit room
+        REQUIRE(game.getCurrentRoom() != nullptr);
+        REQUIRE(game.getCurrentRoom()->isLit() == true);
+
+        // Debug: Check room status
+        const Room* room = map->getRoomAt(Point(15, 15));
+        INFO("Room at (15,15): " << (room ? "exists" : "null"));
+        if (room) {
+            INFO("Room is lit: " << room->isLit());
+            INFO("Room bounds: " << room->x << "," << room->y << " " << room->width << "x" << room->height);
+        }
+
         // The entire room should now be visible
         for (int y = 10; y < 20; y++) {
             for (int x = 10; x < 20; x++) {

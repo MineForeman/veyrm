@@ -33,6 +33,8 @@ enum class InputAction {
     CANCEL,
     OPEN_DOOR,  // Open/close doors
     GET_ITEM,   // Pick up items
+    USE_STAIRS_DOWN,  // Go down stairs (>)
+    USE_STAIRS_UP,    // Go up stairs (<)
 
     // UI actions
     OPEN_INVENTORY,
@@ -76,4 +78,7 @@ private:
     
     // Convert event to string key for mapping
     std::string eventToKey(const ftxui::Event& event) const;
+
+    // Convert action enum to string for logging
+    std::string actionToString(InputAction action) const;
 };

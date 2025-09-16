@@ -11,7 +11,6 @@
 #include <string>
 
 class GameManager;
-class Player;
 
 class StatusBar {
 public:

@@ -90,6 +90,10 @@ public:
     void setVisible(int x, int y, bool visible);
     bool isExplored(int x, int y) const;
     void setExplored(int x, int y, bool explored);
+
+    // Clear visibility/exploration (for level transitions)
+    void clearVisibility();
+    void clearExploration();
     
     // Rendering
     std::string getGlyph(int x, int y) const;

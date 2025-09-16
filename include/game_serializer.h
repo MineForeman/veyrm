@@ -20,9 +20,6 @@ using json = nlohmann::json;
 // Forward declarations
 class GameManager;
 class Map;
-class Player;
-class EntityManager;
-class ItemManager;
 class MessageLog;
 
 /**
@@ -113,7 +110,7 @@ private:
     std::filesystem::path save_directory;
     bool auto_save_enabled = true;
     int auto_save_interval = 100;  // turns
-    // int auto_save_counter = 0;  // TODO: Use when implementing auto-save timer
+    // int auto_save_counter = 0;  // For future auto-save feature
     int current_auto_save_slot = -1;
     std::chrono::time_point<std::chrono::steady_clock> session_start_time;
 };

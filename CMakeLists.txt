@@ -126,10 +126,9 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # ========================================
-# Main executable
+# Core library (everything except main)
 # ========================================
-add_executable(veyrm
-    src/main.cpp
+add_library(veyrm_core STATIC
     src/game_screen.cpp
     src/game_manager.cpp
     src/input_handler.cpp
@@ -145,39 +144,63 @@ add_executable(veyrm
     src/wall_connector.cpp
     src/map_generator.cpp
     src/map_validator.cpp
-    src/entity.cpp
-    src/player.cpp
-    src/entity_manager.cpp
     src/room.cpp
     src/fov.cpp
     src/map_memory.cpp
     src/status_bar.cpp
     src/layout_system.cpp
-    src/monster.cpp
-    src/monster_factory.cpp
+    # src/monster.cpp removed - using ECS entities
+    # monster_factory.cpp removed - using ECS DataLoader
     src/config.cpp
-    src/spawn_manager.cpp
-    src/monster_ai.cpp
+    # spawn_manager.cpp removed - using ECS spawning
     src/pathfinding.cpp
-    src/combat_system.cpp
+    # combat_system.cpp removed - using ECS CombatSystem
     src/log.cpp
-    src/item.cpp
-    src/item_factory.cpp
-    src/item_manager.cpp
-    src/inventory.cpp
+    # src/item.cpp  # Legacy - removed, using ECS ItemComponent
+    # src/item_factory.cpp removed - using ECS DataLoader
+    # src/item_manager.cpp removed - using ECS item system
+    # src/inventory.cpp  # Legacy - removed, using ECS InventoryComponent
     src/inventory_renderer.cpp
     src/game_serializer.cpp
     src/save_load_screen.cpp
+    src/ecs/entity.cpp
+    src/ecs/movement_system.cpp
+    src/ecs/render_system.cpp
+    # Bridge classes removed - no longer needed in full ECS mode
+    src/ecs/game_world.cpp
+    src/ecs/combat_system.cpp
+    src/ecs/ai_system.cpp
+    src/ecs/event.cpp
+    src/ecs/inventory_system.cpp
+    src/ecs/input_system.cpp
+    src/ecs/save_load_system.cpp
+    src/ecs/status_effect_system.cpp
+    src/ecs/loot_system.cpp
+    src/ecs/equipment_system.cpp
+    src/ecs/experience_system.cpp
+    src/ecs/entity_factory.cpp
+    src/ecs/data_loader.cpp
 )
 
-# Link libraries
-target_link_libraries(veyrm 
-    PRIVATE 
+# Link libraries to core
+target_link_libraries(veyrm_core
+    PUBLIC
         ftxui::screen
         ftxui::dom
         ftxui::component
         nlohmann_json::nlohmann_json
         ryml::ryml
+)
+
+# ========================================
+# Main executable
+# ========================================
+add_executable(veyrm src/main.cpp)
+
+# Link libraries
+target_link_libraries(veyrm
+    PRIVATE
+        veyrm_core
 )
 
 # Set executable output directory
@@ -190,6 +213,21 @@ set_target_properties(veyrm PROPERTIES
 # ========================================
 enable_testing()
 add_subdirectory(tests)
+
+# ========================================
+# ECS Demo Program (optional)
+# ========================================
+if(EXISTS ${CMAKE_SOURCE_DIR}/test_ecs_demo.cpp)
+    add_executable(test_ecs_demo test_ecs_demo.cpp)
+    target_link_libraries(test_ecs_demo
+        PRIVATE
+            veyrm_core
+    )
+    # Set executable output directory
+    set_target_properties(test_ecs_demo PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endif()
 
 # ========================================
 # Installation rules

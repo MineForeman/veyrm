@@ -1,21 +1,25 @@
 #include "fov.h"
 #include "map.h"
+#include "log.h"
 #include <algorithm>
 #include <cmath>
 
-void FOV::calculate(const Map& map, const Point& origin, int radius, 
+void FOV::calculate(const Map& map, const Point& origin, int radius,
                    std::vector<std::vector<bool>>& visible) {
+    Log::fov("Calculating FOV from (" + std::to_string(origin.x) + "," +
+             std::to_string(origin.y) + ") with radius " + std::to_string(radius));
+
     // Initialize visible array if needed
     if (visible.size() != static_cast<size_t>(map.getHeight()) ||
         (visible.size() > 0 && visible[0].size() != static_cast<size_t>(map.getWidth()))) {
         visible.resize(map.getHeight(), std::vector<bool>(map.getWidth(), false));
     }
-    
+
     // Clear visibility
     for (auto& row : visible) {
         std::fill(row.begin(), row.end(), false);
     }
-    
+
     // Origin is always visible
     if (map.inBounds(origin.x, origin.y)) {
         visible[origin.y][origin.x] = true;
@@ -57,6 +61,13 @@ void FOV::calculate(const Map& map, const Point& origin, int radius,
             }
         }
     }
+
+    // Count visible tiles for logging
+    int visibleCount = 0;
+    for (const auto& row : visible) {
+        visibleCount += static_cast<int>(std::count(row.begin(), row.end(), true));
+    }
+    Log::fov("FOV calculation complete: " + std::to_string(visibleCount) + " tiles visible");
 }
 
 void FOV::castLight([[maybe_unused]] const Map& map, 
@@ -84,28 +95,39 @@ bool FOV::isOpaque(const Map& map, int x, int y) {
     return !props.transparent;  // Opaque is the opposite of transparent
 }
 
-bool FOV::isVisible(const Map& map, const Point& origin, 
+bool FOV::isVisible(const Map& map, const Point& origin,
                    const Point& target, int maxDistance) {
+    Log::fov("Checking visibility from (" + std::to_string(origin.x) + "," +
+             std::to_string(origin.y) + ") to (" + std::to_string(target.x) + "," +
+             std::to_string(target.y) + ")");
+
     // Quick distance check
     int dx = target.x - origin.x;
     int dy = target.y - origin.y;
     if (dx * dx + dy * dy > maxDistance * maxDistance) {
+        Log::fov("Target too far: distance squared " + std::to_string(dx * dx + dy * dy) +
+                 " > max " + std::to_string(maxDistance * maxDistance));
         return false;
     }
-    
+
     // Use shadowcasting to check visibility
-    std::vector<std::vector<bool>> visible(map.getHeight(), 
+    std::vector<std::vector<bool>> visible(map.getHeight(),
                                           std::vector<bool>(map.getWidth(), false));
     calculate(map, origin, maxDistance, visible);
-    
-    return visible[target.y][target.x];
+
+    bool result = visible[target.y][target.x];
+    Log::fov("Visibility check result: " + std::string(result ? "visible" : "blocked"));
+    return result;
 }
 
 std::set<Point> FOV::getVisibleTiles(const Map& map, const Point& origin, int radius) {
-    std::vector<std::vector<bool>> visible(map.getHeight(), 
+    Log::fov("Getting all visible tiles from (" + std::to_string(origin.x) + "," +
+             std::to_string(origin.y) + ") with radius " + std::to_string(radius));
+
+    std::vector<std::vector<bool>> visible(map.getHeight(),
                                           std::vector<bool>(map.getWidth(), false));
     calculate(map, origin, radius, visible);
-    
+
     std::set<Point> visiblePoints;
     for (int y = 0; y < map.getHeight(); y++) {
         for (int x = 0; x < map.getWidth(); x++) {
@@ -114,6 +136,7 @@ std::set<Point> FOV::getVisibleTiles(const Map& map, const Point& origin, int ra
             }
         }
     }
-    
+
+    Log::fov("Returning " + std::to_string(visiblePoints.size()) + " visible tile points");
     return visiblePoints;
 }

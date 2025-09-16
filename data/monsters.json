@@ -1,115 +1,597 @@
 {
-  "version": "0.0.1",
+  "version": "1.0.0",
   "monsters": [
     {
       "id": "gutter_rat",
       "name": "Gutter Rat",
-      "description": "A diseased rat from the sewers, its eyes gleam with hunger",
+      "description": "A diseased rat from the sewers",
       "glyph": "r",
-      "color": "brown",
-      "hp": 3,
-      "attack": 2,
-      "defense": 0,
-      "speed": 120,
-      "xp_value": 2,
-      "threat_level": "a",
-      "spawn_weight": 1.0,
-      "min_depth": 1,
-      "max_depth": 5,
-      "pack_size": [2, 4],
-      "flags": {
-        "aggressive": true,
-        "can_open_doors": false,
-        "can_see_invisible": false
-      }
-    },
-    {
-      "id": "orc_rookling",
-      "name": "Orc Rookling",
-      "description": "A young orc warrior in training, eager to prove itself",
-      "glyph": "o",
-      "color": "green",
-      "hp": 8,
-      "attack": 4,
-      "defense": 1,
-      "speed": 100,
-      "xp_value": 10,
-      "threat_level": "c",
-      "spawn_weight": 0.6,
-      "min_depth": 3,
-      "max_depth": 20,
-      "pack_size": [1, 1],
-      "flags": {
-        "aggressive": true,
-        "can_open_doors": true,
-        "can_see_invisible": false
-      }
+      "color": "grey",
+      "components": {
+        "health": {
+          "max_hp": 3,
+          "hp": 3
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 2,
+          "attack_bonus": 0,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 3,
+          "dexterity": 14,
+          "constitution": 6,
+          "intelligence": 2,
+          "wisdom": 10,
+          "charisma": 4
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 4,
+          "aggro_range": 2
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 3,
+          "drop_chance": 0.05
+        }
+      },
+      "spawn": {
+        "weight": 1.5,
+        "min_depth": 1,
+        "max_depth": 3,
+        "pack_size": [1, 3]
+      },
+      "xp_value": 3,
+      "tags": ["animal", "small", "vermin"]
     },
     {
       "id": "cave_spider",
       "name": "Cave Spider",
-      "description": "A small but venomous spider that lurks in dark corners",
+      "description": "A venomous arachnid lurking in darkness",
       "glyph": "s",
-      "color": "gray",
-      "hp": 4,
-      "attack": 3,
-      "defense": 0,
-      "speed": 110,
+      "color": "dark_grey",
+      "components": {
+        "health": {
+          "max_hp": 4,
+          "hp": 4
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 3,
+          "attack_bonus": 1,
+          "defense_bonus": 1
+        },
+        "stats": {
+          "strength": 4,
+          "dexterity": 16,
+          "constitution": 6,
+          "intelligence": 1,
+          "wisdom": 12,
+          "charisma": 2
+        },
+        "ai": {
+          "behavior": "defensive",
+          "vision_range": 6,
+          "aggro_range": 3
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 5,
+          "drop_chance": 0.1
+        }
+      },
+      "spawn": {
+        "weight": 1.2,
+        "min_depth": 1,
+        "max_depth": 5,
+        "pack_size": [1, 2]
+      },
       "xp_value": 5,
-      "threat_level": "b",
-      "spawn_weight": 0.8,
-      "min_depth": 1,
-      "max_depth": 10,
-      "pack_size": [1, 3],
-      "flags": {
-        "aggressive": true,
-        "can_open_doors": false,
-        "can_see_invisible": true
-      }
+      "tags": ["animal", "small", "poisonous"]
     },
     {
-      "id": "kobold",
-      "name": "Kobold",
-      "description": "A small reptilian humanoid with a cowardly disposition",
-      "glyph": "k",
+      "id": "rat",
+      "name": "Rat",
+      "description": "A diseased rat from the sewers",
+      "glyph": "r",
+      "color": "grey",
+      "components": {
+        "health": {
+          "max_hp": 5,
+          "hp": 5
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 2,
+          "attack_bonus": 0,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 4,
+          "dexterity": 14,
+          "constitution": 8,
+          "intelligence": 2,
+          "wisdom": 10,
+          "charisma": 4
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 5,
+          "aggro_range": 3
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 5,
+          "drop_chance": 0.1
+        }
+      },
+      "spawn": {
+        "weight": 1.0,
+        "min_depth": 1,
+        "max_depth": 5,
+        "pack_size": [2, 4]
+      },
+      "xp_value": 5,
+      "tags": ["animal", "small"]
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "description": "A small, green-skinned humanoid",
+      "glyph": "g",
+      "color": "green",
+      "components": {
+        "health": {
+          "max_hp": 20,
+          "hp": 20
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 4,
+          "attack_bonus": 1,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 8,
+          "dexterity": 12,
+          "constitution": 10,
+          "intelligence": 8,
+          "wisdom": 8,
+          "charisma": 6
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 6,
+          "aggro_range": 4
+        },
+        "loot": {
+          "guaranteed_gold": 5,
+          "random_gold_max": 15,
+          "drop_chance": 0.3,
+          "item_drops": ["dagger", "potion_minor"]
+        }
+      },
+      "spawn": {
+        "weight": 0.8,
+        "min_depth": 1,
+        "max_depth": 10,
+        "pack_size": [1, 3]
+      },
+      "xp_value": 15,
+      "tags": ["humanoid", "goblinoid", "intelligent"]
+    },
+    {
+      "id": "orc_rookling",
+      "name": "Orc Rookling",
+      "description": "A young orc warrior in training",
+      "glyph": "o",
+      "color": "dark_green",
+      "components": {
+        "health": {
+          "max_hp": 20,
+          "hp": 20
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 4,
+          "attack_bonus": 1,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 12,
+          "dexterity": 10,
+          "constitution": 12,
+          "intelligence": 6,
+          "wisdom": 8,
+          "charisma": 5
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 5,
+          "aggro_range": 3
+        },
+        "loot": {
+          "guaranteed_gold": 5,
+          "random_gold_max": 15,
+          "drop_chance": 0.3,
+          "item_drops": ["dagger", "leather_armor"]
+        }
+      },
+      "spawn": {
+        "weight": 0.8,
+        "min_depth": 2,
+        "max_depth": 10,
+        "pack_size": [1, 2]
+      },
+      "xp_value": 20,
+      "tags": ["humanoid", "orcish", "warrior"]
+    },
+    {
+      "id": "orc",
+      "name": "Orc",
+      "description": "A brutish warrior of the deep",
+      "glyph": "o",
+      "color": "brown",
+      "components": {
+        "health": {
+          "max_hp": 35,
+          "hp": 35
+        },
+        "combat": {
+          "min_damage": 2,
+          "max_damage": 6,
+          "attack_bonus": 2,
+          "defense_bonus": 1
+        },
+        "stats": {
+          "strength": 14,
+          "dexterity": 10,
+          "constitution": 14,
+          "intelligence": 7,
+          "wisdom": 8,
+          "charisma": 6
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 6,
+          "aggro_range": 4
+        },
+        "loot": {
+          "guaranteed_gold": 10,
+          "random_gold_max": 30,
+          "drop_chance": 0.4,
+          "item_drops": ["sword", "leather_armor", "potion_minor"]
+        }
+      },
+      "spawn": {
+        "weight": 0.6,
+        "min_depth": 3,
+        "max_depth": 20,
+        "pack_size": [1, 2]
+      },
+      "xp_value": 30,
+      "tags": ["humanoid", "orcish", "warrior"]
+    },
+    {
+      "id": "skeleton",
+      "name": "Skeleton",
+      "description": "Animated bones held together by dark magic",
+      "glyph": "s",
+      "color": "white",
+      "components": {
+        "health": {
+          "max_hp": 15,
+          "hp": 15
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 3,
+          "attack_bonus": 2,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 10,
+          "dexterity": 8,
+          "constitution": 10,
+          "intelligence": 1,
+          "wisdom": 5,
+          "charisma": 1
+        },
+        "ai": {
+          "behavior": "wandering",
+          "vision_range": 4,
+          "aggro_range": 2
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 10,
+          "drop_chance": 0.2
+        }
+      },
+      "spawn": {
+        "weight": 0.7,
+        "min_depth": 2,
+        "max_depth": 15,
+        "pack_size": [1, 3]
+      },
+      "xp_value": 20,
+      "tags": ["undead", "mindless", "bludgeon_vulnerable", "pierce_resistant"]
+    },
+    {
+      "id": "troll",
+      "name": "Troll",
+      "description": "A massive, regenerating brute",
+      "glyph": "T",
+      "color": "dark_green",
+      "components": {
+        "health": {
+          "max_hp": 50,
+          "hp": 50
+        },
+        "combat": {
+          "min_damage": 3,
+          "max_damage": 8,
+          "attack_bonus": 3,
+          "defense_bonus": 2
+        },
+        "stats": {
+          "strength": 18,
+          "dexterity": 8,
+          "constitution": 16,
+          "intelligence": 6,
+          "wisdom": 9,
+          "charisma": 5
+        },
+        "ai": {
+          "behavior": "defensive",
+          "vision_range": 5,
+          "aggro_range": 3
+        },
+        "loot": {
+          "guaranteed_gold": 20,
+          "random_gold_max": 50,
+          "drop_chance": 0.5,
+          "item_drops": ["potion_major", "ring_strength"]
+        }
+      },
+      "spawn": {
+        "weight": 0.3,
+        "min_depth": 5,
+        "max_depth": 25,
+        "pack_size": [1, 1]
+      },
+      "xp_value": 60,
+      "tags": ["giant", "regenerating", "fire_vulnerable"]
+    },
+    {
+      "id": "dragon",
+      "name": "Dragon",
+      "description": "An ancient wyrm of terrible power",
+      "glyph": "D",
+      "color": "red",
+      "components": {
+        "health": {
+          "max_hp": 100,
+          "hp": 100
+        },
+        "combat": {
+          "min_damage": 5,
+          "max_damage": 15,
+          "attack_bonus": 5,
+          "defense_bonus": 5
+        },
+        "stats": {
+          "strength": 22,
+          "dexterity": 10,
+          "constitution": 20,
+          "intelligence": 16,
+          "wisdom": 14,
+          "charisma": 18
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 8,
+          "aggro_range": 6
+        },
+        "loot": {
+          "guaranteed_gold": 100,
+          "random_gold_max": 500,
+          "drop_chance": 1.0,
+          "item_drops": ["dragon_scale", "potion_full", "legendary_weapon"]
+        }
+      },
+      "spawn": {
+        "weight": 0.05,
+        "min_depth": 10,
+        "max_depth": 100,
+        "pack_size": [1, 1]
+      },
+      "xp_value": 500,
+      "tags": ["boss", "dragon", "fire_breath", "flying", "magical", "intelligent"]
+    },
+    {
+      "id": "bat",
+      "name": "Bat",
+      "description": "A small flying creature",
+      "glyph": "b",
+      "color": "dark_grey",
+      "components": {
+        "health": {
+          "max_hp": 3,
+          "hp": 3
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 1,
+          "attack_bonus": 1,
+          "defense_bonus": 2
+        },
+        "stats": {
+          "strength": 2,
+          "dexterity": 16,
+          "constitution": 6,
+          "intelligence": 2,
+          "wisdom": 12,
+          "charisma": 4
+        },
+        "ai": {
+          "behavior": "wandering",
+          "vision_range": 7,
+          "aggro_range": 2
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 2,
+          "drop_chance": 0.05
+        }
+      },
+      "spawn": {
+        "weight": 1.2,
+        "min_depth": 1,
+        "max_depth": 10,
+        "pack_size": [3, 6]
+      },
+      "xp_value": 3,
+      "tags": ["animal", "flying", "small"]
+    },
+    {
+      "id": "snake",
+      "name": "Snake",
+      "description": "A venomous serpent",
+      "glyph": "S",
       "color": "yellow",
-      "hp": 6,
-      "attack": 3,
-      "defense": 1,
-      "speed": 110,
-      "xp_value": 8,
-      "threat_level": "b",
-      "spawn_weight": 0.8,
-      "min_depth": 1,
-      "max_depth": 10,
-      "pack_size": [1, 3],
-      "flags": {
-        "aggressive": false,
-        "can_open_doors": true,
-        "can_see_invisible": false
-      }
+      "components": {
+        "health": {
+          "max_hp": 8,
+          "hp": 8
+        },
+        "combat": {
+          "min_damage": 1,
+          "max_damage": 3,
+          "attack_bonus": 3,
+          "defense_bonus": 1
+        },
+        "stats": {
+          "strength": 6,
+          "dexterity": 14,
+          "constitution": 8,
+          "intelligence": 2,
+          "wisdom": 10,
+          "charisma": 3
+        },
+        "ai": {
+          "behavior": "defensive",
+          "vision_range": 4,
+          "aggro_range": 2
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 5,
+          "drop_chance": 0.1,
+          "item_drops": ["antidote"]
+        }
+      },
+      "spawn": {
+        "weight": 0.8,
+        "min_depth": 1,
+        "max_depth": 15,
+        "pack_size": [1, 2]
+      },
+      "xp_value": 10,
+      "tags": ["animal", "poisonous"]
     },
     {
       "id": "zombie",
       "name": "Zombie",
-      "description": "A shambling corpse animated by dark magic",
+      "description": "A shambling corpse",
       "glyph": "z",
-      "color": "dark_gray",
-      "hp": 12,
-      "attack": 3,
-      "defense": 0,
-      "speed": 80,
-      "xp_value": 15,
-      "threat_level": "d",
-      "spawn_weight": 0.5,
-      "min_depth": 5,
-      "max_depth": 30,
-      "pack_size": [1, 2],
-      "flags": {
-        "aggressive": true,
-        "can_open_doors": false,
-        "can_see_invisible": false
-      }
+      "color": "dark_grey",
+      "components": {
+        "health": {
+          "max_hp": 25,
+          "hp": 25
+        },
+        "combat": {
+          "min_damage": 2,
+          "max_damage": 4,
+          "attack_bonus": 0,
+          "defense_bonus": 0
+        },
+        "stats": {
+          "strength": 12,
+          "dexterity": 6,
+          "constitution": 14,
+          "intelligence": 1,
+          "wisdom": 5,
+          "charisma": 1
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 3,
+          "aggro_range": 3
+        },
+        "loot": {
+          "guaranteed_gold": 0,
+          "random_gold_max": 15,
+          "drop_chance": 0.2
+        }
+      },
+      "spawn": {
+        "weight": 0.6,
+        "min_depth": 2,
+        "max_depth": 20,
+        "pack_size": [2, 5]
+      },
+      "xp_value": 25,
+      "tags": ["undead", "slow", "mindless", "slash_resistant"]
+    },
+    {
+      "id": "wraith",
+      "name": "Wraith",
+      "description": "A ghostly apparition",
+      "glyph": "W",
+      "color": "cyan",
+      "components": {
+        "health": {
+          "max_hp": 30,
+          "hp": 30
+        },
+        "combat": {
+          "min_damage": 2,
+          "max_damage": 5,
+          "attack_bonus": 4,
+          "defense_bonus": 4
+        },
+        "stats": {
+          "strength": 8,
+          "dexterity": 14,
+          "constitution": 10,
+          "intelligence": 10,
+          "wisdom": 12,
+          "charisma": 8
+        },
+        "ai": {
+          "behavior": "aggressive",
+          "vision_range": 8,
+          "aggro_range": 5
+        },
+        "loot": {
+          "guaranteed_gold": 10,
+          "random_gold_max": 40,
+          "drop_chance": 0.3,
+          "item_drops": ["scroll_invisibility", "ghost_essence"]
+        }
+      },
+      "spawn": {
+        "weight": 0.3,
+        "min_depth": 5,
+        "max_depth": 30,
+        "pack_size": [1, 2]
+      },
+      "xp_value": 50,
+      "tags": ["undead", "incorporeal", "physical_resistant", "magical"]
     }
   ]
 }

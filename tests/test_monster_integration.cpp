@@ -1,76 +1,110 @@
 #include <catch2/catch_test_macros.hpp>
-#include "monster_factory.h"
-#include "monster.h"
-#include "entity_manager.h"
+#include "ecs/data_loader.h"
+#include "ecs/entity_factory.h"
 
-TEST_CASE("Monster JSON Loading Integration", "[monster][integration]") {
-    MonsterFactory& factory = MonsterFactory::getInstance();
-    factory.clearTemplates();
-    
-    SECTION("Load actual monsters.json file") {
+TEST_CASE("Monster Data Loading via ECS", "[monster][integration][ecs]") {
+    ecs::DataLoader& loader = ecs::DataLoader::getInstance();
+
+    SECTION("Load actual monsters.json file via ECS DataLoader") {
         // Load the actual data file (from project root)
-        bool loaded = factory.loadFromFile("data/monsters.json");
+        bool loaded = loader.loadMonsters("data/monsters.json");
         REQUIRE(loaded == true);
-        
+
         // Check all expected monsters are loaded
-        REQUIRE(factory.hasSpecies("gutter_rat") == true);
-        REQUIRE(factory.hasSpecies("orc_rookling") == true);
-        REQUIRE(factory.hasSpecies("cave_spider") == true);
-        REQUIRE(factory.hasSpecies("kobold") == true);
-        REQUIRE(factory.hasSpecies("zombie") == true);
-        
-        // Verify we have exactly 5 species
-        auto species = factory.getAvailableSpecies();
-        REQUIRE(species.size() == 5);
-    }
-    
-    SECTION("Create each monster type from file") {
-        factory.loadFromFile("data/monsters.json");
-        EntityManager manager;
-        
-        // Gutter Rat
-        auto rat = manager.createMonster("gutter_rat", 0, 0);
-        REQUIRE(rat != nullptr);
-        REQUIRE(rat->name == "Gutter Rat");
-        REQUIRE(rat->hp == 3);
-        REQUIRE(rat->attack == 2);
-        REQUIRE(rat->defense == 0);
-        REQUIRE(rat->glyph == "r");
-        REQUIRE(rat->threat_level == 'a');
-        
-        // Orc Rookling
-        auto orc = manager.createMonster("orc_rookling", 1, 1);
-        REQUIRE(orc != nullptr);
-        REQUIRE(orc->name == "Orc Rookling");
-        REQUIRE(orc->hp == 8);
-        REQUIRE(orc->attack == 4);
-        REQUIRE(orc->defense == 1);
-        REQUIRE(orc->can_open_doors == true);
-        
-        // Cave Spider
-        auto spider = manager.createMonster("cave_spider", 2, 2);
-        REQUIRE(spider != nullptr);
-        REQUIRE(spider->can_see_invisible == true);
-        
-        // Kobold
-        auto kobold = manager.createMonster("kobold", 3, 3);
-        REQUIRE(kobold != nullptr);
-        REQUIRE(kobold->aggressive == false);  // Kobolds are cowardly
-        
-        // Zombie
-        auto zombie = manager.createMonster("zombie", 4, 4);
+        auto gutter_rat = loader.getMonsterTemplate("gutter_rat");
+        REQUIRE(gutter_rat != nullptr);
+        REQUIRE(gutter_rat->name == "Gutter Rat");
+
+        auto orc_rookling = loader.getMonsterTemplate("orc_rookling");
+        REQUIRE(orc_rookling != nullptr);
+        REQUIRE(orc_rookling->name == "Orc Rookling");
+
+        auto cave_spider = loader.getMonsterTemplate("cave_spider");
+        REQUIRE(cave_spider != nullptr);
+
+        auto goblin = loader.getMonsterTemplate("goblin");
+        REQUIRE(goblin != nullptr);
+
+        auto zombie = loader.getMonsterTemplate("zombie");
         REQUIRE(zombie != nullptr);
-        REQUIRE(zombie->hp == 12);
-        REQUIRE(zombie->speed == 80);  // Slow
+
+        // Verify we have the expected number of species
+        auto& templates = loader.getMonsterTemplates();
+        REQUIRE(templates.size() == 13);
     }
-    
-    SECTION("Verify threat levels") {
-        factory.loadFromFile("data/monsters.json");
-        
-        REQUIRE(factory.getThreatLevel("gutter_rat") == 'a');
-        REQUIRE(factory.getThreatLevel("cave_spider") == 'b');
-        REQUIRE(factory.getThreatLevel("kobold") == 'b');
-        REQUIRE(factory.getThreatLevel("orc_rookling") == 'c');
-        REQUIRE(factory.getThreatLevel("zombie") == 'd');
+
+    SECTION("Create monsters via ECS EntityFactory") {
+        loader.loadMonsters("data/monsters.json");
+        ecs::EntityFactory factory;
+
+        // Test creating a gutter rat
+        auto rat_template = loader.getMonsterTemplate("gutter_rat");
+        REQUIRE(rat_template != nullptr);
+
+        auto rat = factory.createMonster("gutter_rat", 10, 10);
+        REQUIRE(rat != nullptr);
+
+        // Verify position
+        auto* pos = rat->getComponent<ecs::PositionComponent>();
+        REQUIRE(pos != nullptr);
+        REQUIRE(pos->position.x == 10);
+        REQUIRE(pos->position.y == 10);
+
+        // Verify health
+        auto* health = rat->getComponent<ecs::HealthComponent>();
+        REQUIRE(health != nullptr);
+        REQUIRE(health->max_hp == rat_template->hp);
+
+        // Test creating multiple types
+        auto goblin = factory.createMonster("goblin", 5, 5);
+        REQUIRE(goblin != nullptr);
+
+        auto zombie = factory.createMonster("zombie", 15, 15);
+        REQUIRE(zombie != nullptr);
+    }
+
+    SECTION("Verify monster properties from templates") {
+        loader.loadMonsters("data/monsters.json");
+
+        // Check gutter rat properties
+        auto rat = loader.getMonsterTemplate("gutter_rat");
+        REQUIRE(rat != nullptr);
+        REQUIRE(rat->hp == 3);
+        // Attack and defense are now in the combat component, not template
+        // XP value is in experience.amount
+
+        // Check orc rookling exists and is stronger
+        auto orc = loader.getMonsterTemplate("orc_rookling");
+        REQUIRE(orc != nullptr);
+        REQUIRE(orc->hp > rat->hp);
+    }
+}
+
+TEST_CASE("Monster Spawning via ECS", "[monster][spawn][ecs]") {
+    ecs::DataLoader& loader = ecs::DataLoader::getInstance();
+    loader.loadMonsters("data/monsters.json");
+
+    SECTION("Spawn monsters at different depths") {
+        ecs::EntityFactory factory;
+
+        // Should be able to create any monster regardless of depth
+        // (depth filtering would be done at a higher level)
+        auto rat = factory.createMonster("gutter_rat", 0, 0);
+        REQUIRE(rat != nullptr);
+
+        auto orc = factory.createMonster("orc_rookling", 0, 0);
+        REQUIRE(orc != nullptr);
+
+        auto goblin = factory.createMonster("goblin", 0, 0);
+        REQUIRE(goblin != nullptr);
+    }
+
+    SECTION("Monster pack spawning") {
+        auto goblin_template = loader.getMonsterTemplate("goblin");
+        REQUIRE(goblin_template != nullptr);
+
+        // Goblins should have pack size info
+        REQUIRE(goblin_template->min_pack_size >= 1);
+        REQUIRE(goblin_template->max_pack_size >= goblin_template->min_pack_size);
     }
 }

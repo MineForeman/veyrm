@@ -1,21 +1,24 @@
 #include "game_screen.h"
-#include "item_factory.h"
 #include "input_handler.h"
 #include "turn_manager.h"
 #include "message_log.h"
 #include "frame_stats.h"
 #include "map.h"
+#include "map_generator.h"
 #include "renderer.h"
-#include "entity_manager.h"
-#include "player.h"
 #include "status_bar.h"
 #include "layout_system.h"
 #include "inventory_renderer.h"
 #include "log.h"
-#include "monster.h"
-#include "combat_system.h"
-#include "item_manager.h"
-#include "item.h"
+#include "ecs/entity.h"
+#include "ecs/position_component.h"
+#include "ecs/inventory_component.h"
+#include "ecs/item_component.h"
+#include "ecs/inventory_system.h"
+#include "ecs/game_world.h"
+#include "ecs/combat_system.h"
+#include "ecs/position_component.h"
+#include "ecs/event.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -33,164 +36,224 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
       layout_system(std::make_unique<LayoutSystem>()),
       inventory_renderer(nullptr) {
     // Center renderer on player's starting position
-    if (auto* player = game_manager->getPlayer()) {
-        renderer->centerOn(player->x, player->y);
-    } else {
-        // Fallback to deprecated variables if entity system not initialized
-        renderer->centerOn(game_manager->player_x, game_manager->player_y);
-    }
+    renderer->centerOn(game_manager->player_x, game_manager->player_y);
 }
 
 GameScreen::~GameScreen() = default;
 
 bool GameScreen::handleDoorInteraction() {
-    auto* player = game_manager->getPlayer();
+    auto* msg_log = game_manager->getMessageLog();
+    if (!msg_log) {
+        return false;
+    }
+
+    // Set state to await direction input
+    awaiting_direction = true;
+    direction_prompt = "Open door in which direction?";
+    msg_log->addMessage(direction_prompt);
+
+    LOG_PLAYER("Prompting for door direction");
+    return true; // Input handled, now waiting for direction
+}
+
+bool GameScreen::handleDirectionalDoorInteraction(int dx, int dy) {
     auto* map = game_manager->getMap();
     auto* msg_log = game_manager->getMessageLog();
 
-    if (!player || !map || !msg_log) {
+    if (!map || !msg_log) {
         return false;
     }
 
-    LOG_PLAYER("Attempting to interact with doors");
+    // Calculate target position using game_manager position
+    int target_x = game_manager->player_x + dx;
+    int target_y = game_manager->player_y + dy;
 
-    // Check all 8 directions for doors
-    const int dirs[8][2] = {
-        {0, -1}, {0, 1}, {-1, 0}, {1, 0},   // Cardinal
-        {-1, -1}, {1, -1}, {-1, 1}, {1, 1}  // Diagonal
-    };
-
-    bool found_door = false;
-    int door_count = 0;
-
-    for (const auto& dir : dirs) {
-        int check_x = player->x + dir[0];
-        int check_y = player->y + dir[1];
-
-        if (!map->inBounds(check_x, check_y)) {
-            continue;
-        }
-
-        TileType tile = map->getTile(check_x, check_y);
-
-        if (tile == TileType::DOOR_CLOSED) {
-            // Open the door
-            map->setTile(check_x, check_y, TileType::DOOR_OPEN);
-            msg_log->addMessage("You open the door.");
-            LOG_ENVIRONMENT("Door opened at (" + std::to_string(check_x) + ", " + std::to_string(check_y) + ")");
-            LOG_PLAYER("Player opened a closed door");
-            found_door = true;
-            door_count++;
-        } else if (tile == TileType::DOOR_OPEN) {
-            // Close the door
-            map->setTile(check_x, check_y, TileType::DOOR_CLOSED);
-            msg_log->addMessage("You close the door.");
-            LOG_ENVIRONMENT("Door closed at (" + std::to_string(check_x) + ", " + std::to_string(check_y) + ")");
-            LOG_PLAYER("Player closed an open door");
-            found_door = true;
-            door_count++;
-        }
-    }
-
-    if (!found_door) {
-        msg_log->addMessage("There is no door here.");
-        LOG_PLAYER("Player tried to interact with door but none found");
+    if (!map->inBounds(target_x, target_y)) {
+        msg_log->addMessage("There is no door there.");
         return false;
     }
 
-    // Opening/closing doors takes a turn
+    TileType tile = map->getTile(target_x, target_y);
+
+    if (tile == TileType::DOOR_CLOSED) {
+        // Open the door
+        map->setTile(target_x, target_y, TileType::DOOR_OPEN);
+        msg_log->addMessage("You open the door.");
+        LOG_ENVIRONMENT("Door opened at (" + std::to_string(target_x) + ", " + std::to_string(target_y) + ")");
+        LOG_PLAYER("Player opened a closed door");
+
+        // Opening doors takes a turn
+        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+        game_manager->updateMonsters();
+
+        return true;
+    } else if (tile == TileType::DOOR_OPEN) {
+        // Close the door
+        map->setTile(target_x, target_y, TileType::DOOR_CLOSED);
+        msg_log->addMessage("You close the door.");
+        LOG_ENVIRONMENT("Door closed at (" + std::to_string(target_x) + ", " + std::to_string(target_y) + ")");
+        LOG_PLAYER("Player closed an open door");
+
+        // Closing doors takes a turn
+        game_manager->processPlayerAction(ActionSpeed::NORMAL);
+        game_manager->updateMonsters();
+
+        return true;
+    } else {
+        msg_log->addMessage("There is no door there.");
+        LOG_PLAYER("Player tried to interact with door but none found at specified location");
+        return false;
+    }
+}
+
+bool GameScreen::handleStairInteraction(bool going_down) {
+    auto* map = game_manager->getMap();
+    auto* msg_log = game_manager->getMessageLog();
+
+    if (!map || !msg_log) {
+        return false;
+    }
+
+    // Check if player is standing on the appropriate stairs
+    int player_x = game_manager->player_x;
+    int player_y = game_manager->player_y;
+    TileType current_tile = map->getTile(player_x, player_y);
+
+    TileType required_stairs = going_down ? TileType::STAIRS_DOWN : TileType::STAIRS_UP;
+
+    if (current_tile != required_stairs) {
+        std::string stair_type = going_down ? "down" : "up";
+        msg_log->addMessage("You must be standing on stairs " + stair_type + " to use them.");
+        return false;
+    }
+
+    // Handle level transition
+    int current_depth = game_manager->getCurrentDepth();
+    int new_depth = going_down ? current_depth + 1 : current_depth - 1;
+
+    // Prevent going up from level 1
+    if (new_depth < 1) {
+        msg_log->addMessage("You cannot go higher than the first level.");
+        return false;
+    }
+
+    // Perform level transition
+    std::string direction_text = going_down ? "descend" : "ascend";
+    std::string level_text = going_down ? "deeper into" : "back up through";
+
+    msg_log->addMessage("You " + direction_text + " the stairs, going " + level_text + " the dungeon...");
+    LOG_PLAYER(std::string("Player used stairs to go ") + (going_down ? "down" : "up") + " from depth " +
+               std::to_string(current_depth) + " to " + std::to_string(new_depth));
+
+    // Change depth and regenerate map
+    game_manager->setCurrentDepth(new_depth);
+
+    // Generate new map with depth-specific seed
+    unsigned int depth_seed = game_manager->getSeedForDepth(new_depth);
+    game_manager->setCurrentMapSeed(depth_seed);
+    game_manager->initializeMap(game_manager->getCurrentMapType());
+
+    // Clear exploration/visibility from previous level
+    map->clearExploration();
+    map->clearVisibility();
+
+    // Place player on opposite stairs type
+    // When going down, player should appear at stairs UP
+    // When going up, player should appear at stairs DOWN
+    TileType target_stairs = going_down ? TileType::STAIRS_UP : TileType::STAIRS_DOWN;
+    Point stairs_pos(-1, -1);
+
+    // Find the opposite stairs position
+    for (int y = 0; y < map->getHeight() && stairs_pos.x == -1; y++) {
+        for (int x = 0; x < map->getWidth(); x++) {
+            if (map->getTile(x, y) == target_stairs) {
+                stairs_pos = Point(x, y);
+                break;
+            }
+        }
+    }
+
+    // Set player position
+    if (stairs_pos.x != -1 && stairs_pos.y != -1) {
+        game_manager->player_x = stairs_pos.x;
+        game_manager->player_y = stairs_pos.y;
+    } else {
+        // Fallback to spawn point if stairs not found
+        auto spawn_point = MapGenerator::getDefaultSpawnPoint(game_manager->getCurrentMapType());
+        game_manager->player_x = spawn_point.x;
+        game_manager->player_y = spawn_point.y;
+    }
+
+    // Update ECS player position if in ECS mode
+    if (game_manager->isECSMode()) {
+        auto* ecs_world = game_manager->getECSWorld();
+        if (ecs_world) {
+            auto* player_entity = ecs_world->getPlayerEntity();
+            if (player_entity) {
+                auto* pos_comp = player_entity->getComponent<ecs::PositionComponent>();
+                if (pos_comp) {
+                    pos_comp->moveTo(game_manager->player_x, game_manager->player_y);
+                }
+            }
+        }
+    }
+
+    // Update FOV for new level (entities already spawned in initializeMap)
+    game_manager->updateFOV();
+
+    // Using stairs takes a turn
     game_manager->processPlayerAction(ActionSpeed::NORMAL);
     game_manager->updateMonsters();
 
-    // If multiple doors, add a note
-    if (door_count > 1) {
-        msg_log->addMessage("(Multiple doors toggled)");
-    }
+    std::string depth_msg = "Welcome to dungeon level " + std::to_string(new_depth) + "!";
+    msg_log->addMessage(depth_msg);
 
     return true;
 }
 
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
-    auto* player = game_manager->getPlayer();
-    auto* map = game_manager->getMap();
-    auto* entity_manager = game_manager->getEntityManager();
-    auto* combat_system = game_manager->getCombatSystem();
+    LOG_DEBUG("handlePlayerMovement called: dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ", dir=" + direction);
 
-    LOG_PLAYER("Moving " + direction + " (dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ")");
+    // Use ECS movement if ECS mode is enabled
+    bool ecs_mode = game_manager->isECSMode();
 
-    if (!player || !map || !entity_manager) {
-        LOG_ERROR("Missing required components for player movement");
-        return false;
-    }
+    if (ecs_mode) {
+        auto ecs_world = game_manager->getECSWorld();
+        if (ecs_world) {
+            LOG_DEBUG("Using ECS movement system for " + direction);
+            ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
 
-    int new_x = player->x + dx;
-    int new_y = player->y + dy;
-    LOG_PLAYER("Target position: (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
-
-    // Check for monsters to attack
-    auto blocking = entity_manager->getBlockingEntityAt(new_x, new_y);
-    if (blocking && blocking->is_monster) {
-        LOG_COMBAT("Player bumping into monster at (" + std::to_string(new_x) + ", " + std::to_string(new_y) + ")");
-
-        // Attack the monster
-        if (combat_system) {
-            LOG_COMBAT("Initiating player attack on monster");
-            auto result = combat_system->processAttack(*player, *blocking);
-
-            // Log messages to both debug log and game message log
-            auto* msg_log = game_manager->getMessageLog();
-            if (msg_log) {
-                LOG_INFO("Adding combat messages to game message log");
-                if (!result.attack_message.empty()) {
-                    msg_log->addMessage(result.attack_message);
-                    LOG_INFO("Added attack message: " + result.attack_message);
-                }
-                if (!result.damage_message.empty()) {
-                    msg_log->addMessage(result.damage_message);
-                    LOG_INFO("Added damage message: " + result.damage_message);
-                }
-                if (!result.result_message.empty()) {
-                    msg_log->addMessage(result.result_message);
-                    LOG_INFO("Added result message: " + result.result_message);
+            // Sync the ECS player position
+            auto player_entity = ecs_world->getPlayerEntity();
+            if (player_entity) {
+                auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+                if (pos) {
+                    // Update the game manager's position variables
+                    game_manager->player_x = pos->position.x;
+                    game_manager->player_y = pos->position.y;
+                    LOG_DEBUG("ECS player moved to: (" + std::to_string(pos->position.x) +
+                             ", " + std::to_string(pos->position.y) + ")");
                 }
             }
 
-            if (result.fatal) {
-                LOG_COMBAT("Monster killed! Removing from entity manager");
-                entity_manager->destroyEntity(blocking);
+            game_manager->processPlayerAction(speed);
 
-                // Award experience if it's a monster
-                if (auto* monster = dynamic_cast<Monster*>(blocking.get())) {
-                    int exp = monster->xp_value;
-                    player->gainExperience(exp);
-                    msg_log->addMessage("You gain " + std::to_string(exp) + " experience.");
-                    LOG_COMBAT("Player gained " + std::to_string(exp) + " experience");
+            // Update FOV and renderer
+            // Get updated player position from ECS (reuse existing player_entity variable)
+            if (player_entity && renderer) {
+                auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+                if (pos) {
+                    renderer->centerOn(pos->position.x, pos->position.y);
                 }
             }
-        } else {
-            LOG_ERROR("Combat system not available!");
+            game_manager->updateFOV();
+            game_manager->updateMonsters();
+            return true;
         }
-
-        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-        game_manager->updateMonsters();  // Let monsters respond
-        return true;
-    } else if (player->tryMove(*map, entity_manager, dx, dy)) {
-        LOG_PLAYER("Moved successfully to (" + std::to_string(player->x) + ", " + std::to_string(player->y) + ")");
-        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-
-        // Only add movement message if not in combat
-        if (!direction.empty()) {
-            // Commenting out movement messages to reduce log spam
-            // game_manager->getMessageLog()->addMessage("You move " + direction + ".");
-        }
-
-        renderer->centerOn(player->x, player->y);
-        game_manager->updateFOV();
-        game_manager->updateMonsters();  // Let monsters act after player moves
-        return true;
-    } else {
-        LOG_PLAYER("Movement blocked");
     }
+
+    // Legacy movement code - should not be reached in ECS mode
+    LOG_ERROR("Legacy movement code reached - this should not happen in ECS mode");
     return false;
 }
 
@@ -250,6 +313,10 @@ Component GameScreen::CreateInventoryPanel() {
         if (!inventory_renderer) {
             if (auto* player = game_manager->getPlayer()) {
                 inventory_renderer = std::make_unique<InventoryRenderer>(player);
+                // Set ECS world if available
+                if (auto* ecs_world = game_manager->getECSWorld()) {
+                    inventory_renderer->setECSWorld(ecs_world);
+                }
             }
         }
 
@@ -334,29 +401,73 @@ Component GameScreen::Create() {
             case InputAction::QUIT:
                 game_manager->setState(GameState::MENU);
                 return true;
-                
+
+            case InputAction::CANCEL:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    auto* msg_log = game_manager->getMessageLog();
+                    if (msg_log) {
+                        msg_log->addMessage("Cancelled.");
+                    }
+                    return true;
+                }
+                // If not awaiting direction, do nothing
+                return false;
+
             case InputAction::MOVE_UP:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(0, -1);
+                }
                 return handlePlayerMovement(0, -1, "north");
 
             case InputAction::MOVE_DOWN:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(0, 1);
+                }
                 return handlePlayerMovement(0, 1, "south");
 
             case InputAction::MOVE_LEFT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(-1, 0);
+                }
                 return handlePlayerMovement(-1, 0, "west");
 
             case InputAction::MOVE_RIGHT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(1, 0);
+                }
                 return handlePlayerMovement(1, 0, "east");
 
             case InputAction::MOVE_UP_LEFT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(-1, -1);
+                }
                 return handlePlayerMovement(-1, -1, "northwest");
 
             case InputAction::MOVE_UP_RIGHT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(1, -1);
+                }
                 return handlePlayerMovement(1, -1, "northeast");
 
             case InputAction::MOVE_DOWN_LEFT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(-1, 1);
+                }
                 return handlePlayerMovement(-1, 1, "southwest");
 
             case InputAction::MOVE_DOWN_RIGHT:
+                if (awaiting_direction) {
+                    awaiting_direction = false;
+                    return handleDirectionalDoorInteraction(1, 1);
+                }
                 return handlePlayerMovement(1, 1, "southeast");
 
             case InputAction::WAIT:
@@ -370,43 +481,20 @@ Component GameScreen::Create() {
                 return handleDoorInteraction();
 
             case InputAction::GET_ITEM: {
-                auto* player = game_manager->getPlayer();
-                auto* item_manager = game_manager->getItemManager();
-                auto* msg_log = game_manager->getMessageLog();
-
-                if (player && item_manager) {
-                    auto item = item_manager->getItemAt(player->x, player->y);
-                    if (item) {
-                        // Create a copy for inventory
-                        auto item_copy = ItemFactory::getInstance().create(item->id);
-                        if (item_copy) {
-                            // Copy stack size and properties
-                            item_copy->stack_size = item->stack_size;
-                            item_copy->properties = item->properties;
-
-                            // Try to pick up the item
-                            if (player->pickupItem(std::move(item_copy))) {
-                                msg_log->addMessage("You pick up " + item->name + ".");
-
-                                // Special message for gold
-                                if (item->type == Item::ItemType::GOLD) {
-                                    msg_log->addMessage("You gain " + std::to_string(item->properties["amount"]) + " gold.");
-                                }
-
-                                // Remove from world
-                                item_manager->removeItem(item);
-                                game_manager->processPlayerAction(ActionSpeed::FAST);
-                                return true;
-                            } else {
-                                msg_log->addMessage("Your inventory is full!");
-                            }
-                        }
-                    } else {
-                        msg_log->addMessage("There is nothing here to pick up.");
-                    }
+                auto* ecs_world = game_manager->getECSWorld();
+                if (ecs_world) {
+                    // Use ECS action system for item pickup (action 1 = pickup)
+                    ActionSpeed speed = ecs_world->processPlayerAction(1, 0, 0);
+                    game_manager->processPlayerAction(speed);
                 }
-                return false;
+                return true;
             }
+
+            case InputAction::USE_STAIRS_DOWN:
+                return handleStairInteraction(true);  // Going down
+
+            case InputAction::USE_STAIRS_UP:
+                return handleStairInteraction(false); // Going up
 
             case InputAction::OPEN_INVENTORY:
                 game_manager->setState(GameState::INVENTORY);
@@ -445,6 +533,10 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
         // Initialize if needed
         if (auto* player = game_manager->getPlayer()) {
             inventory_renderer = std::make_unique<InventoryRenderer>(player);
+            // Set ECS world for inventory access
+            if (auto* ecs_world = game_manager->getECSWorld()) {
+                inventory_renderer->setECSWorld(ecs_world);
+            }
             LOG_INFO("Created inventory renderer");
         }
         if (!inventory_renderer) {
@@ -453,12 +545,24 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
         }
     }
 
-    // Handle direct slot selection with letter keys
-    // Now includes 'd' and 'e' since we use uppercase D and E for actions
+    // Check for inventory-specific action keys first
     if (event.is_character()) {
         char c = event.character()[0];
-        if (c >= 'a' && c <= 'z') {
+
+        // Handle inventory action keys (case-insensitive)
+        if (c == 'd' || c == 'D') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> DROP_ITEM");
+            action = InputAction::DROP_ITEM;
+        } else if (c == 'e' || c == 'E' || c == 'x' || c == 'X') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> EXAMINE_ITEM");
+            action = InputAction::EXAMINE_ITEM;
+        } else if (c == 'u' || c == 'U') {
+            LOG_INFO("Inventory key: '" + std::string(1, c) + "' -> USE_ITEM");
+            action = InputAction::USE_ITEM;
+        } else if (c >= 'a' && c <= 'z') {
+            // Only treat as slot selection if not an action key
             int slot = c - 'a';
+            LOG_INFO("Inventory slot selection: '" + std::string(1, c) + "' -> slot " + std::to_string(slot));
             inventory_renderer->selectSlot(slot);
             return true;
         }
@@ -488,59 +592,54 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
             return true;
 
         case InputAction::USE_ITEM: {
-            auto* player = game_manager->getPlayer();
             auto* msg_log = game_manager->getMessageLog();
-            Item* item = inventory_renderer->getSelectedItem();
+            auto* ecs_world = game_manager->getECSWorld();
 
-            if (item && player && msg_log) {
-                // Handle potion use
-                if (item->type == Item::ItemType::POTION) {
-                    if (item->properties.count("heal")) {
-                        int heal_amount = item->properties.at("heal");
-                        player->heal(heal_amount);
-                        msg_log->addMessage("You drink the " + item->name + " and recover " +
-                                          std::to_string(heal_amount) + " HP.");
-
-                        // Remove the item
-                        player->inventory->removeItem(inventory_renderer->getSelectedSlot());
-
-                        // Close inventory and consume turn
-                        game_manager->setState(GameState::PLAYING);
-                        game_manager->processPlayerAction(ActionSpeed::NORMAL);
-                        inventory_renderer->reset();
-                        return true;
+            if (ecs_world && inventory_renderer) {
+                auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                if (selected_item) {
+                    auto* inv_system = ecs_world->getInventorySystem();
+                    if (inv_system) {
+                        auto player_id = ecs_world->getPlayerID();
+                        auto* player_entity = ecs_world->getEntity(player_id);
+                        if (inv_system->useItem(player_entity, selected_item->getID())) {
+                            msg_log->addMessage("You use the item.");
+                            // Refresh inventory display
+                            inventory_renderer->reset();
+                        } else {
+                            msg_log->addMessage("Cannot use that item.");
+                        }
                     }
+                } else {
+                    msg_log->addMessage("No item selected.");
                 }
-                msg_log->addMessage("You can't use that item.");
             }
             return true;
         }
 
         case InputAction::DROP_ITEM: {
-            auto* player = game_manager->getPlayer();
-            auto* item_manager = game_manager->getItemManager();
             auto* msg_log = game_manager->getMessageLog();
+            auto* ecs_world = game_manager->getECSWorld();
 
-            if (player && item_manager && msg_log) {
-                auto dropped = player->inventory->removeItem(inventory_renderer->getSelectedSlot());
-                if (dropped) {
-                    std::string item_name = dropped->name;
-                    int px = player->x;
-                    int py = player->y;
-
-                    msg_log->addMessage("You drop the " + item_name + ".");
-                    LOG_INFO("Dropping item: " + item_name + " at (" +
-                             std::to_string(px) + ", " + std::to_string(py) + ")");
-
-                    // Spawn item at player position
-                    item_manager->spawnItem(std::move(dropped), px, py);
-
-                    // Log item count after drop
-                    LOG_INFO("Items in world after drop: " +
-                             std::to_string(item_manager->getItemCount()));
-
-                    // Consume turn
-                    game_manager->processPlayerAction(ActionSpeed::FAST);
+            if (ecs_world && inventory_renderer) {
+                auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                if (selected_item) {
+                    auto* inv_system = ecs_world->getInventorySystem();
+                    if (inv_system) {
+                        auto player_id = ecs_world->getPlayerID();
+                        auto* player_entity = ecs_world->getEntity(player_id);
+                        if (inv_system->dropItem(player_entity, selected_item->getID())) {
+                            msg_log->addMessage("You drop the item.");
+                            // Process drop event immediately
+                            ecs::EventSystem::getInstance().update();
+                            // Refresh inventory display
+                            inventory_renderer->reset();
+                        } else {
+                            msg_log->addMessage("Cannot drop that item.");
+                        }
+                    }
+                } else {
+                    msg_log->addMessage("No item selected.");
                 }
             }
             return true;
@@ -548,16 +647,24 @@ bool GameScreen::handleInventoryInput(InputAction action, const ftxui::Event& ev
 
         case InputAction::EXAMINE_ITEM: {
             auto* msg_log = game_manager->getMessageLog();
-            Item* item = inventory_renderer->getSelectedItem();
-
-            if (item && msg_log) {
-                msg_log->addMessage("Examining: " + item->name);
-                if (!item->description.empty()) {
-                    msg_log->addMessage(item->description);
-                }
-                // Add more detailed info
-                if (item->type == Item::ItemType::POTION && item->properties.count("heal")) {
-                    msg_log->addMessage("Heals " + std::to_string(item->properties.at("heal")) + " HP when used.");
+            if (msg_log) {
+                auto* ecs_world = game_manager->getECSWorld();
+                if (ecs_world && inventory_renderer) {
+                    auto* selected_item = static_cast<ecs::Entity*>(inventory_renderer->getSelectedItem());
+                    if (selected_item) {
+                        auto* item_comp = selected_item->getComponent<ecs::ItemComponent>();
+                        if (item_comp) {
+                            msg_log->addMessage("Examining: " + item_comp->name);
+                            if (!item_comp->description.empty()) {
+                                msg_log->addMessage(item_comp->description);
+                            }
+                            if (item_comp->heal_amount > 0) {
+                                msg_log->addMessage("Heals " + std::to_string(item_comp->heal_amount) + " HP when used.");
+                            }
+                        }
+                    } else {
+                        msg_log->addMessage("No item selected.");
+                    }
                 }
             }
             return true;

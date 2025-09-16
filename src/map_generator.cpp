@@ -292,6 +292,72 @@ void MapGenerator::placeStairs(Map& map, const Point& position) {
     }
 }
 
+void MapGenerator::updateStairsForDepth(Map& map, int depth) {
+    if (depth < 1) depth = 1; // Clamp to minimum depth
+
+    // Find existing stairs down (should be placed by normal generation)
+    Point stairs_down_pos = findStairsLocation(map);
+
+    if (depth == 1) {
+        // Level 1: Only stairs down, ensure existing stairs are down
+        if (stairs_down_pos.x != -1) {
+            map.setTile(stairs_down_pos.x, stairs_down_pos.y, TileType::STAIRS_DOWN);
+        }
+    } else {
+        // Deeper levels: Need both up and down stairs
+
+        // Find a good position for stairs up (preferably near spawn point)
+        Point spawn = getDefaultSpawnPoint(MapType::PROCEDURAL);
+        Point stairs_up_pos = spawn;
+
+        // Try to find an alternative position if spawn is not suitable
+        bool placed_up = false;
+
+        // First try: spawn point area
+        for (int dy = -2; dy <= 2 && !placed_up; dy++) {
+            for (int dx = -2; dx <= 2 && !placed_up; dx++) {
+                int x = spawn.x + dx;
+                int y = spawn.y + dy;
+
+                if (map.inBounds(x, y) && map.getTile(x, y) == TileType::FLOOR) {
+                    // Make sure it's not too close to stairs down
+                    if (stairs_down_pos.x == -1 ||
+                        (abs(x - stairs_down_pos.x) > 3 || abs(y - stairs_down_pos.y) > 3)) {
+                        stairs_up_pos = Point(x, y);
+                        placed_up = true;
+                    }
+                }
+            }
+        }
+
+        // Second try: anywhere on the map that's not too close to stairs down
+        if (!placed_up) {
+            for (int y = 1; y < map.getHeight() - 1 && !placed_up; y++) {
+                for (int x = 1; x < map.getWidth() - 1 && !placed_up; x++) {
+                    if (map.getTile(x, y) == TileType::FLOOR) {
+                        // Make sure it's not too close to stairs down
+                        if (stairs_down_pos.x == -1 ||
+                            (abs(x - stairs_down_pos.x) > 5 || abs(y - stairs_down_pos.y) > 5)) {
+                            stairs_up_pos = Point(x, y);
+                            placed_up = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Place stairs up
+        if (map.inBounds(stairs_up_pos.x, stairs_up_pos.y)) {
+            map.setTile(stairs_up_pos.x, stairs_up_pos.y, TileType::STAIRS_UP);
+        }
+
+        // Ensure stairs down are still there
+        if (stairs_down_pos.x != -1) {
+            map.setTile(stairs_down_pos.x, stairs_down_pos.y, TileType::STAIRS_DOWN);
+        }
+    }
+}
+
 Point MapGenerator::getDefaultSpawnPoint(MapType type) {
     // Calculate spawn points based on actual room layouts
     switch (type) {
@@ -901,19 +967,19 @@ void MapGenerator::placeDoorsAtRoomEntrances(Map& map, const std::vector<Room>& 
     LOG_MAP("Placing doors at room entrances for " + std::to_string(rooms.size()) + " rooms");
     // Scan the perimeter of each room for doorway positions
     for (const auto& room : rooms) {
-        // Check each edge of the room
+        // Check each edge of the room (walls are at the room boundary)
         for (int x = room.x; x < room.x + room.width; x++) {
-            // Top edge
-            checkAndPlaceDoor(map, x, room.y - 1);
-            // Bottom edge
-            checkAndPlaceDoor(map, x, room.y + room.height);
+            // Top wall
+            checkAndPlaceDoor(map, x, room.y);
+            // Bottom wall
+            checkAndPlaceDoor(map, x, room.y + room.height - 1);
         }
 
         for (int y = room.y; y < room.y + room.height; y++) {
-            // Left edge
-            checkAndPlaceDoor(map, room.x - 1, y);
-            // Right edge
-            checkAndPlaceDoor(map, room.x + room.width, y);
+            // Left wall
+            checkAndPlaceDoor(map, room.x, y);
+            // Right wall
+            checkAndPlaceDoor(map, room.x + room.width - 1, y);
         }
     }
 }
@@ -921,20 +987,26 @@ void MapGenerator::placeDoorsAtRoomEntrances(Map& map, const std::vector<Room>& 
 void MapGenerator::checkAndPlaceDoor(Map& map, int x, int y) {
     // Check if this position is a valid doorway
     if (!map.inBounds(x, y)) return;
-    if (map.getTile(x, y) != TileType::FLOOR) return;
 
-    // Check for doorway pattern (walls on opposite sides)
-    bool horizontalDoor = map.inBounds(x, y - 1) &&
-                         map.inBounds(x, y + 1) &&
-                         map.getTile(x, y - 1) == TileType::WALL &&
-                         map.getTile(x, y + 1) == TileType::WALL;
+    // This position should be a wall that connects room to corridor
+    if (map.getTile(x, y) != TileType::WALL) return;
 
-    bool verticalDoor = map.inBounds(x - 1, y) &&
-                       map.inBounds(x + 1, y) &&
-                       map.getTile(x - 1, y) == TileType::WALL &&
-                       map.getTile(x + 1, y) == TileType::WALL;
+    // Check if this wall position connects a room interior to a corridor
+    // For horizontal walls (top/bottom of room)
+    bool horizontalConnection =
+        (map.inBounds(x, y - 1) && map.getTile(x, y - 1) == TileType::FLOOR &&
+         map.inBounds(x, y + 1) && map.getTile(x, y + 1) == TileType::FLOOR) &&
+        (map.inBounds(x - 1, y) && map.getTile(x - 1, y) == TileType::WALL &&
+         map.inBounds(x + 1, y) && map.getTile(x + 1, y) == TileType::WALL);
 
-    if (horizontalDoor || verticalDoor) {
+    // For vertical walls (left/right of room)
+    bool verticalConnection =
+        (map.inBounds(x - 1, y) && map.getTile(x - 1, y) == TileType::FLOOR &&
+         map.inBounds(x + 1, y) && map.getTile(x + 1, y) == TileType::FLOOR) &&
+        (map.inBounds(x, y - 1) && map.getTile(x, y - 1) == TileType::WALL &&
+         map.inBounds(x, y + 1) && map.getTile(x, y + 1) == TileType::WALL);
+
+    if (horizontalConnection || verticalConnection) {
         map.setTile(x, y, TileType::DOOR_CLOSED);
         LOG_ENVIRONMENT("Door placed at (" + std::to_string(x) + ", " + std::to_string(y) + ")");
     }

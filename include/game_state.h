@@ -34,14 +34,13 @@ class TurnManager;
 class MessageLog;
 class FrameStats;
 class Map;
-class EntityManager;
-class Player;
-class SpawnManager;
 class MapMemory;
-class MonsterAI;
-class CombatSystem;
-class ItemManager;
 class GameSerializer;
+
+// Forward declare ECS namespace
+namespace ecs {
+    class GameWorld;
+}
 
 /**
  * @class GameManager
@@ -53,7 +52,7 @@ class GameSerializer;
  * access to all major subsystems.
  *
  * @see GameLoop
- * @see EntityManager
+ * @see ecs::GameWorld
  * @see Map
  * @see TurnManager
  */
@@ -104,9 +103,7 @@ public:
     FrameStats* getFrameStats() const { return frame_stats.get(); }
     Map* getMap() { return map.get(); }
     const Map* getMap() const { return map.get(); }
-    EntityManager* getEntityManager() { return entity_manager.get(); }
-    const EntityManager* getEntityManager() const { return entity_manager.get(); }
-    Player* getPlayer();
+    void* getPlayer();  // Returns nullptr - use ECS
     int getCurrentDepth() const { return current_depth; }
     void setCurrentDepth(int depth) { current_depth = depth; }
     
@@ -139,18 +136,14 @@ public:
 
     /**
      * @brief Enable frame statistics
-     * @deprecated Frame stats are always enabled
      */
     void enableFrameStats() { /* Frame stats are always enabled if available */ }
     
-    // Spawn management
-    SpawnManager* getSpawnManager() { return spawn_manager.get(); }
-    
-    // Game data (deprecated - use entity_manager->getPlayer() instead)
-    int player_hp = 10;      // DEPRECATED
-    int player_max_hp = 10;  // DEPRECATED
-    int player_x = 30;       // DEPRECATED - Player position
-    int player_y = 10;       // DEPRECATED
+    // Player data synced from ECS for compatibility
+    int player_hp = 10;
+    int player_max_hp = 10;
+    int player_x = 30;
+    int player_y = 10;
     
     // Game flow
 
@@ -195,14 +188,11 @@ public:
 
     // Monster AI
     void updateMonsters();
-    MonsterAI* getMonsterAI() { return monster_ai.get(); }
 
-    // Combat system
-    CombatSystem* getCombatSystem() { return combat_system.get(); }
 
-    // Item system
-    ItemManager* getItemManager() { return item_manager.get(); }
-    const ItemManager* getItemManager() const { return item_manager.get(); }
+    // Item system - Legacy (using ECS item system)
+    void* getItemManager() { return nullptr; }  // Use ECS
+    const void* getItemManager() const { return nullptr; }  // Use ECS
 
     // Save/Load system
 
@@ -226,6 +216,38 @@ public:
      */
     GameSerializer* getSerializer() { return serializer.get(); }
 
+    // ECS Integration
+
+    /**
+     * @brief Get ECS game world
+     * @return Pointer to ECS GameWorld
+     */
+    ecs::GameWorld* getECSWorld() { return ecs_world.get(); }
+    const ecs::GameWorld* getECSWorld() const { return ecs_world.get(); }
+
+    /**
+     * @brief Enable ECS mode
+     * @param enable If true, use ECS for entity management
+     */
+    void setECSMode(bool enable) { use_ecs = enable; }
+
+    /**
+     * @brief Check if ECS mode is enabled
+     * @return true if using ECS
+     */
+    bool isECSMode() const { return use_ecs; }
+
+    /**
+     * @brief Initialize ECS world
+     * @param migrate_existing If true, migrate existing entities to ECS
+     */
+    void initializeECS(bool migrate_existing = true);
+
+    /**
+     * @brief Spawn monsters and items in the map
+     */
+    void spawnEntities();
+
 private:
     GameState current_state = GameState::MENU;
     GameState previous_state = GameState::MENU;
@@ -234,15 +256,17 @@ private:
     std::unique_ptr<MessageLog> message_log;
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
-    std::unique_ptr<EntityManager> entity_manager;
-    std::unique_ptr<SpawnManager> spawn_manager;
     std::unique_ptr<MapMemory> map_memory;
-    std::unique_ptr<MonsterAI> monster_ai;
-    std::unique_ptr<CombatSystem> combat_system;
-    std::unique_ptr<ItemManager> item_manager;
     std::unique_ptr<GameSerializer> serializer;
+    std::unique_ptr<ecs::GameWorld> ecs_world;  ///< ECS world manager
     std::vector<std::vector<bool>> current_fov;
-    Room* current_room = nullptr;  // Track which room the player is currently in
+    bool use_ecs = false;  ///< Flag to enable ECS mode
+
+    // Room tracking - using observer pointer since Map owns the rooms
+    // This is safe because rooms lifetime is tied to Map lifetime
+    // and Map is owned by this GameManager
+    const Room* current_room = nullptr;  // Observer pointer to current room
+
     bool debug_mode = false;
     int current_depth = 1;  // Track dungeon depth for spawning
 
@@ -253,6 +277,10 @@ private:
     // Save/Load state
     bool save_menu_mode = true;  // true = save, false = load
 
+    // Death tracking
+    std::string death_cause = "unknown";
+    int death_turn = 0;
+
 public:
     // Map generation
     MapType getCurrentMapType() const { return current_map_type; }
@@ -260,7 +288,24 @@ public:
     unsigned int getCurrentMapSeed() const { return current_map_seed; }
     void setCurrentMapSeed(unsigned int seed) { current_map_seed = seed; }
 
+    /**
+     * @brief Get deterministic seed for a specific depth
+     * @param depth Target dungeon depth
+     * @return Deterministic seed based on base seed and depth
+     */
+    unsigned int getSeedForDepth(int depth) const;
+
+    // Room tracking
+    const Room* getCurrentRoom() const { return current_room; }
+    void setCurrentRoom(const Room* room) { current_room = room; }
+
     // Save/Load UI
     bool getSaveMenuMode() const { return save_menu_mode; }
     void setSaveMenuMode(bool save_mode) { save_menu_mode = save_mode; }
+
+    // Death tracking
+    const std::string& getDeathCause() const { return death_cause; }
+    void setDeathCause(const std::string& cause) { death_cause = cause; }
+    int getDeathTurn() const { return death_turn; }
+    void setDeathTurn(int turn) { death_turn = turn; }
 };

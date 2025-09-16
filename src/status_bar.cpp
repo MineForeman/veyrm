@@ -1,8 +1,11 @@
 #include "status_bar.h"
 #include "game_state.h"
 #include "turn_manager.h"
-#include "player.h"
 #include "frame_stats.h"
+#include "ecs/game_world.h"
+#include "ecs/position_component.h"
+#include "ecs/health_component.h"
+#include "ecs/player_component.h"
 #include <ftxui/dom/elements.hpp>
 #include <sstream>
 #include <iomanip>
@@ -13,29 +16,63 @@ StatusBar::StatusBar() {}
 
 Element StatusBar::render(const GameManager& game_manager) const {
     auto tm = game_manager.getTurnManager();
-    
-    std::vector<Element> status_elements;
-    
-    status_elements.push_back(renderHP(game_manager.player_hp, game_manager.player_max_hp));
-    
-    status_elements.push_back(separator());
-    status_elements.push_back(renderPosition(game_manager.player_x, game_manager.player_y));
-    
-    status_elements.push_back(separator());
-    status_elements.push_back(renderTurn(tm->getCurrentTurn()));
-    
-    status_elements.push_back(separator());
-    status_elements.push_back(renderTime(tm->getWorldTime()));
-    
-    status_elements.push_back(separator());
-    status_elements.push_back(renderDepth(1));
-    
-    if (game_manager.isDebugMode() && game_manager.getFrameStats()) {
-        status_elements.push_back(separator());
-        status_elements.push_back(renderDebugInfo(game_manager.getFrameStats()->format()));
+
+    // Get player data from ECS if available
+    int hp = game_manager.player_hp;
+    int max_hp = game_manager.player_max_hp;
+    int x = game_manager.player_x;
+    int y = game_manager.player_y;
+    int depth = 1;
+
+    // Try to get data directly from ECS
+    auto* ecs_world = const_cast<GameManager&>(game_manager).getECSWorld();
+    if (ecs_world) {
+        auto* player_entity = ecs_world->getPlayerEntity();
+        if (player_entity) {
+            // Get position from ECS
+            if (auto* pos = player_entity->getComponent<ecs::PositionComponent>()) {
+                x = pos->position.x;
+                y = pos->position.y;
+            }
+            // Get health from ECS
+            if (auto* health = player_entity->getComponent<ecs::HealthComponent>()) {
+                hp = health->hp;
+                max_hp = health->max_hp;
+            }
+            // Get player-specific data from ECS
+            if ([[maybe_unused]] auto* player_comp = player_entity->getComponent<ecs::PlayerComponent>()) {
+                // Could display level, experience, gold here if needed
+                // For now just use depth 1
+            }
+        }
     }
-    
-    return hbox(status_elements) | border | size(HEIGHT, EQUAL, 3);
+
+    // First line: HP and Position
+    std::vector<Element> line1_elements;
+    line1_elements.push_back(renderHP(hp, max_hp) | size(WIDTH, EQUAL, 15));
+    line1_elements.push_back(separator());
+    line1_elements.push_back(text("Position: ") | size(WIDTH, EQUAL, 10));
+    line1_elements.push_back(renderPosition(x, y));
+
+    // Second line: Turn, Time, and Depth
+    std::vector<Element> line2_elements;
+    line2_elements.push_back(renderTurn(tm->getCurrentTurn()) | size(WIDTH, EQUAL, 10));
+    line2_elements.push_back(separator());
+    line2_elements.push_back(renderTime(tm->getWorldTime()) | size(WIDTH, EQUAL, 10));
+    line2_elements.push_back(separator());
+    line2_elements.push_back(renderDepth(depth) | size(WIDTH, EQUAL, 10));
+
+    if (game_manager.isDebugMode() && game_manager.getFrameStats()) {
+        line2_elements.push_back(separator());
+        line2_elements.push_back(renderDebugInfo(game_manager.getFrameStats()->format()));
+    }
+
+    // Stack the two lines vertically with separator
+    return vbox({
+        hbox(line1_elements),
+        separatorHeavy(),  // Horizontal line between the two lines
+        hbox(line2_elements)
+    }) | border | size(HEIGHT, EQUAL, 5);  // Increased height for 2 lines + separator
 }
 
 Element StatusBar::renderHP(int current, int max) const {
@@ -46,7 +83,7 @@ Element StatusBar::renderHP(int current, int max) const {
 }
 
 Element StatusBar::renderPosition(int x, int y) const {
-    return text("Pos: " + std::to_string(x) + "," + std::to_string(y));
+    return text(std::to_string(x) + ", " + std::to_string(y));
 }
 
 Element StatusBar::renderTurn(int turn) const {

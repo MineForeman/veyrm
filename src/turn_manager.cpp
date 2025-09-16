@@ -1,5 +1,6 @@
 #include "turn_manager.h"
 #include "game_state.h"
+#include "log.h"
 #include <iostream>
 
 TurnManager::TurnManager(GameManager* gm) 
@@ -12,6 +13,8 @@ TurnManager::TurnManager(GameManager* gm)
 
 void TurnManager::startPlayerTurn() {
     current_phase = TurnPhase::WAITING_FOR_INPUT;
+    Log::turn("Starting player turn " + std::to_string(current_turn + 1) +
+              " at world time " + std::to_string(world_time));
     // Player can act when world_time >= player_next_action_time
 }
 
@@ -19,29 +22,34 @@ void TurnManager::executePlayerAction(ActionSpeed speed) {
     if (current_phase != TurnPhase::WAITING_FOR_INPUT) {
         return;
     }
-    
+
     current_phase = TurnPhase::PLAYER_ACTION;
-    
+
     // Calculate time cost of action
     int cost = getActionCost(speed);
     player_next_action_time = world_time + cost;
-    
+
+    Log::turn("Player action executed: cost " + std::to_string(cost) +
+              " AP, next action at time " + std::to_string(player_next_action_time));
+
     // Process the action (handled by game logic)
     current_turn++;
-    
+
     // Move to world update phase
     processWorldTurn();
 }
 
 void TurnManager::processWorldTurn() {
     current_phase = TurnPhase::WORLD_UPDATE;
-    
+
     // Advance time to next player action
     int time_to_advance = player_next_action_time - world_time;
     if (time_to_advance > 0) {
         advanceTime(time_to_advance);
+        Log::turn("Advanced world time by " + std::to_string(time_to_advance) +
+                  " to " + std::to_string(world_time));
     }
-    
+
     // Process any scheduled actions that are due
     processScheduledActions();
 
@@ -55,7 +63,10 @@ void TurnManager::processWorldTurn() {
 
 void TurnManager::endTurn() {
     current_phase = TurnPhase::TURN_COMPLETE;
-    
+
+    Log::turn("Turn " + std::to_string(current_turn) + " completed at world time " +
+              std::to_string(world_time));
+
     // Check if player can act again
     if (world_time >= player_next_action_time) {
         startPlayerTurn();
