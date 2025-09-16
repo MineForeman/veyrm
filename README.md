@@ -2,13 +2,13 @@
 
 A modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI. Descend through the Spiral Vaults beneath Veyrmspire to shatter the last shard of a dead god's crown.
 
-![Version](https://img.shields.io/badge/version-1.0.0--MVP-blue)
+![Version](https://img.shields.io/badge/version-0.0.3-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-23-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 ## 🎮 Features
 
-### Current (v1.0.0-MVP)
+### Current (v0.0.3)
 - **Item System** - Complete item entity system with collectibles and treasure
 - **Item Pickup** - Press 'g' to get items, automatic gold collection
 - **Combat System** - d20-based tactical bump-to-attack with critical hits

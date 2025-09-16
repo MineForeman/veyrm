@@ -3,7 +3,7 @@
 # Command-line arguments will override these settings.
 
 # Version Information
-version: "0.0.2"
+version: "0.0.3"
 
 # Game Settings
 game:

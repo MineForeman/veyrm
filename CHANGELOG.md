@@ -5,6 +5,41 @@ All notable changes to Veyrm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.3] - 2025-09-16
+
+### Added
+- **GitLab CI/CD Integration** - Full continuous integration pipeline
+  - Windows, macOS, and Linux builds via GitLab runners
+  - Automated testing on all platforms
+  - Cross-platform build verification
+
+- **GitLab CLI Support** - Installed and configured `glab` for GitLab operations
+  - Personal access token authentication
+  - API integration for merge requests
+  - Command-line GitLab management
+
+### Fixed
+- **Windows Build Compatibility** - Resolved all MSVC compiler warnings
+  - Fixed EntityID to int conversion warnings in event.h
+  - Fixed parameter shadowing in ai_system.h and equipment_system.h
+  - Fixed size_t to int conversions in fov.cpp and entity_factory.cpp
+  - Added explicit static_cast for all implicit conversions
+  - All tests pass on Windows platform
+
+### Changed
+- **Documentation Updates**
+  - Updated CLAUDE.md with GitLab remote configuration
+  - Improved ECS architecture documentation
+  - Added GitLab as primary remote, GitHub as mirror
+  - Clarified build and test requirements
+
+### Technical
+- **Cross-Platform Improvements**
+  - Enhanced CMake configuration for Windows
+  - Improved compiler warning handling
+  - Better platform-specific build settings
+  - Consistent build behavior across OS types
+
 ## [v1.0.0-MVP] - 2025-09-14
 
 ### 🎉 MVP Complete!
