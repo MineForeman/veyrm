@@ -51,13 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-The game is transitioning from legacy entity classes to a modern **ECS (Entity Component System)** architecture.
-
-### Current Branch: refactor-optimize
-- ✅ Bridge classes removed (monster_ai.h, spawn_manager.h deleted)
-- ✅ Legacy Entity, Item, and Inventory systems removed
-- ✅ ECS implementation consolidated
-- ✅ All rendering now ECS-only
+The game uses a modern **ECS (Entity Component System)** architecture. Legacy entity classes have been completely removed.
 
 ### Core ECS System (`include/ecs/`, `src/ecs/`)
 ```
@@ -68,7 +62,7 @@ component.h            # Base component class
 system.h               # Base system class
 ```
 
-### Components
+### Key Components
 - **PositionComponent**: x, y coordinates
 - **HealthComponent**: current/max HP
 - **RenderableComponent**: glyph, color for display
@@ -83,7 +77,7 @@ system.h               # Base system class
 - **EquipmentComponent**: equipped items
 - **EffectsComponent**: status effects and buffs
 
-### Systems
+### Key Systems
 - **MovementSystem**: Handles entity movement and collision
 - **CombatSystem**: Bump-to-attack combat resolution
 - **AISystem**: Monster behavior and pathfinding
@@ -107,12 +101,6 @@ GameManager (main loop)
   │    └── RendererTUI (FTXUI)
   └── SaveLoadScreen
 ```
-
-### Legacy Systems (Removed ✅)
-- ✅ `include/entity.h`: Old base entity class (removed)
-- ✅ `include/monster.h`, `include/player.h`: Replaced by ECS components
-- ✅ Bridge classes (monster_ai.h, spawn_manager.h) removed
-- ✅ Legacy Item and Inventory systems removed
 
 ## Key Implementation Patterns
 
@@ -144,21 +132,21 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 
 ### Configuration
 - `config.yml`: Game settings, map generation parameters
-- `data/monsters.json`: Monster definitions
-- `data/items.json`: Item definitions
-- Save files: 9 slots with seed-based map regen
+- `data/monsters.json`: Monster definitions with ECS components
+- `data/items.json`: Item definitions with properties
+- Save files: 9 slots with seed-based map regeneration
 
-### Monster Definition Example
+### Monster Definition Format
 ```json
 {
   "id": "goblin",
   "glyph": "g",
   "color": "green",
-  "hp": 10,
-  "atk": [2, 5],
-  "def": 1,
-  "speed": 100,
-  "xp": 15
+  "components": {
+    "health": { "max_hp": 20, "hp": 20 },
+    "combat": { "min_damage": 1, "max_damage": 4 },
+    "ai": { "behavior": "aggressive", "vision_range": 6 }
+  }
 }
 ```
 
@@ -201,7 +189,7 @@ if (auto* pos = world.getComponent<PositionComponent>(entity)) {
 4. Write tests in `tests/test_ecs_systems.cpp`
 
 ### Adding a New Monster
-1. Add to `data/monsters.json`
+1. Add to `data/monsters.json` with proper ECS component structure
 2. Test with `./build.sh run arena`
 3. Verify spawning works
 
