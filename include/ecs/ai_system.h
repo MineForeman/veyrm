@@ -111,9 +111,9 @@ public:
 
     /**
      * @brief Set the player entity for AI targeting
-     * @param player_id ID of the player entity
+     * @param id ID of the player entity
      */
-    void setPlayerId(EntityID player_id) { this->player_id = player_id; }
+    void setPlayerId(EntityID id) { this->player_id = id; }
 
 private:
     Map* map;                           ///< Game map

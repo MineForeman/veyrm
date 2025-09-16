@@ -371,8 +371,8 @@ std::unique_ptr<Entity> EntityFactory::createRandomMonster(int x, int y, int dun
     }
 
     // Pick random monster
-    static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<> dist(0, available.size() - 1);
+    static std::mt19937 rng(static_cast<unsigned int>(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::uniform_int_distribution<> dist(0, static_cast<int>(available.size()) - 1);
     std::string monster_id = available[dist(rng)];
 
     return createMonster(monster_id, x, y, dungeon_level);
@@ -414,8 +414,8 @@ std::unique_ptr<Entity> EntityFactory::createRandomItem(int x, int y, int dungeo
     }
 
     // Pick random item
-    static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<> dist(0, available.size() - 1);
+    static std::mt19937 rng(static_cast<unsigned int>(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::uniform_int_distribution<> dist(0, static_cast<int>(available.size()) - 1);
     std::string item_id = available[dist(rng)];
 
     return createItem(item_id, x, y);
@@ -592,7 +592,7 @@ void EntityFactory::generateRandomProperties(Entity* entity, int quality) {
     auto* item = entity->getComponent<ItemComponent>();
     if (!item) return;
 
-    static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+    static std::mt19937 rng(static_cast<unsigned int>(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::uniform_int_distribution<> bonus_dist(1, quality);
 
     // Add random bonuses based on quality

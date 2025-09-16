@@ -65,7 +65,7 @@ void FOV::calculate(const Map& map, const Point& origin, int radius,
     // Count visible tiles for logging
     int visibleCount = 0;
     for (const auto& row : visible) {
-        visibleCount += std::count(row.begin(), row.end(), true);
+        visibleCount += static_cast<int>(std::count(row.begin(), row.end(), true));
     }
     Log::fov("FOV calculation complete: " + std::to_string(visibleCount) + " tiles visible");
 }

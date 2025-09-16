@@ -131,9 +131,9 @@ public:
 
     /**
      * @brief Set world reference for entity lookups
-     * @param world World instance
+     * @param w World instance
      */
-    void setWorld(World* world) { this->world = world; }
+    void setWorld(World* w) { this->world = w; }
 
 private:
     ILogger* logger;

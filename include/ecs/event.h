@@ -137,7 +137,7 @@ inline BaseEvent DropEvent(EntityID dropper, EntityID item, int x, int y) {
 
 inline BaseEvent UseItemEvent(EntityID user, EntityID item, EntityID target = 0) {
     BaseEvent e(EventType::USE_ITEM, user, target ? target : user);
-    e.value1 = item;
+    e.value1 = static_cast<int>(item);
     return e;
 }
 
