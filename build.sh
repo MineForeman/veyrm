@@ -49,6 +49,217 @@ clear_logs() {
     echo -e "${GREEN}Logs cleared${NC}"
 }
 
+# Database management functions
+create_db_program() {
+    # Create a simple C++ program to manage database
+    cat > "${BUILD_DIR}/db_manager.cpp" << 'EOF'
+#include <iostream>
+#include <string>
+
+#ifdef ENABLE_DATABASE
+#include "db/database_manager.h"
+#include "log.h"
+
+using namespace db;
+
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "Usage: " << argv[0] << " <command>" << std::endl;
+        std::cout << "Commands:" << std::endl;
+        std::cout << "  create    - Create database tables" << std::endl;
+        std::cout << "  clear     - Clear all data" << std::endl;
+        std::cout << "  load      - Load initial data" << std::endl;
+        std::cout << "  status    - Check database status" << std::endl;
+        return 1;
+    }
+
+    // Initialize logging
+    Log::init("db_manager");
+
+    // Get database connection info from environment
+    DatabaseConfig config;
+    config.host = std::getenv("DB_HOST") ? std::getenv("DB_HOST") : "localhost";
+    config.port = std::getenv("DB_PORT") ? std::stoi(std::getenv("DB_PORT")) : 5432;
+    config.database = std::getenv("DB_NAME") ? std::getenv("DB_NAME") : "veyrm_game";
+    config.username = std::getenv("DB_USER") ? std::getenv("DB_USER") : "veyrm_user";
+    config.password = std::getenv("DB_PASS") ? std::getenv("DB_PASS") : "secure_password";
+
+    try {
+        auto& db = DatabaseManager::getInstance();
+        db.initialize(config);
+
+        std::string command = argv[1];
+
+        if (command == "create") {
+            std::cout << "Creating database tables..." << std::endl;
+            if (db.createTables()) {
+                std::cout << "Tables created successfully!" << std::endl;
+            } else {
+                std::cout << "Failed to create tables." << std::endl;
+                return 1;
+            }
+        } else if (command == "clear") {
+            std::cout << "Clearing all database data..." << std::endl;
+            if (db.clearAllData()) {
+                std::cout << "Data cleared successfully!" << std::endl;
+            } else {
+                std::cout << "Failed to clear data." << std::endl;
+                return 1;
+            }
+        } else if (command == "load") {
+            std::cout << "Loading initial data..." << std::endl;
+            if (db.loadInitialData()) {
+                std::cout << "Initial data loaded successfully!" << std::endl;
+            } else {
+                std::cout << "Failed to load initial data." << std::endl;
+                return 1;
+            }
+        } else if (command == "status") {
+            std::cout << "Database Status:" << std::endl;
+            std::cout << "  Connected: " << (db.testConnection() ? "Yes" : "No") << std::endl;
+            std::cout << "  Version: " << db.getDatabaseVersion() << std::endl;
+            std::cout << "  Schema Version: " << db.getCurrentSchemaVersion() << std::endl;
+            std::cout << "  Data Loaded: " << (db.isDataLoaded() ? "Yes" : "No") << std::endl;
+        } else {
+            std::cout << "Unknown command: " << command << std::endl;
+            return 1;
+        }
+
+        db.shutdown();
+
+    } catch (const std::exception& e) {
+        std::cout << "Database error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+
+#else
+int main() {
+    std::cout << "Database support not compiled. Rebuild with PostgreSQL support." << std::endl;
+    return 1;
+}
+#endif
+EOF
+}
+
+# Database command functions
+db_create() {
+    echo -e "${YELLOW}Creating database tables...${NC}"
+    create_db_program
+
+    # Compile the database manager
+    if command -v g++ >/dev/null 2>&1; then
+        g++ -std=c++23 -I"${PROJECT_ROOT}/include" -I"${BUILD_DIR}/_deps/json-src/include" \
+            -DENABLE_DATABASE "${BUILD_DIR}/db_manager.cpp" \
+            "${PROJECT_ROOT}/src/db/database_manager.cpp" \
+            "${PROJECT_ROOT}/src/log.cpp" \
+            -lpq -o "${BUILD_DIR}/db_manager" 2>/dev/null || {
+            echo -e "${RED}Failed to compile database manager. Using alternative method...${NC}"
+            return 1
+        }
+
+        # Run with environment variables
+        export DB_HOST=${DB_HOST:-localhost}
+        export DB_PORT=${DB_PORT:-5432}
+        export DB_NAME=${DB_NAME:-veyrm_game}
+        export DB_USER=${DB_USER:-veyrm_user}
+        export DB_PASS=${DB_PASS:-secure_password}
+
+        "${BUILD_DIR}/db_manager" create
+    else
+        echo -e "${RED}g++ not found. Cannot run database commands.${NC}"
+        return 1
+    fi
+}
+
+db_clear() {
+    echo -e "${YELLOW}Clearing database data...${NC}"
+    create_db_program
+
+    if command -v g++ >/dev/null 2>&1; then
+        g++ -std=c++23 -I"${PROJECT_ROOT}/include" -I"${BUILD_DIR}/_deps/json-src/include" \
+            -DENABLE_DATABASE "${BUILD_DIR}/db_manager.cpp" \
+            "${PROJECT_ROOT}/src/db/database_manager.cpp" \
+            "${PROJECT_ROOT}/src/log.cpp" \
+            -lpq -o "${BUILD_DIR}/db_manager" 2>/dev/null || {
+            echo -e "${RED}Failed to compile database manager.${NC}"
+            return 1
+        }
+
+        export DB_HOST=${DB_HOST:-localhost}
+        export DB_PORT=${DB_PORT:-5432}
+        export DB_NAME=${DB_NAME:-veyrm_game}
+        export DB_USER=${DB_USER:-veyrm_user}
+        export DB_PASS=${DB_PASS:-secure_password}
+
+        "${BUILD_DIR}/db_manager" clear
+    else
+        echo -e "${RED}g++ not found. Cannot run database commands.${NC}"
+        return 1
+    fi
+}
+
+db_load() {
+    echo -e "${YELLOW}Loading initial database data...${NC}"
+    create_db_program
+
+    if command -v g++ >/dev/null 2>&1; then
+        g++ -std=c++23 -I"${PROJECT_ROOT}/include" -I"${BUILD_DIR}/_deps/json-src/include" \
+            -DENABLE_DATABASE "${BUILD_DIR}/db_manager.cpp" \
+            "${PROJECT_ROOT}/src/db/database_manager.cpp" \
+            "${PROJECT_ROOT}/src/log.cpp" \
+            -lpq -o "${BUILD_DIR}/db_manager" 2>/dev/null || {
+            echo -e "${RED}Failed to compile database manager.${NC}"
+            return 1
+        }
+
+        export DB_HOST=${DB_HOST:-localhost}
+        export DB_PORT=${DB_PORT:-5432}
+        export DB_NAME=${DB_NAME:-veyrm_game}
+        export DB_USER=${DB_USER:-veyrm_user}
+        export DB_PASS=${DB_PASS:-secure_password}
+
+        "${BUILD_DIR}/db_manager" load
+    else
+        echo -e "${RED}g++ not found. Cannot run database commands.${NC}"
+        return 1
+    fi
+}
+
+db_status() {
+    echo -e "${YELLOW}Checking database status...${NC}"
+    create_db_program
+
+    if command -v g++ >/dev/null 2>&1; then
+        g++ -std=c++23 -I"${PROJECT_ROOT}/include" -I"${BUILD_DIR}/_deps/json-src/include" \
+            -DENABLE_DATABASE "${BUILD_DIR}/db_manager.cpp" \
+            "${PROJECT_ROOT}/src/db/database_manager.cpp" \
+            "${PROJECT_ROOT}/src/log.cpp" \
+            -lpq -o "${BUILD_DIR}/db_manager" 2>/dev/null || {
+            echo -e "${RED}Failed to compile database manager.${NC}"
+            return 1
+        }
+
+        export DB_HOST=${DB_HOST:-localhost}
+        export DB_PORT=${DB_PORT:-5432}
+        export DB_NAME=${DB_NAME:-veyrm_game}
+        export DB_USER=${DB_USER:-veyrm_user}
+        export DB_PASS=${DB_PASS:-secure_password}
+
+        "${BUILD_DIR}/db_manager" status
+    else
+        echo -e "${RED}g++ not found. Cannot run database commands.${NC}"
+        return 1
+    fi
+}
+
+db_reset() {
+    echo -e "${YELLOW}Resetting database (clear + load)...${NC}"
+    db_clear && db_load
+}
+
 # Function to generate visual class diagram
 class_diagram() {
     echo -e "${CYAN}=========================================${NC}"
@@ -899,6 +1110,13 @@ show_help() {
     echo "  test                   Run tests"
     echo "  dump [keystrokes]      Run dump mode test (frame-by-frame)"
     echo "  keys <keystrokes>      Run game with automated keys"
+    echo
+    echo -e "${BOLD}Database Commands:${NC}"
+    echo "  db create              Create database tables"
+    echo "  db clear               Clear all database data"
+    echo "  db load                Load initial data"
+    echo "  db status              Check database status"
+    echo "  db reset               Clear and reload data"
     echo "  check                  Run system checks"
     echo "  reset                  Reset terminal"
     echo "  clearlog               Clear all log files"
@@ -1008,6 +1226,31 @@ main() {
         release)
             print_header
             create_release "${2}"
+            ;;
+        db)
+            print_header
+            case "${2}" in
+                create)
+                    db_create
+                    ;;
+                clear)
+                    db_clear
+                    ;;
+                load)
+                    db_load
+                    ;;
+                status)
+                    db_status
+                    ;;
+                reset)
+                    db_reset
+                    ;;
+                *)
+                    echo -e "${RED}Unknown database command: ${2}${NC}"
+                    echo "Available commands: create, clear, load, status, reset"
+                    exit 1
+                    ;;
+            esac
             ;;
         help|--help|-h)
             show_help

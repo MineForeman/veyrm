@@ -71,7 +71,21 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# Make dependencies available  
+# PostgreSQL database support (using libpq directly)
+message(STATUS "Configuring PostgreSQL...")
+find_package(PostgreSQL QUIET)
+if(PostgreSQL_FOUND)
+    message(STATUS "Found PostgreSQL: ${PostgreSQL_VERSION}")
+    message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")
+    message(STATUS "PostgreSQL include dirs: ${PostgreSQL_INCLUDE_DIRS}")
+    message(STATUS "Using libpq directly for database connectivity")
+    set(ENABLE_DATABASE ON)
+else()
+    message(WARNING "PostgreSQL not found - database features will be disabled")
+    set(ENABLE_DATABASE OFF)
+endif()
+
+# Make dependencies available
 FetchContent_MakeAvailable(ftxui json Catch2 ryml)
 
 message(STATUS "All dependencies configured successfully")
@@ -180,7 +194,15 @@ add_library(veyrm_core STATIC
     src/ecs/experience_system.cpp
     src/ecs/entity_factory.cpp
     src/ecs/data_loader.cpp
+    src/ecs/persistence_system.cpp
 )
+
+# Database source files (conditional)
+if(ENABLE_DATABASE)
+    target_sources(veyrm_core PRIVATE
+        src/db/database_manager.cpp
+    )
+endif()
 
 # Link libraries to core
 target_link_libraries(veyrm_core
@@ -191,6 +213,22 @@ target_link_libraries(veyrm_core
         nlohmann_json::nlohmann_json
         ryml::ryml
 )
+
+# Link PostgreSQL if available
+if(ENABLE_DATABASE)
+    target_link_libraries(veyrm_core
+        PUBLIC
+            ${PostgreSQL_LIBRARIES}
+    )
+    target_include_directories(veyrm_core
+        PUBLIC
+            ${PostgreSQL_INCLUDE_DIRS}
+    )
+    target_compile_definitions(veyrm_core
+        PUBLIC
+            ENABLE_DATABASE
+    )
+endif()
 
 # ========================================
 # Main executable
