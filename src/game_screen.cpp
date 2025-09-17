@@ -19,6 +19,8 @@
 #include "ecs/combat_system.h"
 #include "ecs/position_component.h"
 #include "ecs/event.h"
+#include "controllers/game_controller.h"
+#include "ui/game_view.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -34,9 +36,41 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
       renderer(std::make_unique<MapRenderer>(200, 60)),  // Large default for fullscreen
       status_bar(std::make_unique<StatusBar>()),
       layout_system(std::make_unique<LayoutSystem>()),
-      inventory_renderer(nullptr) {
+      inventory_renderer(nullptr),
+      controller(nullptr),
+      view(nullptr) {
     // Center renderer on player's starting position
     renderer->centerOn(game_manager->player_x, game_manager->player_y);
+
+    // Initialize MVC components
+    if (game_manager) {
+        auto* ecs_world = game_manager->getECSWorld();
+        controller = std::make_unique<controllers::GameController>(game_manager, ecs_world);
+        view = std::make_unique<ui::GameView>(game_manager, screen);
+
+        // Set up controller callbacks
+        controllers::GameController::ViewCallbacks callbacks;
+        callbacks.refreshDisplay = []() {
+            // Display updates are handled automatically by FTXUI
+        };
+        callbacks.showMessage = [this](const std::string& msg) {
+            if (auto* msg_log = game_manager->getMessageLog()) {
+                msg_log->addMessage(msg);
+            }
+        };
+        callbacks.showPrompt = [this](const std::string& prompt) {
+            if (auto* msg_log = game_manager->getMessageLog()) {
+                msg_log->addMessage(prompt);
+            }
+        };
+        callbacks.clearPrompt = []() {
+            // Prompts clear automatically with new messages
+        };
+        callbacks.exitToMenu = [this]() {
+            game_manager->setState(GameState::MENU);
+        };
+        controller->setViewCallbacks(callbacks);
+    }
 }
 
 GameScreen::~GameScreen() = default;
@@ -391,6 +425,12 @@ Component GameScreen::Create() {
 
     // Add input handling
     layout = CatchEvent(layout, [this](Event event) {
+        // Use the controller if available for MVC pattern
+        if (controller) {
+            return controller->handleInput(event);
+        }
+
+        // Fallback to direct input handling if controller not available
         InputHandler* input = game_manager->getInputHandler();
         InputAction action = input->processEvent(event);
 

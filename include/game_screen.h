@@ -17,6 +17,14 @@ class StatusBar;
 class LayoutSystem;
 class InventoryRenderer;
 
+namespace controllers {
+    class GameController;
+}
+
+namespace ui {
+    class GameView;
+}
+
 /**
  * @class GameScreen
  * @brief Main game screen UI component that orchestrates all game display elements
@@ -75,6 +83,10 @@ private:
     std::unique_ptr<StatusBar> status_bar;                  ///< Status bar component
     std::unique_ptr<LayoutSystem> layout_system;            ///< Layout management
     std::unique_ptr<InventoryRenderer> inventory_renderer;  ///< Inventory display
+
+    // MVC components
+    std::unique_ptr<controllers::GameController> controller; ///< Game controller for business logic
+    std::unique_ptr<ui::GameView> view;                     ///< Game view for UI rendering
 
     // Directional action state
     bool awaiting_direction = false;                        ///< Waiting for direction input
