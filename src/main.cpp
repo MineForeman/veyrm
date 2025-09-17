@@ -41,6 +41,10 @@
 #include "db/player_repository.h"
 #include "auth/authentication_service.h"
 
+// MVC components
+#include "controllers/main_menu_controller.h"
+#include "ui/main_menu_view.h"
+
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
     #include <windows.h>
@@ -147,25 +151,108 @@ bool runSystemChecks() {
 static int menu_selected = 0;
 
 /**
- * Create main menu component
+ * Create main menu component using MVC pattern
  */
-ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive* screen,
-                               [[maybe_unused]] auth::AuthenticationService* auth_service,
+ftxui::Component createMainMenu(GameManager* game_manager, [[maybe_unused]] ftxui::ScreenInteractive* screen,
+                               auth::AuthenticationService* auth_service,
                                LoginScreen* login_screen,
                                int* user_id, std::string* session_token, std::string* username) {
     using namespace ftxui;
 
-    // Use global menu state
-    int& selected = menu_selected;
+    // Create MVC components
+    static std::unique_ptr<controllers::MainMenuController> controller;
+    static std::unique_ptr<ui::MainMenuView> view;
 
-    // Check if user is authenticated
-    bool is_authenticated = (user_id && *user_id > 0);
+    if (!controller) {
+        controller = std::make_unique<controllers::MainMenuController>(
+            game_manager,
+            auth_service,
+            login_screen
+        );
+    }
 
-    // Menu options - authentication required
+    if (!view) {
+        view = std::make_unique<ui::MainMenuView>();
+    }
+
+    // Update authentication state in controller when user_id changes
+    if (user_id && session_token && username) {
+        // These need to be set via proper methods or made public
+        // For now, we'll work with the controller's public interface
+    }
+
+    // Set controller callbacks
+    controllers::MainMenuController::ViewCallbacks callbacks;
+    callbacks.showMessage = [](const std::string& msg) {
+        LOG_INFO("Menu message: " + msg);
+    };
+    callbacks.showError = [](const std::string& error) {
+        LOG_ERROR("Menu error: " + error);
+    };
+    callbacks.refreshMenu = []() {
+        // This will be handled by view refresh
+    };
+    callbacks.exitApplication = []() {
+        // This will be handled by game_manager state
+    };
+    controller->setViewCallbacks(callbacks);
+
+    // Create view callbacks for controller
+    ui::MainMenuView::ControllerCallbacks view_callbacks;
+    view_callbacks.onMenuSelect = [controller = controller.get()](int index) {
+        if (controller->isAuthenticated()) {
+            // Handle authenticated menu selections
+            switch(index) {
+                case 0: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME); break;
+                case 1: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE); break;
+                case 2: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES); break;
+                case 3: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS); break;
+                case 4: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS); break;
+                case 5: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE); break;
+                case 6: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT); break;
+                case 7: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT); break;
+                case 8: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT); break;
+            }
+        } else {
+            // Handle unauthenticated menu selections
+            switch(index) {
+                case 0: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::LOGIN); break;
+                case 1: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::REGISTER); break;
+                case 2: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::ABOUT); break;
+                case 3: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT); break;
+            }
+        }
+    };
+    view_callbacks.onAboutToggle = [controller = controller.get()]() {
+        controller->toggleAbout();
+    };
+    view_callbacks.onExit = []() {
+        // Handled by game manager
+    };
+    view_callbacks.isAuthenticated = [controller = controller.get()]() {
+        return controller->isAuthenticated();
+    };
+    view_callbacks.getUsername = [controller = controller.get()]() {
+        return controller->getUsername();
+    };
+    view_callbacks.getAuthStatus = [controller = controller.get()]() {
+        return controller->getAuthStatus();
+    };
+
+    view->setControllerCallbacks(view_callbacks);
+    view->setAuthenticated(controller->isAuthenticated());
+
+    // Create the FTXUI component that integrates with the MVC pattern
+    using namespace ftxui;
+
+    // Menu state
+    static int selected = 0;
     static std::vector<std::string> menu_entries;
+
+    // Update menu entries based on authentication state
     menu_entries.clear();
 
-    if (is_authenticated) {
+    if (controller->isAuthenticated()) {
         menu_entries = {
             "New Game",
             "Continue",
@@ -186,12 +273,11 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
             "Quit"
         };
     }
-    
+
     auto menu = Menu(&menu_entries, &selected);
-    
+
     // Create the main component with renderer
-    // Capture pointers by value so they remain valid
-    auto component = Renderer(menu, [user_id, session_token, username, menu] {
+    auto component = Renderer(menu, [controller = controller.get(), menu, user_id, session_token, username] {
         // ANSI art title - properly centered
         auto title = vbox({
             text(""),
@@ -216,7 +302,7 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
         
         // Clean about box
         Element about_box = emptyElement();
-        if (menu_selected == 3) {  // Show about when About is selected
+        if (selected == 3 || (controller->isAuthenticated() && selected == 7) || (!controller->isAuthenticated() && selected == 2)) {  // Show about when About is selected
             about_box = vbox({
                 text(""),
                 window(text(" About ") | bold, vbox({
@@ -264,127 +350,76 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     
     // Add event handling
     // Capture pointers explicitly
-    component |= CatchEvent([game_manager, screen, login_screen,
-                            user_id, session_token, username](Event event) {
-        // Re-check authentication state
-        bool is_authenticated = (user_id && *user_id > 0);
+    component |= CatchEvent([controller = controller.get(), selected = &selected, user_id, session_token, username](Event event) {
+        // Handle Enter key for menu selection
         if (event == Event::Return) {
-            if (is_authenticated) {
+            if (controller->isAuthenticated()) {
                 // Authenticated menu
-                switch(menu_selected) {
+                switch(*selected) {
                     case 0: // New Game
-                        game_manager->setState(GameState::PLAYING);
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME);
                         break;
                     case 1: // Continue
-                        game_manager->setState(GameState::SAVE_LOAD);
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE);
                         break;
                     case 2: // Cloud Saves
-                        // TODO: Cloud saves menu
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES);
                         break;
                     case 3: // Leaderboards
-                        // TODO: Leaderboards screen
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS);
                         break;
                     case 4: // Settings
-                        // TODO: Settings menu
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS);
                         break;
                     case 5: // Profile
-                        // TODO: Profile screen
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE);
                         break;
                     case 6: // Logout
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT);
                         if (user_id) *user_id = 0;
                         if (session_token) session_token->clear();
                         if (username) username->clear();
                         break;
                     case 7: // About
-                        // Toggle about is handled in renderer directly
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT);
                         break;
                     case 8: // Quit
-                        game_manager->setState(GameState::QUIT);
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT);
                         break;
                 }
             } else {
                 // Unauthenticated menu - only login/register/about/quit
-                switch(menu_selected) {
+                switch(*selected) {
                     case 0: // Login
-                        LOG_INFO("Login option selected");
-                        if (login_screen) {
-                            login_screen->setMode(LoginScreen::Mode::LOGIN);
-                            LOG_INFO("Launching LoginScreen in LOGIN mode");
-
-                            // Run the login screen synchronously
-                            auto result = login_screen->run();
-                            if (result == LoginScreen::Result::SUCCESS) {
-                                *user_id = login_screen->getUserId();
-                                *session_token = login_screen->getSessionToken();
-                                // Get username from database
-                                try {
-                                    *username = db::DatabaseManager::getInstance().executeQuery([user_id](db::Connection& conn) {
-                                        auto result = conn.execParams(
-                                            "SELECT username FROM users WHERE id = $1",
-                                            {std::to_string(*user_id)}
-                                        );
-                                        if (result.isOk() && result.numRows() > 0) {
-                                            return result.getValue(0, 0);
-                                        }
-                                        return std::string("");
-                                    });
-                                } catch (const std::exception& e) {
-                                    LOG_ERROR("Failed to get username: " + std::string(e.what()));
-                                }
-                                LOG_INFO("User authenticated successfully: " + *username + " (ID=" + std::to_string(*user_id) + ")");
-                                // Force menu refresh
-                                if (screen) screen->PostEvent(Event::Custom);
-                            }
-                        } else {
-                            LOG_ERROR("LoginScreen not initialized - check database connection");
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::LOGIN);
+                        // Update auth state if successful
+                        if (controller->isAuthenticated()) {
+                            if (user_id) *user_id = controller->getUserId();
+                            // Session token is managed internally by controller
+                            if (username) *username = controller->getUsername();
                         }
                         break;
                     case 1: // Register
-                        LOG_INFO("Register option selected");
-                        if (login_screen) {
-                            login_screen->setMode(LoginScreen::Mode::REGISTER);
-                            LOG_INFO("Launching LoginScreen in REGISTER mode");
-
-                            // Run the login screen synchronously
-                            auto result = login_screen->run();
-                            if (result == LoginScreen::Result::SUCCESS) {
-                                *user_id = login_screen->getUserId();
-                                *session_token = login_screen->getSessionToken();
-                                // Get username from database
-                                try {
-                                    *username = db::DatabaseManager::getInstance().executeQuery([user_id](db::Connection& conn) {
-                                        auto result = conn.execParams(
-                                            "SELECT username FROM users WHERE id = $1",
-                                            {std::to_string(*user_id)}
-                                        );
-                                        if (result.isOk() && result.numRows() > 0) {
-                                            return result.getValue(0, 0);
-                                        }
-                                        return std::string("");
-                                    });
-                                } catch (const std::exception& e) {
-                                    LOG_ERROR("Failed to get username: " + std::string(e.what()));
-                                }
-                                LOG_INFO("User registered and authenticated successfully: " + *username + " (ID=" + std::to_string(*user_id) + ")");
-                                // Force menu refresh
-                                if (screen) screen->PostEvent(Event::Custom);
-                            }
-                        } else {
-                            LOG_ERROR("LoginScreen not initialized - check database connection");
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::REGISTER);
+                        // Update auth state if successful
+                        if (controller->isAuthenticated()) {
+                            if (user_id) *user_id = controller->getUserId();
+                            // Session token is managed internally by controller
+                            if (username) *username = controller->getUsername();
                         }
                         break;
                     case 2: // About
-                        // Toggle about is handled in renderer directly
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::ABOUT);
                         break;
                     case 3: // Quit
-                        game_manager->setState(GameState::QUIT);
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT);
                         break;
                 }
             }
             return true;
         }
         if (event == Event::Character('q') || event == Event::Escape) {
-            game_manager->setState(GameState::QUIT);
+            controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT);
             return true;
         }
         return false;

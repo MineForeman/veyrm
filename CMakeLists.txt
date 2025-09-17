@@ -199,6 +199,21 @@ add_library(veyrm_core STATIC
     src/game_serializer.cpp
     src/save_load_screen.cpp
     src/login_screen.cpp
+    # Refactored save/load components
+    src/services/save_game_service.cpp
+    src/controllers/save_load_controller.cpp
+    src/controllers/game_controller.cpp
+    src/controllers/main_menu_controller.cpp
+    src/ui/save_load_view.cpp
+    src/ui/game_view.cpp
+    src/ui/main_menu_view.cpp
+    # UI component library
+    src/ui/components/button.cpp
+    src/ui/components/list.cpp
+    src/ui/components/progress.cpp
+    src/ui/components/dialog.cpp
+    src/ui/components/panel.cpp
+    src/ui/components/form.cpp
     src/ecs/entity.cpp
     src/ecs/movement_system.cpp
     src/ecs/render_system.cpp
@@ -219,6 +234,7 @@ add_library(veyrm_core STATIC
     src/ecs/persistence_system.cpp
     # UI components
     src/ui/cloud_save_indicator.cpp
+    src/ui/login_view.cpp
 )
 
 # Database source files (always included)
@@ -233,6 +249,8 @@ target_sources(veyrm_core PRIVATE
 if(ENABLE_AUTH)
     target_sources(veyrm_core PRIVATE
         src/auth/authentication_service.cpp
+        src/auth/validation_service.cpp
+        src/auth/login_controller.cpp
     )
 endif()
 

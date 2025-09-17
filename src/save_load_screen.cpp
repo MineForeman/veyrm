@@ -1,4 +1,7 @@
 #include "save_load_screen.h"
+#include "controllers/save_load_controller.h"
+#include "services/save_game_service.h"
+#include "ui/save_load_view.h"
 #include "game_state.h"
 #include "game_serializer.h"
 #include "message_log.h"
@@ -14,24 +17,64 @@ using namespace ftxui;
 
 SaveLoadScreen::SaveLoadScreen(GameManager* gm)
     : game_manager(gm), selected_slot(0), save_mode(true) {
+
+    // Initialize MVC components
+    save_service = std::make_shared<services::SaveGameService>(
+        gm->getSerializer()
+    );
+
+    controller = std::make_unique<controllers::SaveLoadController>(
+        gm,
+        save_service,
+        nullptr  // Cloud service optional
+    );
+
+    view = std::make_unique<ui::SaveLoadView>();
+
+    setupMVCCallbacks();
     refreshSaveList();
+}
+
+SaveLoadScreen::~SaveLoadScreen() {
+    // Destructor defined here to allow unique_ptr with forward declaration
 }
 
 void SaveLoadScreen::reset() {
     selected_slot = 0;
-    refreshSaveList();
 
     // Get the mode from GameManager
     save_mode = game_manager->getSaveMenuMode();
+
+    // Update MVC components
+    controller->setMode(save_mode ?
+        controllers::SaveLoadController::Mode::SAVE :
+        controllers::SaveLoadController::Mode::LOAD);
+
+    view->setMode(save_mode ?
+        ui::SaveLoadView::Mode::SAVE :
+        ui::SaveLoadView::Mode::LOAD);
+
+    refreshSaveList();
 }
 
 void SaveLoadScreen::refreshSaveList() {
-    save_infos.clear();
-    if (!game_manager->getSerializer()) return;
+    // Refresh through controller
+    controller->refreshSlots();
 
-    for (int i = 1; i <= MAX_SLOTS; i++) {
-        save_infos.push_back(game_manager->getSerializer()->getSaveInfo(
-            game_manager->getSerializer()->getSlotFilename(i)));
+    // Get updated list for backward compatibility
+    auto slots = controller->getSaveSlots();
+    save_infos.clear();
+
+    for (const auto& slot : slots.slots) {
+        SaveInfo info;
+        info.exists = slot.exists;
+        info.player_name = slot.player_name;
+        info.depth = slot.depth;
+        info.player_hp = slot.player_hp;
+        info.player_max_hp = slot.player_max_hp;
+        info.timestamp = slot.timestamp;
+        info.filename = slot.filename;
+        save_infos.push_back(info);
     }
 }
 
@@ -65,29 +108,15 @@ std::string SaveLoadScreen::formatSaveInfo(int slot) const {
 }
 
 void SaveLoadScreen::saveToSlot(int slot) {
-    if (game_manager->saveGame(slot)) {
-        game_manager->getMessageLog()->addMessage("Game saved to slot " + std::to_string(slot));
-        game_manager->setState(GameState::PLAYING);
-    } else {
-        game_manager->getMessageLog()->addMessage("Failed to save game!");
-    }
+    controller->handleSave(slot);
 }
 
 void SaveLoadScreen::loadFromSlot(int slot) {
-    if (game_manager->loadGame(slot)) {
-        game_manager->getMessageLog()->addMessage("Game loaded from slot " + std::to_string(slot));
-        game_manager->setState(GameState::PLAYING);
-    } else {
-        game_manager->getMessageLog()->addMessage("Failed to load game!");
-    }
+    controller->handleLoad(slot);
 }
 
 void SaveLoadScreen::deleteSlot(int slot) {
-    if (game_manager->getSerializer() &&
-        game_manager->getSerializer()->deleteSave(slot)) {
-        game_manager->getMessageLog()->addMessage("Save deleted from slot " + std::to_string(slot));
-        refreshSaveList();
-    }
+    controller->handleDelete(slot);
 }
 
 Component SaveLoadScreen::create() {
@@ -204,4 +233,77 @@ bool SaveLoadScreen::handleInput(const ftxui::Event& event) {
     }
 
     return false;
+}
+
+void SaveLoadScreen::setupMVCCallbacks() {
+    // Set up controller -> view callbacks
+    controllers::SaveLoadController::ViewCallbacks viewCallbacks;
+
+    viewCallbacks.showMessage = [this](const std::string& msg) {
+        if (view) view->showMessage(msg);
+        if (game_manager->getMessageLog()) {
+            game_manager->getMessageLog()->addMessage(msg);
+        }
+    };
+
+    viewCallbacks.showError = [this](const std::string& err) {
+        if (view) view->showError(err);
+        if (game_manager->getMessageLog()) {
+            game_manager->getMessageLog()->addMessage("Error: " + err);
+        }
+    };
+
+    viewCallbacks.updateProgress = [this](float progress) {
+        if (view) view->updateProgress(progress);
+    };
+
+    viewCallbacks.refreshSlotDisplay = [this]() {
+        refreshSaveList();
+        if (view) view->refreshSlotDisplay();
+    };
+
+    viewCallbacks.exitScreen = [this]() {
+        // Return to playing state
+        game_manager->setState(GameState::PLAYING);
+    };
+
+    viewCallbacks.confirmAction = [this](const std::string& msg) {
+        if (view) return view->confirmAction(msg);
+        return true;  // Default to true if no view
+    };
+
+    controller->setViewCallbacks(viewCallbacks);
+
+    // Set up view -> controller callbacks
+    ui::SaveLoadView::ControllerCallbacks controllerCallbacks;
+
+    controllerCallbacks.onSave = [this](int slot) {
+        controller->handleSave(slot);
+    };
+
+    controllerCallbacks.onLoad = [this](int slot) {
+        controller->handleLoad(slot);
+    };
+
+    controllerCallbacks.onDelete = [this](int slot) {
+        controller->handleDelete(slot);
+    };
+
+    controllerCallbacks.onRefresh = [this]() {
+        controller->refreshSlots();
+    };
+
+    controllerCallbacks.getSaveSlots = [this]() {
+        return controller->getSaveSlots();
+    };
+
+    controllerCallbacks.canSaveToSlot = [this](int slot) {
+        return controller->canSaveToSlot(slot);
+    };
+
+    controllerCallbacks.canLoadFromSlot = [this](int slot) {
+        return controller->canLoadFromSlot(slot);
+    };
+
+    view->setControllerCallbacks(controllerCallbacks);
 }

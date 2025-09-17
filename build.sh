@@ -1058,19 +1058,31 @@ build_coverage() {
     echo -e "${YELLOW}Cleaning previous coverage data...${NC}"
     find "${BUILD_DIR}" -name "*.gcda" -delete 2>/dev/null || true
     find "${BUILD_DIR}" -name "*.gcno" -delete 2>/dev/null || true
+    rm -rf "${BUILD_DIR}/coverage" 2>/dev/null || true
 
     # Configure with coverage enabled
     echo -e "${YELLOW}Configuring with coverage enabled...${NC}"
     cd "${BUILD_DIR}" || exit 1
-    cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON
 
     # Build the project
     echo -e "${YELLOW}Building project...${NC}"
     cmake --build . --parallel "${JOBS}"
 
-    # Run tests to generate coverage data
+    # Run tests to generate coverage data from project root (so data files are found)
     echo -e "${YELLOW}Running tests to generate coverage data...${NC}"
-    "${BUILD_DIR}/bin/veyrm_tests"
+    cd "${PROJECT_ROOT}" || exit 1
+
+    # Run tests from project root where data files are available
+    if [ -f "${BUILD_DIR}/bin/veyrm_tests" ]; then
+        "${BUILD_DIR}/bin/veyrm_tests"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Warning: Some tests failed, but continuing with coverage generation${NC}"
+        fi
+    else
+        echo -e "${RED}Error: Test executable not found at ${BUILD_DIR}/bin/veyrm_tests${NC}"
+        exit 1
+    fi
 
     echo -e "${GREEN}Coverage build complete!${NC}"
     echo -e "${YELLOW}Run './build.sh coverage-report' to generate HTML report${NC}"
@@ -1108,15 +1120,25 @@ generate_coverage_report() {
     mkdir -p "${COVERAGE_DIR}"
 
     echo -e "${YELLOW}Capturing coverage data...${NC}"
-    lcov --capture \
+    if ! lcov --capture \
          --directory "${BUILD_DIR}" \
          --output-file "${COVERAGE_DIR}/coverage.info" \
          --rc branch_coverage=1 \
-         --ignore-errors deprecated,mismatch,inconsistent,gcov,source,unsupported,format,count,path,empty
+         --ignore-errors deprecated,mismatch,inconsistent,gcov,source,unsupported,format,count,path,empty; then
+        echo -e "${RED}Error: Failed to capture coverage data${NC}"
+        exit 1
+    fi
+
+    # Check if coverage data was captured
+    if [ ! -f "${COVERAGE_DIR}/coverage.info" ] || [ ! -s "${COVERAGE_DIR}/coverage.info" ]; then
+        echo -e "${RED}Error: No coverage data captured${NC}"
+        echo -e "${YELLOW}Make sure tests were run with coverage enabled${NC}"
+        exit 1
+    fi
 
     # Remove external libraries and test files from coverage
     echo -e "${YELLOW}Filtering coverage data...${NC}"
-    lcov --remove "${COVERAGE_DIR}/coverage.info" \
+    if ! lcov --remove "${COVERAGE_DIR}/coverage.info" \
          '/usr/*' \
          '/Applications/*' \
          '*/build/_deps/*' \
@@ -1130,20 +1152,28 @@ generate_coverage_report() {
          '*/ryml/*' \
          --output-file "${COVERAGE_DIR}/coverage_filtered.info" \
          --rc branch_coverage=1 \
-         --ignore-errors deprecated,mismatch,inconsistent,source,format,unused,path
+         --ignore-errors deprecated,mismatch,inconsistent,source,format,unused,path; then
+        echo -e "${RED}Error: Failed to filter coverage data${NC}"
+        exit 1
+    fi
 
     # Generate HTML report
     echo -e "${YELLOW}Generating HTML report...${NC}"
     genhtml "${COVERAGE_DIR}/coverage_filtered.info" \
             --output-directory "${COVERAGE_DIR}/html" \
-            --branch-coverage \
             --function-coverage \
             --title "Veyrm Code Coverage Report" \
             --legend \
-            --ignore-errors category,mismatch,inconsistent \
+            --ignore-errors category,mismatch,inconsistent,unsupported,source,deprecated \
             --show-details \
-            --highlight \
             --demangle-cpp
+
+    # Check if HTML generation succeeded
+    if [ ! -f "${COVERAGE_DIR}/html/index.html" ]; then
+        echo -e "${RED}Error: HTML report generation failed${NC}"
+        echo -e "${YELLOW}Raw coverage data is available at: ${COVERAGE_DIR}/coverage_filtered.info${NC}"
+        exit 1
+    fi
 
     # Print summary
     echo -e "${GREEN}=========================================${NC}"

@@ -11,6 +11,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 #include "game_state.h"
 #include "serializable.h"
 
@@ -18,10 +19,22 @@
 class GameManager;
 class GameSerializer;
 
+namespace controllers {
+    class SaveLoadController;
+}
+
+namespace services {
+    class SaveGameService;
+}
+
+namespace ui {
+    class SaveLoadView;
+}
+
 class SaveLoadScreen {
 public:
     explicit SaveLoadScreen(GameManager* game_manager);
-    ~SaveLoadScreen() = default;
+    ~SaveLoadScreen();  // Destructor must be defined in .cpp for unique_ptr with forward declaration
 
     // Create the UI component
     ftxui::Component create();
@@ -44,11 +57,19 @@ private:
     void loadFromSlot(int slot);
     void deleteSlot(int slot);
 
+    // Setup MVC callbacks
+    void setupMVCCallbacks();
+
     // State
     GameManager* game_manager;
     int selected_slot = 0;
     bool save_mode = true;  // true = save, false = load
     std::vector<SaveInfo> save_infos;
+
+    // MVC Components
+    std::shared_ptr<services::SaveGameService> save_service;
+    std::unique_ptr<controllers::SaveLoadController> controller;
+    std::unique_ptr<ui::SaveLoadView> view;
 
     // UI Constants
     static constexpr int MAX_SLOTS = 9;

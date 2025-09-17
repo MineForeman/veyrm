@@ -1,5 +1,6 @@
 #pragma once
 
+#include "auth/login_models.h"
 #include <string>
 #include <optional>
 #include <memory>
@@ -14,29 +15,6 @@ namespace db {
 }
 
 namespace auth {
-
-/**
- * @struct LoginResult
- * @brief Result of a login attempt
- */
-struct LoginResult {
-    bool success = false;
-    std::optional<std::string> session_token;
-    std::optional<std::string> refresh_token;
-    std::string error_message;
-    std::optional<int> user_id;
-};
-
-/**
- * @struct RegistrationResult
- * @brief Result of a registration attempt
- */
-struct RegistrationResult {
-    bool success = false;
-    std::optional<int> user_id;
-    std::string error_message;
-    std::optional<std::string> verification_token;
-};
 
 /**
  * @struct SessionValidation

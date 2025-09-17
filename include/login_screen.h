@@ -8,6 +8,7 @@
 
 namespace auth {
     class AuthenticationService;
+    class ValidationService;
 }
 
 namespace db {
@@ -39,7 +40,7 @@ public:
      * @param auth_service Reference to authentication service
      */
     explicit LoginScreen(auth::AuthenticationService& auth_service);
-    ~LoginScreen() = default;
+    ~LoginScreen(); // Custom destructor needed for unique_ptr with forward declaration
 
     /**
      * @brief Run the login screen
@@ -75,6 +76,7 @@ public:
 
 private:
     auth::AuthenticationService& auth_service;
+    std::unique_ptr<auth::ValidationService> validator;
 
     // UI State
     Mode current_mode = Mode::LOGIN;
@@ -186,12 +188,6 @@ private:
      */
     void clearForms();
 
-    /**
-     * @brief Validate email format
-     * @param email Email to validate
-     * @return True if valid
-     */
-    bool isValidEmail(const std::string& email) const;
 
     /**
      * @brief Exit the screen

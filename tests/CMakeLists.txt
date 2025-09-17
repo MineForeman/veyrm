@@ -34,6 +34,8 @@ add_executable(veyrm_tests
     test_ecs_systems.cpp
     test_ecs_integration.cpp
     test_data_loader.cpp
+    test_save_load_controller.cpp
+    test_game_controller.cpp
 )
 
 # Add authentication tests if database is enabled

@@ -1,24 +1,22 @@
-#include "login_screen.h"
-#include "auth/authentication_service.h"
-#include "auth/validation_service.h"
-#include "log.h"
+#include "ui/login_view.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
-#include <regex>
 
 using namespace ftxui;
 
-LoginScreen::LoginScreen(auth::AuthenticationService& auth_service)
-    : auth_service(auth_service)
-    , validator(std::make_unique<auth::ValidationService>()) {
-    // Initialize components will be done when run() is called
+namespace ui {
+
+LoginView::LoginView() {
+    // Constructor - UI setup will be done in run()
 }
 
-LoginScreen::~LoginScreen() = default; // Destructor defined here where ValidationService is complete
+void LoginView::setControllerCallbacks(const ControllerCallbacks& callbacks) {
+    controller_callbacks = callbacks;
+}
 
-LoginScreen::Result LoginScreen::run() {
+LoginView::Result LoginView::run() {
     // Reset state
     result = Result::CANCELLED;
     clearForms();
@@ -124,7 +122,7 @@ LoginScreen::Result LoginScreen::run() {
     // Event handler
     renderer = CatchEvent(renderer, [&](Event event) {
         if (event == Event::Escape) {
-            exitScreen(Result::CANCELLED);
+            exitWithResult(Result::CANCELLED);
             return true;
         }
         return false;
@@ -135,27 +133,53 @@ LoginScreen::Result LoginScreen::run() {
     return result;
 }
 
-Component LoginScreen::createLoginForm() {
+void LoginView::showError(const std::string& message) {
+    error_message = message;
+    show_error = true;
+    show_success = false;
+}
+
+void LoginView::showSuccess(const std::string& message) {
+    status_message = message;
+    show_success = true;
+    show_error = false;
+}
+
+void LoginView::clearMessages() {
+    show_error = false;
+    show_success = false;
+    error_message.clear();
+    status_message.clear();
+}
+
+void LoginView::switchToLogin() {
+    current_mode = Mode::LOGIN;
+    clearForms();
+    clearMessages();
+}
+
+void LoginView::switchToVerification() {
+    current_mode = Mode::VERIFY_EMAIL;
+    clearForms();
+    clearMessages();
+}
+
+void LoginView::exitWithResult(Result exit_result) {
+    result = exit_result;
+    screen.ExitLoopClosure()();
+}
+
+Component LoginView::createLoginForm() {
     // Input fields
     auto username_input_field = Input(&username_input, "Username or Email");
-
-    // Password field - mask input with asterisks
     auto password_input_field = Input(&password_input, "Password");
-    auto password_display = Renderer(password_input_field, [&] {
-        std::string masked(password_input.size(), '*');
-        return hbox({
-            text("Password: "),
-            text(masked) | border
-        });
-    });
-
     auto remember_checkbox = Checkbox("Remember Me", &remember_me);
 
     // Submit button
-    auto submit_button = Button("Login", [&] { handleLogin(); });
+    auto submit_button = Button("Login", [&] { submitLogin(); });
 
     // Cancel button
-    auto cancel_button = Button("Cancel", [&] { exitScreen(Result::CANCELLED); });
+    auto cancel_button = Button("Cancel", [&] { exitWithResult(Result::CANCELLED); });
 
     // Layout
     auto form = Container::Vertical({
@@ -185,7 +209,7 @@ Component LoginScreen::createLoginForm() {
     });
 }
 
-Component LoginScreen::createRegistrationForm() {
+Component LoginView::createRegistrationForm() {
     // Input fields
     auto username_input_field = Input(&reg_username_input, "Username");
     auto email_input_field = Input(&reg_email_input, "Email");
@@ -193,10 +217,10 @@ Component LoginScreen::createRegistrationForm() {
     auto confirm_password_field = Input(&reg_confirm_password_input, "Confirm Password");
 
     // Submit button
-    auto submit_button = Button("Register", [&] { handleRegistration(); });
+    auto submit_button = Button("Register", [&] { submitRegistration(); });
 
     // Cancel button
-    auto cancel_button = Button("Cancel", [&] { exitScreen(Result::CANCELLED); });
+    auto cancel_button = Button("Cancel", [&] { exitWithResult(Result::CANCELLED); });
 
     // Layout
     auto form = Container::Vertical({
@@ -229,7 +253,7 @@ Component LoginScreen::createRegistrationForm() {
     });
 }
 
-Component LoginScreen::createPasswordResetForm() {
+Component LoginView::createPasswordResetForm() {
     // Input fields
     auto email_input_field = Input(&reset_email_input, "Email Address");
     auto token_input_field = Input(&reset_token_input, "Reset Token (if you have one)");
@@ -237,35 +261,19 @@ Component LoginScreen::createPasswordResetForm() {
 
     // Submit buttons
     auto request_button = Button("Request Reset", [&] {
-        if (!reset_email_input.empty()) {
-            auto token = auth_service.requestPasswordReset(reset_email_input);
-            if (token.has_value()) {
-                // In a real app, this would be sent via email
-                reset_token_input = token.value();
-                showSuccess("Reset token generated (check email in real app)");
-            } else {
-                showError("Failed to request password reset");
-            }
-        } else {
-            showError("Please enter your email address");
+        if (controller_callbacks.onPasswordResetRequest) {
+            controller_callbacks.onPasswordResetRequest(reset_email_input);
         }
     });
 
     auto reset_button = Button("Reset Password", [&] {
-        if (!reset_token_input.empty() && !reset_new_password_input.empty()) {
-            if (auth_service.resetPassword(reset_token_input, reset_new_password_input)) {
-                showSuccess("Password reset successfully! Please login.");
-                switchMode(Mode::LOGIN);
-            } else {
-                showError("Failed to reset password. Invalid or expired token.");
-            }
-        } else {
-            showError("Please enter token and new password");
+        if (controller_callbacks.onPasswordReset) {
+            controller_callbacks.onPasswordReset(reset_token_input, reset_new_password_input);
         }
     });
 
     auto cancel_button = Button("Cancel", [&] {
-        switchMode(Mode::LOGIN);
+        switchToLogin();
     });
 
     // Layout
@@ -301,16 +309,20 @@ Component LoginScreen::createPasswordResetForm() {
     });
 }
 
-Component LoginScreen::createEmailVerificationForm() {
+Component LoginView::createEmailVerificationForm() {
     // Input field
     auto token_input_field = Input(&verify_token_input, "Verification Token");
 
     // Submit button
-    auto verify_button = Button("Verify Email", [&] { handleEmailVerification(); });
+    auto verify_button = Button("Verify Email", [&] {
+        if (controller_callbacks.onEmailVerification) {
+            controller_callbacks.onEmailVerification(verify_token_input);
+        }
+    });
 
     // Cancel button
     auto cancel_button = Button("Cancel", [&] {
-        switchMode(Mode::LOGIN);
+        switchToLogin();
     });
 
     // Layout
@@ -340,124 +352,7 @@ Component LoginScreen::createEmailVerificationForm() {
     });
 }
 
-void LoginScreen::handleLogin() {
-    // Clear previous messages
-    show_error = false;
-    show_success = false;
-
-    // Validate inputs using ValidationService
-    if (auto error = validator->validateLoginCredentials(username_input, password_input)) {
-        showError(error.value());
-        return;
-    }
-
-    // Attempt login
-    auto login_result = auth_service.login(
-        username_input,
-        password_input,
-        remember_me,
-        "127.0.0.1",  // In a real app, get actual IP
-        "Veyrm Game Client"
-    );
-
-    if (login_result.success) {
-        user_id = login_result.user_id.value();
-        session_token = login_result.session_token.value();
-        refresh_token = login_result.refresh_token.value();
-
-        Log::info("User logged in successfully: ID " + std::to_string(user_id));
-
-        // Call success callback if set
-        if (on_login_success) {
-            on_login_success(user_id, session_token);
-        }
-
-        exitScreen(Result::SUCCESS);
-    } else {
-        showError(login_result.error_message);
-    }
-}
-
-void LoginScreen::handleRegistration() {
-    // Clear previous messages
-    show_error = false;
-    show_success = false;
-
-    // Validate inputs using ValidationService
-    if (auto error = validator->validateRegistrationData(
-        reg_username_input, reg_email_input, reg_password_input, reg_confirm_password_input)) {
-        showError(error.value());
-        return;
-    }
-
-    // Attempt registration
-    auto reg_result = auth_service.registerUser(
-        reg_username_input,
-        reg_email_input,
-        reg_password_input
-    );
-
-    if (reg_result.success) {
-        user_id = reg_result.user_id.value();
-
-        if (reg_result.verification_token.has_value()) {
-            // In a real app, this would be sent via email
-            verify_token_input = reg_result.verification_token.value();
-            showSuccess("Registration successful! Check your email for verification token.");
-
-            // Switch to verification mode
-            switchMode(Mode::VERIFY_EMAIL);
-        } else {
-            showSuccess("Registration successful! Please login.");
-            switchMode(Mode::LOGIN);
-        }
-    } else {
-        showError(reg_result.error_message);
-    }
-}
-
-void LoginScreen::handlePasswordReset() {
-    // Handled inline in createPasswordResetForm
-}
-
-void LoginScreen::handleEmailVerification() {
-    // Clear previous messages
-    show_error = false;
-    show_success = false;
-
-    if (verify_token_input.empty()) {
-        showError("Please enter verification token");
-        return;
-    }
-
-    if (auth_service.verifyEmail(verify_token_input)) {
-        showSuccess("Email verified successfully! Please login.");
-        switchMode(Mode::LOGIN);
-    } else {
-        showError("Invalid or expired verification token");
-    }
-}
-
-void LoginScreen::switchMode(Mode mode) {
-    current_mode = mode;
-    clearForms();
-    show_error = false;
-    show_success = false;
-}
-
-void LoginScreen::showError(const std::string& message) {
-    error_message = message;
-    show_error = true;
-    show_success = false;
-}
-
-void LoginScreen::showSuccess(const std::string& message) {
-    status_message = message;
-    show_success = true;
-    show_error = false;
-}
-
-void LoginScreen::clearForms() {
+void LoginView::clearForms() {
     username_input.clear();
     password_input.clear();
     remember_me = false;
@@ -473,14 +368,28 @@ void LoginScreen::clearForms() {
 
     verify_token_input.clear();
 
-    error_message.clear();
-    status_message.clear();
-    show_error = false;
-    show_success = false;
+    clearMessages();
 }
 
-
-void LoginScreen::exitScreen(Result exit_result) {
-    result = exit_result;
-    screen.ExitLoopClosure()();
+void LoginView::submitLogin() {
+    if (controller_callbacks.onLogin) {
+        auth::LoginCredentials credentials;
+        credentials.username = username_input;
+        credentials.password = password_input;
+        credentials.remember_me = remember_me;
+        controller_callbacks.onLogin(credentials);
+    }
 }
+
+void LoginView::submitRegistration() {
+    if (controller_callbacks.onRegister) {
+        auth::RegistrationData data;
+        data.username = reg_username_input;
+        data.email = reg_email_input;
+        data.password = reg_password_input;
+        data.confirm_password = reg_confirm_password_input;
+        controller_callbacks.onRegister(data);
+    }
+}
+
+} // namespace ui
