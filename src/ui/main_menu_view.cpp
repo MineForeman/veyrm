@@ -73,6 +73,9 @@ void MainMenuView::refresh() {
     }
     updateMenuEntries();
 
+    // Recreate the main component with updated menu entries
+    main_component = createMainComponent();
+
     // Force screen refresh
     screen.PostEvent(Event::Custom);
 }
@@ -186,26 +189,18 @@ Element MainMenuView::createAboutBox() const {
 void MainMenuView::updateMenuEntries() {
     menu_entries.clear();
 
-    if (is_authenticated) {
-        menu_entries = {
-            "New Game",
-            "Continue",
-            "Cloud Saves",
-            "Leaderboards",
-            "Settings",
-            "Profile",
-            "Logout",
-            "About",
-            "Quit"
-        };
-    } else {
-        menu_entries = {
-            "Login",
-            "Register",
-            "About",
-            "Quit"
-        };
-    }
+    // Main menu is only shown after authentication, so always show authenticated options
+    menu_entries = {
+        "New Game",
+        "Continue",
+        "Cloud Saves",
+        "Leaderboards",
+        "Settings",
+        "Profile",
+        "Logout",
+        "About",
+        "Quit"
+    };
 
     // Ensure selected index is valid
     if (selected_index >= static_cast<int>(menu_entries.size())) {

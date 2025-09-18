@@ -16,7 +16,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 namespace db {
     class SaveGameRepository;
@@ -26,12 +26,11 @@ namespace db {
 }
 
 namespace ecs {
-    class SaveLoadSystem;
     class GameWorld;
 }
-
-class GameSerializer;
-class AuthenticationService;
+namespace auth {
+    class AuthenticationService;
+}
 
 // Include SyncStatus enum
 #include "services/sync_status.h"
@@ -96,13 +95,11 @@ public:
     /**
      * @brief Construct cloud save service
      * @param save_repo SaveGameRepository for database operations
-     * @param game_serializer GameSerializer for local saves
      * @param auth_service Authentication service for user info
      * @param ecs_world ECS game world for direct state access
      */
     CloudSaveService(db::SaveGameRepository* save_repo,
-                     GameSerializer* game_serializer,
-                     AuthenticationService* auth_service,
+                     auth::AuthenticationService* auth_service,
                      ecs::GameWorld* ecs_world);
 
     ~CloudSaveService();
@@ -279,20 +276,20 @@ public:
      * @brief Serialize ECS world to JSON
      * @return JSON representation of world state
      */
-    nlohmann::json serializeECSWorld() const;
+    boost::json::value serializeECSWorld() const;
 
     /**
      * @brief Deserialize JSON to ECS world
      * @param data JSON data to load
      * @return true if successful
      */
-    bool deserializeECSWorld(const nlohmann::json& data);
+    bool deserializeECSWorld(const boost::json::value& data);
 
     /**
      * @brief Get metadata from current ECS world
      * @return Metadata JSON
      */
-    nlohmann::json getECSMetadata() const;
+    boost::json::value getECSMetadata() const;
 
     // === Utility ===
 
@@ -324,10 +321,8 @@ public:
 private:
     // Services
     db::SaveGameRepository* save_repository;
-    GameSerializer* game_serializer;
-    AuthenticationService* auth_service;
+    auth::AuthenticationService* auth_service;
     ecs::GameWorld* ecs_world;
-    std::unique_ptr<ecs::SaveLoadSystem> ecs_save_system;
 
     // Auto-sync thread
     std::unique_ptr<std::thread> sync_thread;
@@ -345,10 +340,10 @@ private:
     // Helper methods
     void syncThreadLoop();
     bool compareLocalAndCloud(int slot, db::SaveGame& cloud_save);
-    nlohmann::json mergeConflictingData(const nlohmann::json& local,
-                                        const nlohmann::json& cloud);
+    boost::json::value mergeConflictingData(const boost::json::value& local,
+                                        const boost::json::value& cloud);
     void updateStatusCache(int slot, SyncStatus status);
-    bool validateSaveData(const nlohmann::json& data) const;
+    bool validateSaveData(const boost::json::value& data) const;
     std::string generateDeviceId() const;
-    int calculatePlayTime(const nlohmann::json& data) const;
+    int calculatePlayTime(const boost::json::value& data) const;
 };

@@ -22,7 +22,6 @@ enum class GameState {
     PAUSED,     ///< Game paused
     INVENTORY,  ///< Inventory management screen
     HELP,       ///< Help/controls screen
-    SAVE_LOAD,  ///< Save/Load menu
     DEATH,      ///< Player death screen
     QUIT        ///< Exit game
 };
@@ -36,7 +35,11 @@ class MessageLog;
 class FrameStats;
 class Map;
 class MapMemory;
-class GameSerializer;
+class DatabaseManager;
+
+namespace db {
+    class SaveGameRepository;
+}
 
 // Forward declare ECS namespace
 namespace ecs {
@@ -75,6 +78,7 @@ public:
      * @return Current GameState enum value
      */
     GameState getState() const { return current_state; }
+    GameState getCurrentState() const { return current_state; }
 
     /**
      * @brief Change game state
@@ -198,24 +202,17 @@ public:
     // Save/Load system
 
     /**
-     * @brief Save game to slot
-     * @param slot Save slot number (0-9)
+     * @brief Auto-save current game state to database
      * @return true if save succeeded
      */
-    bool saveGame(int slot);
+    bool autoSave();
 
     /**
-     * @brief Load game from slot
-     * @param slot Save slot number (0-9)
-     * @return true if load succeeded
+     * @brief Auto-restore game from database on startup
+     * @return true if restore succeeded
      */
-    bool loadGame(int slot);
+    bool autoRestore();
 
-    /**
-     * @brief Get game serializer
-     * @return Pointer to GameSerializer
-     */
-    GameSerializer* getSerializer() { return serializer.get(); }
 
     // ECS Integration
 
@@ -249,19 +246,26 @@ public:
      */
     void spawnEntities();
 
+    /**
+     * @brief Initialize database connection for auto-save
+     */
+    void initializeDatabase();
+
 private:
-    GameState current_state = GameState::MENU;
-    GameState previous_state = GameState::MENU;
+    GameState current_state = GameState::LOGIN;
+    GameState previous_state = GameState::LOGIN;
     std::unique_ptr<InputHandler> input_handler;
     std::unique_ptr<TurnManager> turn_manager;
     std::unique_ptr<MessageLog> message_log;
     std::unique_ptr<FrameStats> frame_stats;
     std::unique_ptr<Map> map;
     std::unique_ptr<MapMemory> map_memory;
-    std::unique_ptr<GameSerializer> serializer;
     std::unique_ptr<ecs::GameWorld> ecs_world;  ///< ECS world manager
     std::vector<std::vector<bool>> current_fov;
     bool use_ecs = false;  ///< Flag to enable ECS mode
+
+    // Auto-save database components
+    std::unique_ptr<db::SaveGameRepository> save_repository;
 
     // Room tracking - using observer pointer since Map owns the rooms
     // This is safe because rooms lifetime is tied to Map lifetime

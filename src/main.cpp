@@ -17,14 +17,13 @@
 #include <ftxui/screen/screen.hpp>
 
 // JSON include
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 #include "log.h"
 
 // Game includes
 #include "game_state.h"
 #include "game_screen.h"
-#include "save_load_screen.h"
 #include "login_screen.h"
 #include "test_input.h"
 #include "game_loop.h"
@@ -90,19 +89,20 @@ void initializePlatform() {
 bool testJsonLibrary() {
     try {
         // Create a simple JSON object
-        nlohmann::json testData = {
+        boost::json::value testData = {
             {"version", VEYRM_VERSION},
             {"test", true},
             {"entities", {"player", "monster", "item"}}
         };
         
         // Serialize to string
-        std::string jsonStr = testData.dump();
+        std::string jsonStr = boost::json::serialize(testData);
         
         // Parse back
-        auto parsed = nlohmann::json::parse(jsonStr);
+        auto parsed = boost::json::parse(jsonStr);
         
-        return parsed["test"] == true;
+        return parsed.as_object().contains("test") &&
+               boost::json::value_to<bool>(parsed.as_object().at("test")) == true;
     } catch (const std::exception& e) {
         std::cerr << "JSON test failed: " << e.what() << std::endl;
         return false;
@@ -177,8 +177,7 @@ ftxui::Component createMainMenu(GameManager* game_manager, [[maybe_unused]] ftxu
 
     // Update authentication state in controller when user_id changes
     if (user_id && session_token && username) {
-        // These need to be set via proper methods or made public
-        // For now, we'll work with the controller's public interface
+        controller->setAuthenticationInfo(*user_id, *session_token, *username);
     }
 
     // Set controller callbacks
@@ -189,8 +188,10 @@ ftxui::Component createMainMenu(GameManager* game_manager, [[maybe_unused]] ftxu
     callbacks.showError = [](const std::string& error) {
         LOG_ERROR("Menu error: " + error);
     };
-    callbacks.refreshMenu = []() {
-        // This will be handled by view refresh
+    callbacks.refreshMenu = [view = view.get()]() {
+        if (view) {
+            view->refresh();
+        }
     };
     callbacks.exitApplication = []() {
         // This will be handled by game_manager state
@@ -200,27 +201,17 @@ ftxui::Component createMainMenu(GameManager* game_manager, [[maybe_unused]] ftxu
     // Create view callbacks for controller
     ui::MainMenuView::ControllerCallbacks view_callbacks;
     view_callbacks.onMenuSelect = [controller = controller.get()](int index) {
-        if (controller->isAuthenticated()) {
-            // Handle authenticated menu selections
-            switch(index) {
-                case 0: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME); break;
-                case 1: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE); break;
-                case 2: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES); break;
-                case 3: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS); break;
-                case 4: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS); break;
-                case 5: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE); break;
-                case 6: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT); break;
-                case 7: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT); break;
-                case 8: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT); break;
-            }
-        } else {
-            // Handle unauthenticated menu selections
-            switch(index) {
-                case 0: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::LOGIN); break;
-                case 1: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::REGISTER); break;
-                case 2: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::ABOUT); break;
-                case 3: controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT); break;
-            }
+        // Main menu is only shown after authentication, so always handle as authenticated
+        switch(index) {
+            case 0: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME); break;
+            case 1: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE); break;
+            case 2: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES); break;
+            case 3: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS); break;
+            case 4: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS); break;
+            case 5: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE); break;
+            case 6: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT); break;
+            case 7: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT); break;
+            case 8: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT); break;
         }
     };
     view_callbacks.onAboutToggle = [controller = controller.get()]() {
@@ -470,8 +461,6 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                                         &dump_user_id, &dump_session_token, &dump_username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
-    SaveLoadScreen save_load_screen(&game_manager);
-    Component save_load_component = save_load_screen.create();
     
     int frame_count = 0;
     
@@ -503,8 +492,6 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                     }) | border;
                 case GameState::INVENTORY:
                     return game_component->Render();  // Use game screen's inventory panel
-                case GameState::SAVE_LOAD:
-                    return save_load_component->Render();
                 case GameState::HELP:
                     return vbox({
                         text("HELP") | bold,
@@ -563,7 +550,6 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::PAUSED: std::cout << "PAUSED"; break;
             case GameState::INVENTORY: std::cout << "INVENTORY"; break;
             case GameState::HELP: std::cout << "HELP"; break;
-            case GameState::SAVE_LOAD: std::cout << "SAVE_LOAD"; break;
             case GameState::DEATH: std::cout << "DEATH"; break;
             case GameState::QUIT: std::cout << "QUIT"; break;
         }
@@ -591,11 +577,6 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory also needs game_component events
                 game_component->OnEvent(event);
-                break;
-            case GameState::SAVE_LOAD:
-                if (save_load_screen.handleInput(event)) {
-                    // Input was handled
-                }
                 break;
             case GameState::PAUSED:
             case GameState::HELP:
@@ -630,7 +611,8 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
 /**
  * Run FTXUI interface
  */
-void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType::TEST_DUNGEON) {
+void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType::TEST_DUNGEON,
+                  const std::string& auth_username = "", const std::string& auth_password = "") {
     using namespace ftxui;
     
     // Set up cleanup handlers for unexpected exits
@@ -680,8 +662,22 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
         game_manager.setState(GameState::MENU);
     });
 
-    // Check if user needs to authenticate first
-    if (user_id == 0 && !test_input) {
+    // Check if command line credentials were provided
+    if (!auth_username.empty() && !auth_password.empty()) {
+        LOG_INFO("Attempting command line authentication for user: " + auth_username);
+        auto login_result = auth_service->login(auth_username, auth_password, false, "127.0.0.1", "veyrm-cli");
+        if (login_result.success && login_result.user_id.has_value() && login_result.session_token.has_value()) {
+            user_id = login_result.user_id.value();
+            session_token = login_result.session_token.value();
+            username = auth_username;
+            LOG_INFO("Command line authentication successful: " + username + " (ID=" + std::to_string(user_id) + ")");
+            game_manager.setState(GameState::MENU);
+        } else {
+            LOG_ERROR("Command line authentication failed for user: " + auth_username + " - " + login_result.error_message);
+            std::cerr << "Error: Authentication failed for user '" << auth_username << "': " << login_result.error_message << "\n";
+            return;
+        }
+    } else if (user_id == 0 && !test_input) {
         // Not authenticated and not in test mode - go directly to login
         LOG_INFO("No authenticated user - launching login screen");
         auto result = login_screen->run();
@@ -704,6 +700,9 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                 LOG_ERROR("Failed to get username: " + std::string(e.what()));
             }
             LOG_INFO("User authenticated at startup: " + username + " (ID=" + std::to_string(user_id) + ")");
+
+            // Transition to main menu after successful authentication
+            game_manager.setState(GameState::MENU);
         } else {
             LOG_INFO("Login cancelled or failed - exiting");
             return;  // Exit if user cancels login
@@ -717,8 +716,6 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                                         &user_id, &session_token, &username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
-    SaveLoadScreen save_load_screen(&game_manager);
-    Component save_load_component = save_load_screen.create();
 
     // State-based renderer
     auto main_renderer = Renderer([&] {
@@ -743,8 +740,6 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                 }) | border;
             case GameState::INVENTORY:
                 return game_component->Render();  // Use game screen's inventory panel
-            case GameState::SAVE_LOAD:
-                return save_load_component->Render();
             case GameState::HELP:
                 return vbox({
                     text("VEYRM HELP") | bold | center,
@@ -929,8 +924,6 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory needs game_component events too
                 return game_component->OnEvent(event);
-            case GameState::SAVE_LOAD:
-                return save_load_screen.handleInput(event);
             case GameState::PAUSED:
             case GameState::HELP:
                 if (event == Event::Escape) {
@@ -1053,7 +1046,11 @@ int main(int argc, char* argv[]) {
     
     // Get default map type from config
     MapType map_type = config.getDefaultMapType();
-    
+
+    // Authentication options for testing
+    std::string cmdline_username;
+    std::string cmdline_password;
+
     // Parse command-line arguments for config options (CLI overrides config file)
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -1101,6 +1098,17 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
+
+        // Authentication arguments for testing
+        if (arg == "--username" && i + 1 < argc) {
+            cmdline_username = argv[++i];
+            continue;
+        }
+
+        if (arg == "--password" && i + 1 < argc) {
+            cmdline_password = argv[++i];
+            continue;
+        }
     }
     
     // Handle command-line arguments
@@ -1127,6 +1135,8 @@ int main(int argc, char* argv[]) {
             std::cout << "  --map <type>        Start with specific map type\n";
             std::cout << "                      Types: procedural (random), room, dungeon,\n";
             std::cout << "                             corridor, arena, stress\n";
+            std::cout << "  --username <user>   Login with specified username (skips login screen)\n";
+            std::cout << "  --password <pass>   Password for auto-login (requires --username)\n";
             std::cout << "\nKeystroke format:\n";
             std::cout << "  Regular characters are sent as-is\n";
             std::cout << "  Escape sequences:\n";
@@ -1161,7 +1171,7 @@ int main(int argc, char* argv[]) {
             TestInput test_input;
             test_input.loadKeystrokes(argv[2]);
             std::cout << "Running with automated input: " << argv[2] << "\n";
-            runInterface(&test_input, map_type);
+            runInterface(&test_input, map_type, cmdline_username, cmdline_password);
             return 0;
         } else if (arg == "--dump" && argc > 2) {
             // Run in frame dump mode
@@ -1170,8 +1180,9 @@ int main(int argc, char* argv[]) {
             test_input.setFrameDumpMode(true);
             runFrameDumpMode(&test_input, map_type);
             return 0;
-        } else if (arg != "--map") {
-            // --map is already handled above, only show error for truly unknown options
+        } else if (arg != "--map" && arg != "--username" && arg != "--password" &&
+                   arg != "--config" && arg != "--data-dir") {
+            // Options already handled above, only show error for truly unknown options
             std::cerr << "Unknown option: " << arg << "\n";
             std::cerr << "Use --help for usage information\n";
             return 1;
@@ -1179,7 +1190,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Run the interface normally with selected map type
-    runInterface(nullptr, map_type);
+    runInterface(nullptr, map_type, cmdline_username, cmdline_password);
     
     return 0;
 }

@@ -559,4 +559,24 @@ void GameWorld::removeDeadEntities() {
     }
 }
 
+Entity& GameWorld::addEntityWithTracking(std::unique_ptr<Entity> entity) {
+    // Check if this is a player entity before adding
+    bool is_player = entity->hasComponent<PlayerComponent>() || entity->hasTag("player");
+
+    Entity& added_entity = world.addEntity(std::move(entity));
+
+    // Update player ID if this was a player entity
+    if (is_player) {
+        player_id = added_entity.getID();
+        LOG_INFO("Player entity restored with ID: " + std::to_string(player_id));
+
+        // Update AI system with player ID
+        if (native_ai_system) {
+            native_ai_system->setPlayerId(player_id);
+        }
+    }
+
+    return added_entity;
+}
+
 } // namespace ecs

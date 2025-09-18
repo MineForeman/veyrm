@@ -43,6 +43,13 @@ std::string MainMenuController::getAuthStatus() const {
     return "";
 }
 
+void MainMenuController::setAuthenticationInfo(int user_id, const std::string& session_token, const std::string& username) {
+    this->user_id = user_id;
+    this->session_token = session_token;
+    this->username = username;
+    LOG_INFO("MainMenuController authentication updated: " + username + " (ID=" + std::to_string(user_id) + ")");
+}
+
 void MainMenuController::handleAuthenticatedSelection(AuthenticatedOption option) {
     switch (option) {
         case AuthenticatedOption::NEW_GAME:
@@ -114,6 +121,9 @@ bool MainMenuController::processLogin() {
 
         LOG_INFO("User authenticated successfully: " + username + " (ID=" + std::to_string(user_id) + ")");
 
+        // Transition to main menu after successful authentication
+        game_manager->setState(GameState::MENU);
+
         if (view_callbacks.showMessage) {
             view_callbacks.showMessage("Welcome back, " + username + "!");
         }
@@ -150,6 +160,9 @@ bool MainMenuController::processRegistration() {
 
         LOG_INFO("User registered successfully: " + username + " (ID=" + std::to_string(user_id) + ")");
 
+        // Transition to main menu after successful registration
+        game_manager->setState(GameState::MENU);
+
         if (view_callbacks.showMessage) {
             view_callbacks.showMessage("Welcome to Veyrm, " + username + "!");
         }
@@ -184,11 +197,22 @@ void MainMenuController::toggleAbout() {
 void MainMenuController::startNewGame() {
     LOG_INFO("Starting new game");
     game_manager->setState(GameState::PLAYING);
+
+    // Auto-save after successful game start
+    game_manager->autoSave();
 }
 
 void MainMenuController::continueSavedGame() {
-    LOG_INFO("Opening save/load menu");
-    game_manager->setState(GameState::SAVE_LOAD);
+    LOG_INFO("*** CONTINUE BUTTON PRESSED ***");
+    LOG_INFO("Auto-restoring saved game");
+    if (game_manager->autoRestore()) {
+        LOG_INFO("*** AUTO-RESTORE SUCCEEDED - SWITCHING TO PLAYING STATE ***");
+        game_manager->setState(GameState::PLAYING);
+    } else {
+        LOG_ERROR("*** AUTO-RESTORE FAILED ***");
+        LOG_ERROR("Failed to restore saved game");
+        // Stay on menu if restore fails
+    }
 }
 
 void MainMenuController::openCloudSaves() {
@@ -221,6 +245,12 @@ void MainMenuController::openProfile() {
 
 void MainMenuController::quitApplication() {
     LOG_INFO("Quitting application");
+
+    // Auto-save before quit if currently playing
+    if (game_manager->getCurrentState() == GameState::PLAYING) {
+        game_manager->autoSave();
+    }
+
     game_manager->setState(GameState::QUIT);
 
     if (view_callbacks.exitApplication) {

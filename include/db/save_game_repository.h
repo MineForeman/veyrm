@@ -11,7 +11,8 @@
 #include <vector>
 #include <optional>
 #include <chrono>
-#include <nlohmann/json.hpp>
+#include <map>
+#include <boost/json.hpp>
 
 namespace db {
 
@@ -33,7 +34,7 @@ struct SaveGame {
     int play_time = 0;                 ///< Play time in seconds
     int turn_count = 0;                ///< Number of turns played
 
-    nlohmann::json save_data;          ///< Complete game state as JSON
+    boost::json::value save_data;          ///< Complete game state as JSON
     std::string save_version;          ///< Save format version
     std::string game_version;          ///< Game version that created this save
 
@@ -59,7 +60,7 @@ struct SaveGame {
 struct SaveConflict {
     std::string id;                    ///< UUID
     std::string save_id;               ///< Reference to save_games
-    nlohmann::json conflicting_data;   ///< Conflicting save data
+    boost::json::value conflicting_data;   ///< Conflicting save data
     std::string device_id;             ///< Device that created conflict
     std::string device_name;           ///< Human-readable device name
     std::chrono::system_clock::time_point created_at;
@@ -74,7 +75,7 @@ struct SaveConflict {
 struct SaveBackup {
     std::string id;                    ///< UUID
     std::string save_id;               ///< Reference to save_games
-    nlohmann::json backup_data;        ///< Backed up game data
+    boost::json::value backup_data;        ///< Backed up game data
     std::string backup_reason;         ///< Why backup was created
     std::chrono::system_clock::time_point created_at;
 };
@@ -253,8 +254,8 @@ private:
     SaveGame rowToSaveGame(const Result& row, int rowIndex) const;
     SaveConflict rowToConflict(const Result& row, int rowIndex) const;
     SaveBackup rowToBackup(const Result& row, int rowIndex) const;
-    std::string jsonToString(const nlohmann::json& json) const;
-    nlohmann::json stringToJson(const std::string& str) const;
+    std::string jsonToString(const boost::json::value& json) const;
+    boost::json::value stringToJson(const std::string& str) const;
     std::string timestampToString(const std::chrono::system_clock::time_point& tp) const;
     std::chrono::system_clock::time_point stringToTimestamp(const std::string& str) const;
 };

@@ -23,13 +23,13 @@ endif()
 # Coverage configuration
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 if(ENABLE_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         message(STATUS "Coverage reporting enabled")
         set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type forced to Debug for coverage" FORCE)
         add_compile_options(--coverage -O0 -g)
         add_link_options(--coverage)
     else()
-        message(WARNING "Coverage is only supported with GCC/Clang")
+        message(WARNING "Coverage is only supported with GCC/Clang but found: ${CMAKE_CXX_COMPILER_ID}")
         set(ENABLE_COVERAGE OFF)
     endif()
 endif()
@@ -59,14 +59,9 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# nlohmann/json
-message(STATUS "Configuring nlohmann/json...")
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-)
+# Boost libraries
+message(STATUS "Configuring Boost...")
+find_package(Boost 1.75 REQUIRED COMPONENTS json)
 
 # Catch2
 message(STATUS "Configuring Catch2...")
@@ -77,14 +72,6 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# rapidyaml - Fast, modern C++ YAML library
-message(STATUS "Configuring rapidyaml...")
-FetchContent_Declare(
-    ryml
-    GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
-    GIT_TAG v0.5.0
-    GIT_SHALLOW TRUE
-)
 
 # PostgreSQL database support (REQUIRED)
 message(STATUS "Configuring PostgreSQL...")
@@ -107,7 +94,7 @@ else()
 endif()
 
 # Make dependencies available
-FetchContent_MakeAvailable(ftxui json Catch2 ryml)
+FetchContent_MakeAvailable(ftxui Catch2)
 
 message(STATUS "All dependencies configured successfully")
 
@@ -196,15 +183,9 @@ add_library(veyrm_core STATIC
     # src/item_manager.cpp removed - using ECS item system
     # src/inventory.cpp  # Legacy - removed, using ECS InventoryComponent
     src/inventory_renderer.cpp
-    src/game_serializer.cpp
-    src/save_load_screen.cpp
     src/login_screen.cpp
-    # Refactored save/load components
-    src/services/save_game_service.cpp
-    src/controllers/save_load_controller.cpp
     src/controllers/game_controller.cpp
     src/controllers/main_menu_controller.cpp
-    src/ui/save_load_view.cpp
     src/ui/game_view.cpp
     src/ui/main_menu_view.cpp
     # UI component library
@@ -224,14 +205,12 @@ add_library(veyrm_core STATIC
     src/ecs/event.cpp
     src/ecs/inventory_system.cpp
     src/ecs/input_system.cpp
-    src/ecs/save_load_system.cpp
     src/ecs/status_effect_system.cpp
     src/ecs/loot_system.cpp
     src/ecs/equipment_system.cpp
     src/ecs/experience_system.cpp
     src/ecs/entity_factory.cpp
     src/ecs/data_loader.cpp
-    src/ecs/persistence_system.cpp
     # UI components
     src/ui/cloud_save_indicator.cpp
     src/ui/login_view.cpp
@@ -242,6 +221,7 @@ target_sources(veyrm_core PRIVATE
     src/db/database_manager.cpp
     src/db/player_repository.cpp
     src/db/save_game_repository.cpp
+    src/db/game_entity_repository.cpp
     src/services/cloud_save_service.cpp
 )
 
@@ -260,8 +240,8 @@ target_link_libraries(veyrm_core
         ftxui::screen
         ftxui::dom
         ftxui::component
-        nlohmann_json::nlohmann_json
-        ryml::ryml
+        Boost::headers
+        Boost::json
 )
 
 # Link PostgreSQL (always required)
@@ -347,5 +327,5 @@ message(STATUS "  Dependencies:")
 message(STATUS "    - FTXUI: v5.0.0")
 message(STATUS "    - nlohmann/json: v3.11.3")
 message(STATUS "    - Catch2: v3.5.1")
-message(STATUS "    - rapidyaml: v0.5.0")
+message(STATUS "    - rapidyaml: v0.9.0")
 message(STATUS "========================================")

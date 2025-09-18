@@ -3,8 +3,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <cstdlib>
+#include <boost/json.hpp>
+
+using namespace boost::json;
 
 Config& Config::getInstance() {
     static Config instance;
@@ -17,173 +19,170 @@ bool Config::loadFromFile(const std::string& filename) {
             // Config file doesn't exist, use defaults
             return true;
         }
-        
+
         // Read file contents
         std::ifstream file(filename);
         if (!file) {
             std::cerr << "Failed to open config file: " << filename << std::endl;
             return false;
         }
-        
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string yaml_content = buffer.str();
-        
-        // Parse YAML using rapidyaml
-        ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(yaml_content));
-        ryml::ConstNodeRef root = tree.rootref();
-        
+
+        // Parse JSON
+        std::string json_content((std::istreambuf_iterator<char>(file)),
+                                std::istreambuf_iterator<char>());
+        boost::json::value config = boost::json::parse(json_content);
+        boost::json::object const& root = config.as_object();
+
         // Game settings
-        if (root.has_child("game")) {
-            auto game = root["game"];
-            if (game.has_child("default_map")) {
-                std::string map_str;
-                game["default_map"] >> map_str;
+        if (root.contains("game")) {
+            auto const& game = root.at("game").as_object();
+            if (game.contains("default_map")) {
+                std::string map_str = game.at("default_map").as_string().c_str();
                 default_map_type = parseMapType(map_str);
             }
-            if (game.has_child("debug_mode")) {
-                game["debug_mode"] >> debug_mode;
+            if (game.contains("debug_mode")) {
+                debug_mode = game.at("debug_mode").as_bool();
             }
         }
-        
+
         // Display settings
-        if (root.has_child("display")) {
-            auto display = root["display"];
-            if (display.has_child("theme")) {
-                display["theme"] >> theme;
+        if (root.contains("display")) {
+            auto const& display = root.at("display").as_object();
+            if (display.contains("theme")) {
+                theme = display.at("theme").as_string().c_str();
             }
-            if (display.has_child("show_fps")) {
-                display["show_fps"] >> show_fps;
+            if (display.contains("show_fps")) {
+                show_fps = display.at("show_fps").as_bool();
             }
-            if (display.has_child("message_log")) {
-                auto msg_log = display["message_log"];
-                if (msg_log.has_child("max_messages")) {
-                    msg_log["max_messages"] >> max_messages;
+            if (display.contains("message_log")) {
+                auto const& msg_log = display.at("message_log").as_object();
+                if (msg_log.contains("max_messages")) {
+                    max_messages = static_cast<int>(msg_log.at("max_messages").as_int64());
                 }
-                if (msg_log.has_child("visible_messages")) {
-                    msg_log["visible_messages"] >> visible_messages;
+                if (msg_log.contains("visible_messages")) {
+                    visible_messages = static_cast<int>(msg_log.at("visible_messages").as_int64());
                 }
             }
         }
-        
+
         // Map generation settings
-        if (root.has_child("map_generation")) {
-            auto map_gen = root["map_generation"];
-            if (map_gen.has_child("procedural")) {
-                auto proc = map_gen["procedural"];
-                if (proc.has_child("width")) proc["width"] >> map_width;
-                if (proc.has_child("height")) proc["height"] >> map_height;
-                if (proc.has_child("min_rooms")) proc["min_rooms"] >> min_rooms;
-                if (proc.has_child("max_rooms")) proc["max_rooms"] >> max_rooms;
-                if (proc.has_child("min_room_size")) proc["min_room_size"] >> min_room_size;
-                if (proc.has_child("max_room_size")) proc["max_room_size"] >> max_room_size;
-                if (proc.has_child("lit_room_chance")) proc["lit_room_chance"] >> lit_room_chance;
-                if (proc.has_child("door_chance")) proc["door_chance"] >> door_chance;
-                if (proc.has_child("corridor_style")) proc["corridor_style"] >> corridor_style;
+        if (root.contains("map_generation")) {
+            auto const& map_gen = root.at("map_generation").as_object();
+            if (map_gen.contains("procedural")) {
+                auto const& proc = map_gen.at("procedural").as_object();
+                if (proc.contains("width")) map_width = static_cast<int>(proc.at("width").as_int64());
+                if (proc.contains("height")) map_height = static_cast<int>(proc.at("height").as_int64());
+                if (proc.contains("min_rooms")) min_rooms = static_cast<int>(proc.at("min_rooms").as_int64());
+                if (proc.contains("max_rooms")) max_rooms = static_cast<int>(proc.at("max_rooms").as_int64());
+                if (proc.contains("min_room_size")) min_room_size = static_cast<int>(proc.at("min_room_size").as_int64());
+                if (proc.contains("max_room_size")) max_room_size = static_cast<int>(proc.at("max_room_size").as_int64());
+                if (proc.contains("lit_room_chance")) lit_room_chance = static_cast<float>(proc.at("lit_room_chance").as_double());
+                if (proc.contains("door_chance")) door_chance = static_cast<float>(proc.at("door_chance").as_double());
+                if (proc.contains("corridor_style")) corridor_style = proc.at("corridor_style").as_string().c_str();
             }
         }
-        
+
         // Monster settings
-        if (root.has_child("monsters")) {
-            auto monsters = root["monsters"];
-            if (monsters.has_child("initial_monster_count")) {
-                monsters["initial_monster_count"] >> initial_monster_count;
+        if (root.contains("monsters")) {
+            auto const& monsters = root.at("monsters").as_object();
+            if (monsters.contains("initial_monster_count")) {
+                initial_monster_count = static_cast<int>(monsters.at("initial_monster_count").as_int64());
             }
-            if (monsters.has_child("max_per_level")) {
-                monsters["max_per_level"] >> max_monsters_per_level;
+            if (monsters.contains("max_per_level")) {
+                max_monsters_per_level = static_cast<int>(monsters.at("max_per_level").as_int64());
             }
-            if (monsters.has_child("spawn_rate")) {
-                monsters["spawn_rate"] >> monster_spawn_rate;
+            if (monsters.contains("spawn_rate")) {
+                monster_spawn_rate = static_cast<int>(monsters.at("spawn_rate").as_int64());
             }
-            if (monsters.has_child("spawn_outside_fov")) {
-                monsters["spawn_outside_fov"] >> spawn_outside_fov;
+            if (monsters.contains("spawn_outside_fov")) {
+                spawn_outside_fov = monsters.at("spawn_outside_fov").as_bool();
             }
-            if (monsters.has_child("min_spawn_distance")) {
-                monsters["min_spawn_distance"] >> min_spawn_distance;
+            if (monsters.contains("min_spawn_distance")) {
+                min_spawn_distance = static_cast<int>(monsters.at("min_spawn_distance").as_int64());
             }
-            if (monsters.has_child("room_spawn_percentage")) {
-                monsters["room_spawn_percentage"] >> room_spawn_percentage;
+            if (monsters.contains("room_spawn_percentage")) {
+                room_spawn_percentage = static_cast<float>(monsters.at("room_spawn_percentage").as_double());
             }
-            if (monsters.has_child("behavior")) {
-                auto behavior = monsters["behavior"];
-                if (behavior.has_child("aggression_radius")) {
-                    behavior["aggression_radius"] >> aggression_radius;
+            if (monsters.contains("behavior")) {
+                auto const& behavior = monsters.at("behavior").as_object();
+                if (behavior.contains("aggression_radius")) {
+                    aggression_radius = static_cast<int>(behavior.at("aggression_radius").as_int64());
                 }
             }
         }
-        
+
         // Player settings
-        if (root.has_child("player")) {
-            auto player = root["player"];
-            if (player.has_child("starting_hp")) {
-                player["starting_hp"] >> player_starting_hp;
+        if (root.contains("player")) {
+            auto const& player = root.at("player").as_object();
+            if (player.contains("starting_hp")) {
+                player_starting_hp = static_cast<int>(player.at("starting_hp").as_int64());
             }
-            if (player.has_child("starting_attack")) {
-                player["starting_attack"] >> player_starting_attack;
+            if (player.contains("starting_attack")) {
+                player_starting_attack = static_cast<int>(player.at("starting_attack").as_int64());
             }
-            if (player.has_child("starting_defense")) {
-                player["starting_defense"] >> player_starting_defense;
+            if (player.contains("starting_defense")) {
+                player_starting_defense = static_cast<int>(player.at("starting_defense").as_int64());
             }
-            if (player.has_child("inventory_capacity")) {
-                player["inventory_capacity"] >> inventory_capacity;
+            if (player.contains("inventory_capacity")) {
+                inventory_capacity = static_cast<int>(player.at("inventory_capacity").as_int64());
             }
-            if (player.has_child("fov_radius")) {
-                player["fov_radius"] >> fov_radius;
+            if (player.contains("fov_radius")) {
+                fov_radius = static_cast<int>(player.at("fov_radius").as_int64());
             }
         }
-        
+
         // Path settings
-        if (root.has_child("paths")) {
-            auto paths = root["paths"];
-            if (paths.has_child("data_dir")) {
-                paths["data_dir"] >> data_dir;
+        if (root.contains("paths")) {
+            auto const& paths = root.at("paths").as_object();
+            if (paths.contains("data_dir")) {
+                data_dir = paths.at("data_dir").as_string().c_str();
             }
-            if (paths.has_child("save_dir")) {
-                paths["save_dir"] >> save_dir;
+            if (paths.contains("save_dir")) {
+                save_dir = paths.at("save_dir").as_string().c_str();
             }
-            if (paths.has_child("log_dir")) {
-                paths["log_dir"] >> log_dir;
+            if (paths.contains("log_dir")) {
+                log_dir = paths.at("log_dir").as_string().c_str();
             }
         }
-        
+
         // Performance settings
-        if (root.has_child("performance")) {
-            auto perf = root["performance"];
-            if (perf.has_child("target_fps")) {
-                perf["target_fps"] >> target_fps;
+        if (root.contains("performance")) {
+            auto const& perf = root.at("performance").as_object();
+            if (perf.contains("target_fps")) {
+                target_fps = static_cast<int>(perf.at("target_fps").as_int64());
             }
         }
-        
+
         // Database settings
-        if (root.has_child("database")) {
-            auto db = root["database"];
-            if (db.has_child("enabled")) {
-                db["enabled"] >> database_enabled;
+        if (root.contains("database")) {
+            auto const& db = root.at("database").as_object();
+            if (db.contains("enabled")) {
+                database_enabled = db.at("enabled").as_bool();
             }
-            if (db.has_child("connection")) {
-                auto conn = db["connection"];
-                if (conn.has_child("host")) conn["host"] >> db_host;
-                if (conn.has_child("port")) conn["port"] >> db_port;
-                if (conn.has_child("database")) conn["database"] >> db_name;
-                if (conn.has_child("username")) conn["username"] >> db_username;
-                if (conn.has_child("password")) conn["password"] >> db_password;
+            if (db.contains("connection")) {
+                auto const& conn = db.at("connection").as_object();
+                if (conn.contains("host")) db_host = conn.at("host").as_string().c_str();
+                if (conn.contains("port")) db_port = static_cast<int>(conn.at("port").as_int64());
+                if (conn.contains("database")) db_name = conn.at("database").as_string().c_str();
+                if (conn.contains("username")) db_username = conn.at("username").as_string().c_str();
+                if (conn.contains("password")) db_password = conn.at("password").as_string().c_str();
             }
-            if (db.has_child("pool")) {
-                auto pool = db["pool"];
-                if (pool.has_child("min_connections")) pool["min_connections"] >> db_min_connections;
-                if (pool.has_child("max_connections")) pool["max_connections"] >> db_max_connections;
-                if (pool.has_child("connection_timeout")) pool["connection_timeout"] >> db_connection_timeout;
+            if (db.contains("pool")) {
+                auto const& pool = db.at("pool").as_object();
+                if (pool.contains("min_connections")) db_min_connections = static_cast<int>(pool.at("min_connections").as_int64());
+                if (pool.contains("max_connections")) db_max_connections = static_cast<int>(pool.at("max_connections").as_int64());
+                if (pool.contains("connection_timeout")) db_connection_timeout = static_cast<int>(pool.at("connection_timeout").as_int64());
             }
         }
 
         // Development settings
-        if (root.has_child("development")) {
-            auto dev = root["development"];
-            if (dev.has_child("verbose_logging")) {
-                dev["verbose_logging"] >> verbose_logging;
+        if (root.contains("development")) {
+            auto const& dev = root.at("development").as_object();
+            if (dev.contains("verbose_logging")) {
+                verbose_logging = dev.at("verbose_logging").as_bool();
             }
-            if (dev.has_child("autosave_interval")) {
-                dev["autosave_interval"] >> autosave_interval;
+            if (dev.contains("autosave_interval")) {
+                autosave_interval = static_cast<int>(dev.at("autosave_interval").as_int64());
             }
         }
 
@@ -197,11 +196,114 @@ bool Config::loadFromFile(const std::string& filename) {
     }
 }
 
-bool Config::saveToFile([[maybe_unused]] const std::string& filename) const {
-    // Mini-yaml doesn't have a built-in serializer/emitter
-    // For now, we'll just return true since config is typically read-only
-    // In the future, we could manually write YAML format
-    return true;
+bool Config::saveToFile(const std::string& filename) const {
+    try {
+        boost::json::object config;
+
+        // Game settings
+        boost::json::object game;
+        game["default_map"] = mapTypeToString(default_map_type);
+        game["debug_mode"] = debug_mode;
+        config["game"] = game;
+
+        // Display settings
+        boost::json::object display;
+        display["theme"] = theme;
+        display["show_fps"] = show_fps;
+
+        boost::json::object message_log;
+        message_log["max_messages"] = max_messages;
+        message_log["visible_messages"] = visible_messages;
+        display["message_log"] = message_log;
+        config["display"] = display;
+
+        // Map generation
+        boost::json::object map_generation;
+        boost::json::object procedural;
+        procedural["width"] = map_width;
+        procedural["height"] = map_height;
+        procedural["min_rooms"] = min_rooms;
+        procedural["max_rooms"] = max_rooms;
+        procedural["min_room_size"] = min_room_size;
+        procedural["max_room_size"] = max_room_size;
+        procedural["lit_room_chance"] = lit_room_chance;
+        procedural["door_chance"] = door_chance;
+        procedural["corridor_style"] = corridor_style;
+        map_generation["procedural"] = procedural;
+        config["map_generation"] = map_generation;
+
+        // Monster settings
+        boost::json::object monsters;
+        monsters["initial_monster_count"] = initial_monster_count;
+        monsters["max_per_level"] = max_monsters_per_level;
+        monsters["spawn_rate"] = monster_spawn_rate;
+        monsters["spawn_outside_fov"] = spawn_outside_fov;
+        monsters["min_spawn_distance"] = min_spawn_distance;
+        monsters["room_spawn_percentage"] = room_spawn_percentage;
+
+        boost::json::object behavior;
+        behavior["aggression_radius"] = aggression_radius;
+        monsters["behavior"] = behavior;
+        config["monsters"] = monsters;
+
+        // Player settings
+        boost::json::object player;
+        player["starting_hp"] = player_starting_hp;
+        player["starting_attack"] = player_starting_attack;
+        player["starting_defense"] = player_starting_defense;
+        player["inventory_capacity"] = inventory_capacity;
+        player["fov_radius"] = fov_radius;
+        config["player"] = player;
+
+        // Paths
+        boost::json::object paths;
+        paths["data_dir"] = data_dir;
+        paths["save_dir"] = save_dir;
+        paths["log_dir"] = log_dir;
+        config["paths"] = paths;
+
+        // Performance
+        boost::json::object performance;
+        performance["target_fps"] = target_fps;
+        config["performance"] = performance;
+
+        // Database
+        boost::json::object database;
+        database["enabled"] = database_enabled;
+
+        boost::json::object connection;
+        connection["host"] = db_host;
+        connection["port"] = db_port;
+        connection["database"] = db_name;
+        connection["username"] = db_username;
+        connection["password"] = db_password;
+        database["connection"] = connection;
+
+        boost::json::object pool;
+        pool["min_connections"] = db_min_connections;
+        pool["max_connections"] = db_max_connections;
+        pool["connection_timeout"] = db_connection_timeout;
+        database["pool"] = pool;
+        config["database"] = database;
+
+        // Development
+        boost::json::object development;
+        development["verbose_logging"] = verbose_logging;
+        development["autosave_interval"] = autosave_interval;
+        config["development"] = development;
+
+        // Write to file
+        std::ofstream file(filename);
+        if (!file) {
+            return false;
+        }
+        file << boost::json::serialize(config);
+        return true;
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error saving config file: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 std::string Config::getDataFilePath(const std::string& filename) const {
@@ -210,7 +312,7 @@ std::string Config::getDataFilePath(const std::string& filename) const {
 }
 
 bool Config::isDataDirValid() const {
-    return std::filesystem::exists(data_dir) && 
+    return std::filesystem::exists(data_dir) &&
            std::filesystem::is_directory(data_dir);
 }
 
@@ -242,7 +344,7 @@ std::string Config::getEnvironmentVariable(const std::string& name, const std::s
 }
 
 void Config::loadEnvironmentVariables() {
-    // Database environment variables (these override config.yml values)
+    // Database environment variables (these override config.json values)
 
     // Database connection settings
     std::string env_host = getEnvironmentVariable("DB_HOST");

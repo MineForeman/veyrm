@@ -13,6 +13,7 @@
 #include <string>
 
 #include "system_manager.h"
+#include "../log.h"
 #include "health_component.h"
 // Bridge classes removed - no longer needed in full ECS mode
 #include "../game_state.h"
@@ -218,7 +219,17 @@ public:
     /**
      * @brief Clear all entities
      */
-    void clearEntities() { world.clearEntities(); }
+    void clearEntities() {
+        world.clearEntities();
+        player_id = 0; // Reset player ID when clearing entities
+    }
+
+    /**
+     * @brief Add an entity and update player tracking if needed
+     * @param entity Entity to add
+     * @return Reference to added entity
+     */
+    Entity& addEntityWithTracking(std::unique_ptr<Entity> entity);
 
     /**
      * @brief Get player entity ID

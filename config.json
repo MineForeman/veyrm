@@ -1,0 +1,118 @@
+{
+  "version": "0.0.3",
+  "game": {
+    "default_map": "procedural",
+    "debug_mode": false,
+    "difficulty": {
+      "monster_damage_multiplier": 1.0,
+      "player_health_multiplier": 1.0,
+      "experience_multiplier": 1.0
+    }
+  },
+  "display": {
+    "theme": "auto",
+    "show_fps": false,
+    "message_log": {
+      "max_messages": 100,
+      "visible_messages": 5
+    },
+    "layout": {
+      "min_terminal_width": 80,
+      "min_terminal_height": 24
+    }
+  },
+  "map_generation": {
+    "seed": "",
+    "procedural": {
+      "width": 198,
+      "height": 66,
+      "min_rooms": 9,
+      "max_rooms": 20,
+      "min_room_size": 4,
+      "max_room_size": 20,
+      "corridor_style": "straight",
+      "lit_room_chance": 0.95,
+      "door_chance": 0.15
+    }
+  },
+  "monsters": {
+    "initial_monster_count": 10,
+    "max_per_level": 30,
+    "spawn_rate": 100,
+    "spawn_outside_fov": true,
+    "min_spawn_distance": 5,
+    "depth_scaling": 0.1,
+    "threat_budget": 100,
+    "prefer_rooms": true,
+    "room_spawn_percentage": 0.95,
+    "pack_spawn_chance": 0.2,
+    "behavior": {
+      "aggression_radius": 10,
+      "door_pursuit_chance": 0.7
+    }
+  },
+  "player": {
+    "starting_hp": 20,
+    "starting_attack": 5,
+    "starting_defense": 2,
+    "inventory_capacity": 26,
+    "fov_radius": 10
+  },
+  "paths": {
+    "data_dir": "data",
+    "save_dir": "saves",
+    "log_dir": "logs"
+  },
+  "performance": {
+    "target_fps": 60,
+    "multithread_generation": true,
+    "fov_cache_size": 100
+  },
+  "development": {
+    "release_assertions": false,
+    "verbose_logging": false,
+    "autosave_interval": 300
+  },
+  "database": {
+    "enabled": false,
+    "connection": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "veyrm_db",
+      "username": "veyrm_admin",
+      "password": ""
+    },
+    "pool": {
+      "min_connections": 2,
+      "max_connections": 10,
+      "connection_timeout": 5000
+    },
+    "features": {
+      "leaderboards": true,
+      "cloud_saves": false,
+      "telemetry": false,
+      "achievements": true
+    }
+  },
+  "keybindings": {
+    "wait": ".",
+    "pickup": "g",
+    "inventory": "i",
+    "drop": "d",
+    "use": "a",
+    "examine": "x",
+    "quit": "q",
+    "save": "S",
+    "help": "?",
+    "new_game": "N",
+    "target": "t",
+    "fire": "f",
+    "run": "shift",
+    "search": "s",
+    "open": "o",
+    "close": "c",
+    "toggle_fov": "ctrl+f",
+    "reveal_map": "ctrl+r",
+    "spawn_monster": "ctrl+m"
+  }
+}

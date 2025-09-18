@@ -4,7 +4,7 @@
 #include "ecs/component.h"
 #include "map.h"
 #include <fstream>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 using namespace ecs;
 
@@ -448,7 +448,7 @@ TEST_CASE("EntityFactory data loading", "[factory][ecs]") {
 
     SECTION("Load monster data from JSON") {
         // Create test JSON data
-        nlohmann::json monsterData = {
+        boost::json::value monsterData = {
             {"monsters", {
                 {
                     {"id", "test_goblin"},
@@ -488,7 +488,7 @@ TEST_CASE("EntityFactory data loading", "[factory][ecs]") {
     }
 
     SECTION("Load item data from JSON") {
-        nlohmann::json itemData = {
+        boost::json::value itemData = {
             {"items", {
                 {
                     {"id", "test_sword"},

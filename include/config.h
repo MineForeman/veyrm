@@ -9,9 +9,7 @@
 
 #include <string>
 #include <filesystem>
-#include <ryml.hpp>
-#include <ryml_std.hpp>  // For std::string support
-#include <c4/format.hpp>
+#include <boost/json.hpp>
 #include "map_generator.h"  // For MapType enum
 
 // Forward declarations
@@ -49,18 +47,18 @@ public:
     static Config& getInstance();
 
     /**
-     * @brief Load configuration from YAML file
-     * @param filename Path to configuration file (default: "config.yml")
+     * @brief Load configuration from JSON file
+     * @param filename Path to configuration file (default: "config.json")
      * @return true if loaded successfully, false otherwise
      */
-    bool loadFromFile(const std::string& filename = "config.yml");
+    bool loadFromFile(const std::string& filename = "config.json");
 
     /**
-     * @brief Save current configuration to YAML file
-     * @param filename Path to save file (default: "config.yml")
+     * @brief Save current configuration to JSON file
+     * @param filename Path to save file (default: "config.json")
      * @return true if saved successfully, false otherwise
      */
-    bool saveToFile(const std::string& filename = "config.yml") const;
+    bool saveToFile(const std::string& filename = "config.json") const;
 
     // === Game Settings ===
 

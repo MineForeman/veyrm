@@ -107,6 +107,14 @@ public:
     std::string getAuthStatus() const;
 
     /**
+     * @brief Set authentication info from main login
+     * @param user_id User ID from authentication
+     * @param session_token Session token from authentication
+     * @param username Username from authentication
+     */
+    void setAuthenticationInfo(int user_id, const std::string& session_token, const std::string& username);
+
+    /**
      * @brief Handle menu selection for authenticated user
      * @param option Selected menu option
      */

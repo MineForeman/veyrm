@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 #include <random>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 namespace db {
 
@@ -78,13 +78,13 @@ protected:
     // Helper to convert JSON string to object
     template<typename JsonType>
     JsonType jsonToObject(const std::string& json) {
-        return nlohmann::json::parse(json).get<JsonType>();
+        return boost::json::value::parse(json).get<JsonType>();
     }
 
     // Helper to convert object to JSON string
     template<typename JsonType>
     std::string objectToJson(const JsonType& obj) {
-        nlohmann::json j = obj;
+        boost::json::value j = obj;
         return j.dump();
     }
 };

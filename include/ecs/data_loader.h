@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 #include <ftxui/screen/color.hpp>
 
 namespace ecs {
@@ -168,14 +168,14 @@ private:
      * @param json JSON object
      * @return Monster template
      */
-    MonsterTemplate parseMonster(const nlohmann::json& json) const;
+    MonsterTemplate parseMonster(const boost::json::value& json) const;
 
     /**
      * @brief Parse item from JSON object
      * @param json JSON object
      * @return Item template
      */
-    ItemTemplate parseItem(const nlohmann::json& json) const;
+    ItemTemplate parseItem(const boost::json::value& json) const;
 
     std::unordered_map<std::string, MonsterTemplate> monster_templates;
     std::unordered_map<std::string, ItemTemplate> item_templates;

@@ -8,6 +8,7 @@
 #include "db/save_game_repository.h"
 #include "db/database_manager.h"
 #include "log.h"
+#include <map>
 #include <sstream>
 #include <iomanip>
 
@@ -684,16 +685,16 @@ SaveBackup SaveGameRepository::rowToBackup(const Result& row, int index) const {
     return backup;
 }
 
-std::string SaveGameRepository::jsonToString(const nlohmann::json& json) const {
-    return json.dump();
+std::string SaveGameRepository::jsonToString(const boost::json::value& json) const {
+    return boost::json::serialize(json);
 }
 
-nlohmann::json SaveGameRepository::stringToJson(const std::string& str) const {
+boost::json::value SaveGameRepository::stringToJson(const std::string& str) const {
     try {
-        return nlohmann::json::parse(str);
+        return boost::json::parse(str);
     } catch (const std::exception& e) {
         Log::error("Failed to parse JSON: " + std::string(e.what()));
-        return nlohmann::json::object();
+        return boost::json::object();
     }
 }
 

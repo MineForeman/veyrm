@@ -1060,14 +1060,26 @@ build_coverage() {
     find "${BUILD_DIR}" -name "*.gcno" -delete 2>/dev/null || true
     rm -rf "${BUILD_DIR}/coverage" 2>/dev/null || true
 
-    # Configure with coverage enabled
+    # Create build directory if it doesn't exist
+    mkdir -p "${BUILD_DIR}"
+
+    # Configure with coverage enabled using GCC for better coverage support
     echo -e "${YELLOW}Configuring with coverage enabled...${NC}"
     cd "${BUILD_DIR}" || exit 1
-    cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON
 
-    # Build the project
+    # Use GCC for coverage instead of Apple Clang for better coverage support
+    if command -v gcc-15 &> /dev/null; then
+        echo -e "${GREEN}Using GCC-15 for better coverage support${NC}"
+        CC=gcc-15 CXX=g++-15 cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON -DC4CORE_NO_DEBUG_BREAK=ON
+    else
+        echo -e "${YELLOW}Using default compiler (may have coverage issues on macOS)${NC}"
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON
+    fi
+
+    # Build the project using make for better coverage compatibility
     echo -e "${YELLOW}Building project...${NC}"
-    cmake --build . --parallel "${JOBS}"
+    JOBS=${JOBS:-$(nproc 2>/dev/null || echo 4)}
+    make -j "${JOBS}"
 
     # Run tests to generate coverage data from project root (so data files are found)
     echo -e "${YELLOW}Running tests to generate coverage data...${NC}"
@@ -1224,6 +1236,68 @@ run_with_keys() {
     fi
 }
 
+# Function to run with auto-login and keys
+run_with_autologin() {
+    local keystrokes="${1:-\\njjjq}"
+    echo -e "${YELLOW}Running game with auto-login and automated keys...${NC}"
+    echo -e "${CYAN}Auto-login: NRF${NC}"
+    echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
+        "${EXECUTABLE}" --username NRF --password '@Cwtt4eva' --keys "${keystrokes}"
+        cd - > /dev/null
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to run with test credentials (manual play)
+run_with_testcreds() {
+    echo -e "${YELLOW}Running game with test credentials (manual play)...${NC}"
+    echo -e "${CYAN}Test login: NRF${NC}"
+    echo -e "${CYAN}Manual gameplay enabled${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
+        "${EXECUTABLE}" --username NRF --password '@Cwtt4eva'
+        cd - > /dev/null
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to clear test data
+clear_test_data() {
+    echo -e "${YELLOW}Clearing test data for NRF user...${NC}"
+
+    # Check if PostgreSQL is running
+    if ! command -v docker-compose &> /dev/null; then
+        echo -e "${RED}Error: docker-compose not found${NC}"
+        return 1
+    fi
+
+    # Check if we're in the right directory or find PostgreSQL directory
+    local postgres_dir="/Users/nrf/repos/PostgreSQL"
+    if [ ! -f "${postgres_dir}/docker-compose.yml" ]; then
+        echo -e "${RED}Error: PostgreSQL docker-compose.yml not found at ${postgres_dir}${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Clearing game saves and entities for NRF (user_id=1)...${NC}"
+
+    # Execute SQL to clear test data
+    if docker-compose -f "${postgres_dir}/docker-compose.yml" exec postgres psql -U veyrm_admin -d veyrm_db -c "DELETE FROM game_entities WHERE user_id = 1; DELETE FROM game_saves WHERE user_id = 1;" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Test data cleared successfully${NC}"
+        echo -e "${CYAN}  - Cleared all game saves for NRF${NC}"
+        echo -e "${CYAN}  - Cleared all game entities for NRF${NC}"
+    else
+        echo -e "${RED}✗ Failed to clear test data${NC}"
+        echo -e "${YELLOW}Make sure PostgreSQL is running: cd ${postgres_dir} && docker-compose up -d${NC}"
+        return 1
+    fi
+}
+
 # Function to run the game
 run_game() {
     if [ -f "${EXECUTABLE}" ]; then
@@ -1352,6 +1426,9 @@ show_menu() {
     echo -e "${BLUE}16)${NC} Lint Markdown Files"
     echo -e "${BLUE}17)${NC} Build with Coverage"
     echo -e "${BLUE}18)${NC} Generate Coverage Report"
+    echo -e "${BLUE}19)${NC} Test with Credentials (Manual Play)"
+    echo -e "${BLUE}20)${NC} Test with Auto-login + Keys"
+    echo -e "${BLUE}21)${NC} Clear Test Data"
     echo -e "${BLUE}q)${NC} Quit"
     echo
 }
@@ -1370,6 +1447,9 @@ show_help() {
     echo "  coverage-report        Generate HTML coverage report"
     echo "  dump [keystrokes]      Run dump mode test (frame-by-frame)"
     echo "  keys <keystrokes>      Run game with automated keys"
+    echo "  autologin [keystrokes] Run game with auto-login and automated keys"
+    echo "  testkeys               Run game with test credentials (manual play)"
+    echo "  cleardata              Clear test data for NRF user"
     echo
     echo -e "${BOLD}Database Commands:${NC}"
     echo "  db create              Create database tables"
@@ -1400,6 +1480,10 @@ show_help() {
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
     echo "  $0 keys '\\n\\d\\d\\dq'    # Run game with automated keys (Enter, Down 3x, quit)"
+    echo "  $0 autologin          # Run game with auto-login and default keys"
+    echo "  $0 autologin '\\n\\d\\d\\dq' # Run game with auto-login and custom keys"
+    echo "  $0 testkeys           # Run game with test credentials (manual play)"
+    echo "  $0 cleardata          # Clear test data for NRF user"
     echo "  $0 gource             # Create Gource video"
     echo "  $0 reset              # Reset terminal"
     echo "  $0 lint               # Check markdown files for issues"
@@ -1474,6 +1558,20 @@ main() {
             print_header
             run_with_keys "$2"
             reset_terminal
+            ;;
+        autologin)
+            print_header
+            run_with_autologin "$2"
+            reset_terminal
+            ;;
+        testkeys)
+            print_header
+            run_with_testcreds
+            reset_terminal
+            ;;
+        cleardata)
+            print_header
+            clear_test_data
             ;;
         check)
             print_header
@@ -1625,6 +1723,18 @@ main() {
                         ;;
                     18)
                         generate_coverage_report
+                        ;;
+                    19)
+                        run_with_testcreds
+                        ;;
+                    20)
+                        echo -e "${CYAN}Enter keystrokes (or press Enter for default):${NC}"
+                        echo -e "${CYAN}Example: \\n\\d\\d\\dq for Enter, Down 3x, Quit${NC}"
+                        read -r custom_keys
+                        run_with_autologin "${custom_keys:-\n\d\d\dq}"
+                        ;;
+                    21)
+                        clear_test_data
                         ;;
                     q|Q)
                         echo -e "${GREEN}Goodbye!${NC}"

@@ -95,14 +95,18 @@ bool GameController::processAction(InputAction action, const ftxui::Event& /*eve
         case InputAction::OPEN_SAVE_MENU:
             if (game_manager) {
                 game_manager->setSaveMenuMode(true);
-                game_manager->setState(GameState::SAVE_LOAD);
+                // Auto-save and return to menu instead of save/load screen
+game_manager->autoSave();
+game_manager->setState(GameState::MENU);
             }
             return true;
 
         case InputAction::OPEN_LOAD_MENU:
             if (game_manager) {
                 game_manager->setSaveMenuMode(false);
-                game_manager->setState(GameState::SAVE_LOAD);
+                // Auto-save and return to menu instead of save/load screen
+game_manager->autoSave();
+game_manager->setState(GameState::MENU);
             }
             return true;
 
@@ -122,13 +126,25 @@ bool GameController::processAction(InputAction action, const ftxui::Event& /*eve
             // This will be handled by the game screen for now
             return false;
 
+        // Movement actions - pass through to GameScreen
+        case InputAction::MOVE_UP:
+        case InputAction::MOVE_DOWN:
+        case InputAction::MOVE_LEFT:
+        case InputAction::MOVE_RIGHT:
+        case InputAction::MOVE_UP_LEFT:
+        case InputAction::MOVE_UP_RIGHT:
+        case InputAction::MOVE_DOWN_LEFT:
+        case InputAction::MOVE_DOWN_RIGHT:
+        case InputAction::WAIT:
+            // Pass movement actions to GameScreen for handling
+            return false;  // Let GameScreen handle movement
+
         default:
             break;
     }
 
-    // Handle movement and other actions through game manager
-    // Let the game manager handle it like the current implementation
-    return false;  // Will be handled by GameScreen for now
+    // Other actions not handled here
+    return false;  // Will be handled by GameScreen
 }
 
 void GameController::handleDirectionalInput(int dx, int dy) {
