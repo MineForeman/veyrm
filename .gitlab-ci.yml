@@ -1,5 +1,5 @@
-# Simplified GitLab CI configuration
-# This version focuses on what actually works with your runners
+# GitLab CI configuration - Linux only (ARM64 and x64)
+# Builds only for Linux platforms to optimize CI resources
 
 stages:
   - build
@@ -10,17 +10,20 @@ variables:
   DEBIAN_FRONTEND: noninteractive
   CMAKE_BUILD_TYPE: Release
 
-# Linux build using Docker executor
-build:linux:
+# Linux x64 build using Docker executor
+build:linux:x64:
   stage: build
-  image: ubuntu:24.04  # Specify image only for Linux
+  image: ubuntu:24.04
   tags:
     - linux
+    - x64
   before_script:
     - apt-get update -qq
     - apt-get install -y cmake build-essential git
   script:
+    - echo "Building for Linux x64"
     - cmake --version
+    - uname -m
     - mkdir -p build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
@@ -32,102 +35,75 @@ build:linux:
       - data/
     expire_in: 1 week
 
-# Test the Linux build
-test:linux:
-  stage: test
-  image: ubuntu:24.04  # Specify image only for Linux
+# Linux ARM64 build using Docker executor
+build:linux:arm64:
+  stage: build
+  image: ubuntu:24.04
   tags:
     - linux
-  needs: ["build:linux"]
+    - arm64
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y cmake build-essential git
   script:
-    - ./build/bin/veyrm_tests
-    - ./build/bin/veyrm --help
-
-# Windows build (native runner with PowerShell)
-build:windows:
-  stage: build
-  tags:
-    - windows  # Native Windows runner
-  script:
-    # Check build environment
-    - Write-Host "Windows native build starting"
+    - echo "Building for Linux ARM64"
     - cmake --version
-    - |
-      $msvc = where.exe cl 2>$null
-      if ($msvc) {
-        Write-Host "MSVC found at: $msvc"
-      } else {
-        Write-Host "MSVC not found"
-      }
-    - |
-      $gcc = where.exe gcc 2>$null
-      if ($gcc) {
-        Write-Host "GCC found at: $gcc"
-      } else {
-        Write-Host "GCC not found"
-      }
-    # Create build directory
-    - |
-      if (-not (Test-Path build)) {
-        New-Item -ItemType Directory -Path build
-      }
-    - Set-Location build
-    # Try to configure and build
-    - Write-Host "Attempting CMake configuration..."
-    - |
-      # Try MinGW first if gcc is available
-      $gcc = where.exe gcc 2>$null
-      if ($gcc) {
-        Write-Host "Trying MinGW Makefiles..."
-        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-        if ($LASTEXITCODE -eq 0) {
-          Write-Host "Configured with MinGW"
-          cmake --build . -j
-        }
-      } else {
-        # Try Visual Studio
-        Write-Host "Trying Visual Studio..."
-        cmake -G "Visual Studio 17 2022" -A x64 ..
-        if ($LASTEXITCODE -eq 0) {
-          Write-Host "Configured with Visual Studio"
-          cmake --build . --config Release -j
-        } else {
-          # Try without specifying generator (let CMake auto-detect)
-          Write-Host "Trying CMake auto-detection..."
-          cmake ..
-          cmake --build . --config Release -j
-        }
-      }
-    - Write-Host "Checking for built executables..."
-    - Get-ChildItem -Path . -Recurse -Filter "*.exe" | Select-Object FullName
+    - uname -m
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
+    - cmake --build . -j
+    - ls -la bin/
   artifacts:
     paths:
       - build/bin/
+      - data/
     expire_in: 1 week
-  allow_failure: true  # Allow failure until build tools are confirmed
 
-# Windows test (native runner with PowerShell)
-test:windows:
+# Test the Linux x64 build
+test:linux:x64:
   stage: test
+  image: ubuntu:24.04
   tags:
-    - windows
-  needs: ["build:windows"]
+    - linux
+    - x64
+  needs: ["build:linux:x64"]
   script:
-    - Write-Host "Testing Windows build"
-    - |
-      if (Test-Path "build\bin\Release\veyrm_tests.exe") {
-        & "build\bin\Release\veyrm_tests.exe"
-      } elseif (Test-Path "build\bin\veyrm_tests.exe") {
-        & "build\bin\veyrm_tests.exe"
-      } else {
-        Write-Host "Tests not found"
-      }
-    - |
-      if (Test-Path "build\bin\Release\veyrm.exe") {
-        & "build\bin\Release\veyrm.exe" --help
-      } elseif (Test-Path "build\bin\veyrm.exe") {
-        & "build\bin\veyrm.exe" --help
-      } else {
-        Write-Host "Game executable not found"
-      }
-  allow_failure: true
+    - echo "Testing Linux x64 build"
+    - ./build/bin/veyrm_tests
+    - ./build/bin/veyrm --help
+
+# Test the Linux ARM64 build
+test:linux:arm64:
+  stage: test
+  image: ubuntu:24.04
+  tags:
+    - linux
+    - arm64
+  needs: ["build:linux:arm64"]
+  script:
+    - echo "Testing Linux ARM64 build"
+    - ./build/bin/veyrm_tests
+    - ./build/bin/veyrm --help
+
+# Windows builds disabled - preserved for future reference
+# Uncomment these sections if Windows builds are needed later
+#
+# build:windows:
+#   stage: build
+#   tags:
+#     - windows
+#   script:
+#     - Write-Host "Windows builds currently disabled"
+#   when: manual
+#   allow_failure: true
+#
+# test:windows:
+#   stage: test
+#   tags:
+#     - windows
+#   needs: ["build:windows"]
+#   script:
+#     - Write-Host "Windows tests currently disabled"
+#   when: manual
+#   allow_failure: true
