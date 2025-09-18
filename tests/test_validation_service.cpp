@@ -59,7 +59,7 @@ TEST_CASE("ValidationService Password Tests", "[validation][password]") {
     auth::ValidationService validator;
 
     SECTION("Valid passwords") {
-        REQUIRE_FALSE(validator.validatePassword("password123").has_value());
+        REQUIRE_FALSE(validator.validatePassword("Password123").has_value());
         REQUIRE_FALSE(validator.validatePassword("123456").has_value());
         REQUIRE_FALSE(validator.validatePassword("mypassword").has_value());
         REQUIRE_FALSE(validator.validatePassword("P@ssw0rd!").has_value());
@@ -146,14 +146,14 @@ TEST_CASE("ValidationService Password Confirmation Tests", "[validation][passwor
     auth::ValidationService validator;
 
     SECTION("Matching passwords") {
-        REQUIRE_FALSE(validator.validatePasswordConfirmation("password", "password").has_value());
+        REQUIRE_FALSE(validator.validatePasswordConfirmation("Password123", "Password123").has_value());
         REQUIRE_FALSE(validator.validatePasswordConfirmation("123456", "123456").has_value());
         REQUIRE_FALSE(validator.validatePasswordConfirmation("", "").has_value());
         REQUIRE_FALSE(validator.validatePasswordConfirmation("P@ssw0rd!", "P@ssw0rd!").has_value());
     }
 
     SECTION("Non-matching passwords") {
-        auto error = validator.validatePasswordConfirmation("password", "different");
+        auto error = validator.validatePasswordConfirmation("Password123", "different");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Passwords do not match");
 
@@ -161,11 +161,11 @@ TEST_CASE("ValidationService Password Confirmation Tests", "[validation][passwor
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Passwords do not match");
 
-        error = validator.validatePasswordConfirmation("password", "");
+        error = validator.validatePasswordConfirmation("Password123", "");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Passwords do not match");
 
-        error = validator.validatePasswordConfirmation("", "password");
+        error = validator.validatePasswordConfirmation("", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Passwords do not match");
     }
@@ -176,7 +176,7 @@ TEST_CASE("ValidationService Login Credentials Tests", "[validation][login_crede
 
     SECTION("Valid login credentials") {
         REQUIRE_FALSE(validator.validateLoginCredentials("user", "pass").has_value());
-        REQUIRE_FALSE(validator.validateLoginCredentials("testuser", "password123").has_value());
+        REQUIRE_FALSE(validator.validateLoginCredentials("testuser", "Password123").has_value());
         REQUIRE_FALSE(validator.validateLoginCredentials("a", "b").has_value()); // Minimal but complete
     }
 
@@ -200,7 +200,7 @@ TEST_CASE("ValidationService Registration Data Tests", "[validation][registratio
 
     SECTION("Valid registration data") {
         REQUIRE_FALSE(validator.validateRegistrationData(
-            "user123", "test@example.com", "password123", "password123").has_value());
+            "user123", "test@example.com", "Password123", "Password123").has_value());
         REQUIRE_FALSE(validator.validateRegistrationData(
             "testuser", "user@domain.org", "mypassword", "mypassword").has_value());
         REQUIRE_FALSE(validator.validateRegistrationData(
@@ -208,39 +208,39 @@ TEST_CASE("ValidationService Registration Data Tests", "[validation][registratio
     }
 
     SECTION("Invalid registration data - empty fields") {
-        auto error = validator.validateRegistrationData("", "test@example.com", "password123", "password123");
+        auto error = validator.validateRegistrationData("", "test@example.com", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Please fill in all fields");
 
-        error = validator.validateRegistrationData("user123", "", "password123", "password123");
+        error = validator.validateRegistrationData("user123", "", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Please fill in all fields");
 
-        error = validator.validateRegistrationData("user123", "test@example.com", "", "password123");
+        error = validator.validateRegistrationData("user123", "test@example.com", "", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Please fill in all fields");
 
-        error = validator.validateRegistrationData("user123", "test@example.com", "password123", "");
+        error = validator.validateRegistrationData("user123", "test@example.com", "Password123", "");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Please fill in all fields");
     }
 
     SECTION("Invalid registration data - username issues") {
-        auto error = validator.validateRegistrationData("ab", "test@example.com", "password123", "password123");
+        auto error = validator.validateRegistrationData("ab", "test@example.com", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Username must be at least 3 characters");
 
-        error = validator.validateRegistrationData("user@name", "test@example.com", "password123", "password123");
+        error = validator.validateRegistrationData("user@name", "test@example.com", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Username can only contain letters, numbers, and underscores");
     }
 
     SECTION("Invalid registration data - email issues") {
-        auto error = validator.validateRegistrationData("user123", "invalid-email", "password123", "password123");
+        auto error = validator.validateRegistrationData("user123", "invalid-email", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Invalid email format");
 
-        error = validator.validateRegistrationData("user123", "test@", "password123", "password123");
+        error = validator.validateRegistrationData("user123", "test@", "Password123", "Password123");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Invalid email format");
     }
@@ -250,7 +250,7 @@ TEST_CASE("ValidationService Registration Data Tests", "[validation][registratio
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Password must be at least 6 characters");
 
-        error = validator.validateRegistrationData("user123", "test@example.com", "password123", "different");
+        error = validator.validateRegistrationData("user123", "test@example.com", "Password123", "different");
         REQUIRE(error.has_value());
         REQUIRE(error.value() == "Passwords do not match");
     }

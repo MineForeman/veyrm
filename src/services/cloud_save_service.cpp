@@ -599,7 +599,7 @@ int CloudSaveService::getCurrentUserId() const {
 
 boost::json::value CloudSaveService::serializeECSWorld() const {
     if (!ecs_world) {
-        return {};
+        return boost::json::object{{"version", "1.0"}, {"entities", boost::json::array{}}, {"metadata", boost::json::object{}}};
     }
 
     boost::json::value result;

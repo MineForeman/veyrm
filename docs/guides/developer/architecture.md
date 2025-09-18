@@ -2,7 +2,7 @@
 
 ## Overview
 
-Veyrm is built using a component-based architecture with clear separation of concerns. The game uses modern C++23 features with smart pointer memory management throughout.
+Veyrm is built using a modern Entity Component System (ECS) architecture with PostgreSQL database integration. The game leverages C++23 features, smart pointer memory management, and the Repository pattern for clean separation of concerns between game logic, data persistence, and UI presentation.
 
 ## System Architecture
 
@@ -16,39 +16,108 @@ Veyrm is built using a component-based architecture with clear separation of con
 ┌─────────────────────────────────────────────────────────┐
 │                      GameManager                         │
 │         Central game state and system coordinator        │
+│                   MVC Architecture                      │
 └─────────────────────────────────────────────────────────┘
                              │
         ┌────────────────────┼────────────────────┐
         │                    │                    │
         ▼                    ▼                    ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│     Map      │    │EntityManager │    │ TurnManager  │
-│ 198x66 tiles │    │Entities/NPCs │    │ Turn order   │
+│ Database     │    │ ECS World    │    │ UI Layer     │
+│ PostgreSQL   │    │ Game Logic   │    │ FTXUI        │
 └──────────────┘    └──────────────┘    └──────────────┘
         │                    │                    │
         ▼                    ▼                    ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│ MapGenerator │    │   Player     │    │CombatSystem  │
-│Procedural gen│    │ Stats/Inv    │    │ d20 combat   │
+│ Repositories │    │  Components  │    │ Controllers  │
+│ Data Access  │    │ & Systems    │    │  & Views     │
+└──────────────┘    └──────────────┘    └──────────────┘
+        │                    │                    │
+        ▼                    ▼                    ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ Auth Service │    │Entity Factory│    │ Login Screen │
+│Session Mgmt  │    │ Data Loader  │    │ Game Screen  │
 └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
 ## Core Components
 
+### Database Layer (PostgreSQL Integration)
+
+#### DatabaseManager (`db/database_manager.h/cpp`)
+- **Purpose**: Connection pooling and database lifecycle management
+- **Features**:
+  - Connection pooling with configurable min/max connections
+  - Automatic reconnection and error handling
+  - Transaction support
+  - Thread-safe singleton pattern
+
+#### Repository Pattern
+- **SaveGameRepository**: Cloud save operations
+- **PlayerRepository**: User and session management
+- **GameEntityRepository**: Game content data
+- **Base Repository**: Common database operations
+
+#### Authentication System (`auth/`)
+- **AuthenticationService**: User registration, login, session management
+- **ValidationService**: Input validation and security checks
+- **Session Management**: Token-based authentication with refresh tokens
+
+### ECS (Entity Component System) Architecture
+
+#### GameWorld (`ecs/game_world.h/cpp`)
+- **Purpose**: Central ECS world manager
+- **Responsibilities**:
+  - Entity lifecycle management
+  - Component registration and retrieval
+  - System coordination and updates
+  - Entity queries and spatial indexing
+
+#### Core Components (`ecs/components/`)
+- **PositionComponent**: x, y coordinates
+- **HealthComponent**: current/max HP
+- **RenderableComponent**: glyph, color for display
+- **CombatComponent**: attack, defense stats
+- **AIComponent**: behavior state, target tracking
+- **InventoryComponent**: item storage
+- **StatsComponent**: level, experience, attributes
+- **PlayerComponent**: player-specific data
+- **ItemComponent**: item properties and type
+- **SaveLoadComponent**: save/load state tracking
+
+#### Core Systems (`ecs/systems/`)
+- **MovementSystem**: Entity movement and collision
+- **CombatSystem**: Bump-to-attack combat resolution
+- **AISystem**: Monster behavior and pathfinding
+- **RenderSystem**: Entity rendering to map
+- **InputSystem**: Player input processing
+- **LootSystem**: Item drops and pickups
+- **ExperienceSystem**: XP and leveling
+- **InventorySystem**: Item management and usage
+- **EquipmentSystem**: Equipment handling
+- **StatusEffectSystem**: Status effects and buffs
+- **SaveLoadSystem**: Game state persistence
+
+#### EntityFactory (`ecs/entity_factory.h/cpp`)
+- **Purpose**: Centralized entity creation with proper component assignment
+- **Factory Methods**:
+  - `createPlayer()`: Player entity with all required components
+  - `createMonster()`: Monsters with AI and combat components
+  - `createItem()`: Items with properties and effects
+
 ### GameManager (`game_manager.h/cpp`)
 
-- **Purpose**: Central orchestrator for all game systems
+- **Purpose**: Central orchestrator coordinating all systems
 - **Responsibilities**:
-  - Game state management (MENU, PLAYING, INVENTORY, etc.)
+  - Game state management (LOGIN, MENU, PLAYING, INVENTORY, etc.)
   - System initialization and coordination
   - Main game loop execution
-  - Save/Load coordination
+  - Screen management and navigation
 - **Key Members**:
-  - `game_state`: Current game state
-  - `map`: The game world
-  - `entity_manager`: All entities
-  - `turn_manager`: Turn ordering
-  - `combat_system`: Combat resolution
+  - `game_world`: ECS world instance
+  - `database_manager`: Database connection
+  - `auth_service`: User authentication
+  - `cloud_save_service`: Save synchronization
 
 ### Map System (`map.h/cpp`)
 

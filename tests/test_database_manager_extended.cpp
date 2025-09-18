@@ -56,7 +56,7 @@ TEST_CASE("ConnectionPool operations", "[database][pool]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
     config.min_connections = 2;
     config.max_connections = 5;
 
@@ -121,7 +121,7 @@ TEST_CASE("DatabaseManager transactions", "[database][transaction]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
 
     auto& db = DatabaseManager::getInstance();
 
@@ -173,7 +173,7 @@ TEST_CASE("DatabaseManager concurrent operations", "[database][concurrent]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
     config.min_connections = 5;
     config.max_connections = 10;
 
@@ -245,7 +245,7 @@ TEST_CASE("DatabaseManager schema operations", "[database][schema]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
 
     auto& db = DatabaseManager::getInstance();
 
@@ -314,7 +314,7 @@ TEST_CASE("DatabaseManager utility operations", "[database][utility]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
 
     auto& db = DatabaseManager::getInstance();
 
@@ -377,7 +377,7 @@ TEST_CASE("Connection parameter handling", "[database][connection]") {
     config.port = 5432;
     config.database = "veyrm_test_db";
     config.username = "veyrm_admin";
-    config.password = "test_password";
+    config.password = "TestPassword123";
 
     auto& db = DatabaseManager::getInstance();
 

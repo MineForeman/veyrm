@@ -5,14 +5,14 @@
 #include <memory>
 
 // Mock authentication service for testing
-class MockAuthenticationService : public auth::AuthenticationService {
+class Mockauth::AuthenticationService : public auth::AuthenticationService {
 private:
     bool should_succeed = true;
     bool should_require_verification = false;
 
 public:
-    MockAuthenticationService(std::shared_ptr<db::DatabaseManager> db)
-        : AuthenticationService(db) {}
+    Mockauth::AuthenticationService(std::shared_ptr<db::DatabaseManager> db)
+        : auth::AuthenticationService(db) {}
 
     void setMockBehavior(bool succeed, bool require_verification = false) {
         should_succeed = succeed;
@@ -75,7 +75,7 @@ public:
 TEST_CASE("LoginScreen Tests", "[login_screen]") {
     // Create mock database and auth service
     auto mock_db = std::make_shared<db::DatabaseManager>("mock://connection");
-    auto mock_auth = std::make_unique<MockAuthenticationService>(mock_db);
+    auto mock_auth = std::make_unique<Mockauth::AuthenticationService>(mock_db);
     auto* auth_ptr = mock_auth.get();
 
     SECTION("Constructor and initial state") {
@@ -356,7 +356,7 @@ TEST_CASE("LoginScreen Tests", "[login_screen]") {
 
 TEST_CASE("LoginScreen UI Component Creation", "[login_screen][ui]") {
     auto mock_db = std::make_shared<db::DatabaseManager>("mock://connection");
-    auto mock_auth = std::make_unique<MockAuthenticationService>(mock_db);
+    auto mock_auth = std::make_unique<Mockauth::AuthenticationService>(mock_db);
 
     SECTION("Component creation doesn't crash") {
         LoginScreen login_screen(*mock_auth);
@@ -379,9 +379,9 @@ TEST_CASE("LoginScreen UI Component Creation", "[login_screen][ui]") {
     }
 }
 
-TEST_CASE("LoginScreen Integration with AuthenticationService", "[login_screen][integration]") {
+TEST_CASE("LoginScreen Integration with auth::AuthenticationService", "[login_screen][integration]") {
     auto mock_db = std::make_shared<db::DatabaseManager>("mock://connection");
-    auto mock_auth = std::make_unique<MockAuthenticationService>(mock_db);
+    auto mock_auth = std::make_unique<Mockauth::AuthenticationService>(mock_db);
     auto* auth_ptr = mock_auth.get();
 
     SECTION("Full login flow") {
@@ -415,8 +415,8 @@ TEST_CASE("LoginScreen Integration with AuthenticationService", "[login_screen][
         // Registration
         login_screen.reg_username_input = "newuser";
         login_screen.reg_email_input = "new@example.com";
-        login_screen.reg_password_input = "password123";
-        login_screen.reg_confirm_password_input = "password123";
+        login_screen.reg_password_input = "Password123";
+        login_screen.reg_confirm_password_input = "Password123";
 
         login_screen.handleRegistration();
 
@@ -448,7 +448,7 @@ TEST_CASE("LoginScreen Integration with AuthenticationService", "[login_screen][
         login_screen.reset_token_input = token.value();
 
         // Reset password
-        login_screen.reset_new_password_input = "newpassword123";
+        login_screen.reset_new_password_input = "newPassword123";
         bool reset_success = auth_ptr->resetPassword(login_screen.reset_token_input, login_screen.reset_new_password_input);
         REQUIRE(reset_success);
     }

@@ -350,7 +350,7 @@ std::optional<int> PlayerRepository::createSession(const UserSession& session) {
                 session.refresh_token.has_value() ? session.refresh_token->c_str() : nullptr,
                 expires_at_str.c_str(),
                 refresh_expires_str.empty() ? nullptr : refresh_expires_str.c_str(),
-                session.ip_address.has_value() ? session.ip_address->c_str() : nullptr,
+                (session.ip_address.has_value() && !session.ip_address->empty()) ? session.ip_address->c_str() : nullptr,
                 session.user_agent.has_value() ? session.user_agent->c_str() : nullptr,
                 remember_str.c_str()
             };

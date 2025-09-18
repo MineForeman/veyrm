@@ -30,6 +30,7 @@ bool Config::loadFromFile(const std::string& filename) {
         // Parse JSON
         std::string json_content((std::istreambuf_iterator<char>(file)),
                                 std::istreambuf_iterator<char>());
+
         boost::json::value config = boost::json::parse(json_content);
         boost::json::object const& root = config.as_object();
 

@@ -61,7 +61,7 @@ TEST_CASE("Error Handling Tests", "[error]") {
         auto games = repo.getUserSaveGames("test_user");
         REQUIRE(games.empty());
 
-        auto save_data = repo.loadGame(1, "test_user");
+        auto save_data = repo.findByUserAndSlot(1, "test_user");
         REQUIRE(save_data.empty());
 
         REQUIRE_FALSE(repo.deleteGame(1, "test_user"));
@@ -79,10 +79,10 @@ TEST_CASE("Error Handling Tests", "[error]") {
         auto result = service.downloadSave("test_user", 1);
         REQUIRE_FALSE(result.has_value());
 
-        auto saves = service.listUserSaves("test_user");
+        auto saves = service.findByUserId("test_user");
         REQUIRE(saves.empty());
 
-        REQUIRE_FALSE(service.deleteSave("test_user", 1));
+        REQUIRE_FALSE(service.deleteByUserAndSlot("test_user", 1));
     }
 
     SECTION("GameSerializer error handling") {

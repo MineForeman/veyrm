@@ -5,14 +5,14 @@
 #include "db/database_manager.h"
 #include <memory>
 
-// Mock AuthenticationService for testing
-class MockAuthenticationService : public auth::AuthenticationService {
+// Mock auth::AuthenticationService for testing
+class Mockauth::AuthenticationService : public auth::AuthenticationService {
 private:
     bool should_succeed = true;
     bool should_require_verification = false;
 
 public:
-    MockAuthenticationService() : AuthenticationService(nullptr) {}
+    Mockauth::AuthenticationService() : auth::AuthenticationService(nullptr) {}
 
     void setMockBehavior(bool succeed, bool require_verification = false) {
         should_succeed = succeed;
@@ -92,7 +92,7 @@ TEST_CASE("ValidationService Tests", "[validation][business_logic]") {
 
     SECTION("Password validation") {
         // Valid passwords
-        REQUIRE_FALSE(validator.validatePassword("password123").has_value());
+        REQUIRE_FALSE(validator.validatePassword("Password123").has_value());
         REQUIRE_FALSE(validator.validatePassword("123456").has_value());
 
         // Invalid passwords
@@ -117,8 +117,8 @@ TEST_CASE("ValidationService Tests", "[validation][business_logic]") {
     }
 
     SECTION("Password confirmation validation") {
-        REQUIRE_FALSE(validator.validatePasswordConfirmation("password", "password").has_value());
-        REQUIRE(validator.validatePasswordConfirmation("password", "different").has_value());
+        REQUIRE_FALSE(validator.validatePasswordConfirmation("Password123", "Password123").has_value());
+        REQUIRE(validator.validatePasswordConfirmation("Password123", "different").has_value());
     }
 
     SECTION("Login credentials validation") {
@@ -130,22 +130,22 @@ TEST_CASE("ValidationService Tests", "[validation][business_logic]") {
 
     SECTION("Registration data validation") {
         // Valid registration
-        REQUIRE_FALSE(validator.validateRegistrationData("user123", "test@example.com", "password123", "password123").has_value());
+        REQUIRE_FALSE(validator.validateRegistrationData("user123", "test@example.com", "Password123", "Password123").has_value());
 
         // Invalid cases
-        REQUIRE(validator.validateRegistrationData("", "test@example.com", "password123", "password123").has_value()); // Empty username
-        REQUIRE(validator.validateRegistrationData("user123", "", "password123", "password123").has_value()); // Empty email
-        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "", "password123").has_value()); // Empty password
-        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "password123", "").has_value()); // Empty confirm
-        REQUIRE(validator.validateRegistrationData("ab", "test@example.com", "password123", "password123").has_value()); // Invalid username
-        REQUIRE(validator.validateRegistrationData("user123", "invalid-email", "password123", "password123").has_value()); // Invalid email
+        REQUIRE(validator.validateRegistrationData("", "test@example.com", "Password123", "Password123").has_value()); // Empty username
+        REQUIRE(validator.validateRegistrationData("user123", "", "Password123", "Password123").has_value()); // Empty email
+        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "", "Password123").has_value()); // Empty password
+        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "Password123", "").has_value()); // Empty confirm
+        REQUIRE(validator.validateRegistrationData("ab", "test@example.com", "Password123", "Password123").has_value()); // Invalid username
+        REQUIRE(validator.validateRegistrationData("user123", "invalid-email", "Password123", "Password123").has_value()); // Invalid email
         REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "12345", "12345").has_value()); // Invalid password
-        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "password123", "different").has_value()); // Password mismatch
+        REQUIRE(validator.validateRegistrationData("user123", "test@example.com", "Password123", "different").has_value()); // Password mismatch
     }
 }
 
 TEST_CASE("LoginController Tests", "[login_controller][business_logic]") {
-    auto mock_auth = std::make_unique<MockAuthenticationService>();
+    auto mock_auth = std::make_unique<Mockauth::AuthenticationService>();
     auto* auth_ptr = mock_auth.get();
 
     auth::LoginController controller(*mock_auth);
@@ -314,7 +314,7 @@ TEST_CASE("LoginController Tests", "[login_controller][business_logic]") {
 }
 
 TEST_CASE("LoginController Edge Cases", "[login_controller][edge_cases]") {
-    auto mock_auth = std::make_unique<MockAuthenticationService>();
+    auto mock_auth = std::make_unique<Mockauth::AuthenticationService>();
     auth::LoginController controller(*mock_auth);
 
     SECTION("Operations without view callbacks set") {

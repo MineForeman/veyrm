@@ -39,7 +39,7 @@ TEST_CASE("LoginScreen basic operations", "[ui][login]") {
 
     SECTION("Register new user") {
         loginScreen.SetUsername("newuser_" + std::to_string(time(nullptr)));
-        loginScreen.SetPassword("password123");
+        loginScreen.SetPassword("Password123");
         loginScreen.SetEmail("test@example.com");
 
         bool result = loginScreen.AttemptRegister();
@@ -582,7 +582,7 @@ TEST_CASE("UI Component error handling", "[ui][errors]") {
 
         // SQL injection attempt
         loginScreen.SetUsername("admin'; DROP TABLE users; --");
-        loginScreen.SetPassword("password");
+        loginScreen.SetPassword("Password123");
 
         bool result = loginScreen.AttemptLogin();
         REQUIRE(result == false);

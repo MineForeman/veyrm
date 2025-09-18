@@ -12,6 +12,8 @@
 #include "db/player_repository.h"
 #include "auth/authentication_service.h"
 #include "ecs/game_world.h"
+#include "message_log.h"
+#include "map.h"
 #include <thread>
 #include <chrono>
 
@@ -38,11 +40,15 @@ public:
         save_repo = std::make_unique<db::SaveGameRepository>(db_manager_ref);
         player_repo = std::make_unique<db::PlayerRepository>(db_manager_ref);
         auth_service = std::make_unique<auth::AuthenticationService>(*player_repo, db_manager_ref);
-        ecs_world = std::make_unique<ecs::GameWorld>();
+
+        // Create dummy message log and map for ECS world
+        message_log = std::make_unique<MessageLog>();
+        game_map = std::make_unique<Map>(20, 20);  // Small test map
+        ecs_world = std::make_unique<ecs::GameWorld>(message_log.get(), game_map.get());
 
         // Create test user
         test_username = "cloud_test_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-        auto reg_result = auth_service->registerUser(test_username, "test_password", "cloud@test.com");
+        auto reg_result = auth_service->registerUser(test_username, "cloud_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "@test.com", "TestPassword123");
         if (!reg_result.success) {
             throw std::runtime_error("Failed to create test user");
         }
@@ -76,6 +82,8 @@ protected:
     std::unique_ptr<db::SaveGameRepository> save_repo;
     std::unique_ptr<db::PlayerRepository> player_repo;
     std::unique_ptr<auth::AuthenticationService> auth_service;
+    std::unique_ptr<MessageLog> message_log;
+    std::unique_ptr<Map> game_map;
     std::unique_ptr<ecs::GameWorld> ecs_world;
     std::unique_ptr<CloudSaveService> cloud_service;
     std::string test_username;
@@ -370,7 +378,7 @@ TEST_CASE_METHOD(CloudSaveServiceTest, "User isolation", "[cloud][security]") {
     SECTION("Users can only access their own saves") {
         // Create second test user
         std::string user2_name = "cloud_test2_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-        auto reg_result = auth_service->registerUser(user2_name, "password2", "user2@test.com");
+        auto reg_result = auth_service->registerUser(user2_name, "user2_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "@test.com", "Password123");
         REQUIRE(reg_result.success);
         int user2_id = reg_result.user_id.value();
 

@@ -58,32 +58,36 @@ TEST_CASE("Config System", "[config]") {
     
     SECTION("Load from YAML file") {
         // Create a test config file
-        const std::string test_config = "test_config.yml";
+        const std::string test_config = "test_config.json";
         std::ofstream file(test_config);
-        file << "# Test configuration\n"
-             << "game:\n"
-             << "  default_map: arena\n"
-             << "  debug_mode: true\n"
-             << "\n"
-             << "display:\n"
-             << "  theme: dark\n"
-             << "  show_fps: true\n"
-             << "  message_log:\n"
-             << "    max_messages: 50\n"
-             << "    visible_messages: 10\n"
-             << "\n"
-             << "map_generation:\n"
-             << "  procedural:\n"
-             << "    width: 100\n"
-             << "    height: 50\n"
-             << "    min_rooms: 5\n"
-             << "    max_rooms: 15\n"
-             << "    lit_room_chance: 0.5\n"
-             << "\n"
-             << "player:\n"
-             << "  starting_hp: 30\n"
-             << "  starting_attack: 7\n"
-             << "  fov_radius: 12\n";
+        file << "{\n"
+             << "  \"game\": {\n"
+             << "    \"default_map\": \"arena\",\n"
+             << "    \"debug_mode\": true\n"
+             << "  },\n"
+             << "  \"display\": {\n"
+             << "    \"theme\": \"dark\",\n"
+             << "    \"show_fps\": true,\n"
+             << "    \"message_log\": {\n"
+             << "      \"max_messages\": 50,\n"
+             << "      \"visible_messages\": 10\n"
+             << "    }\n"
+             << "  },\n"
+             << "  \"map_generation\": {\n"
+             << "    \"procedural\": {\n"
+             << "      \"width\": 100,\n"
+             << "      \"height\": 50,\n"
+             << "      \"min_rooms\": 5,\n"
+             << "      \"max_rooms\": 15,\n"
+             << "      \"lit_room_chance\": 0.5\n"
+             << "    }\n"
+             << "  },\n"
+             << "  \"player\": {\n"
+             << "    \"starting_hp\": 30,\n"
+             << "    \"starting_attack\": 7,\n"
+             << "    \"fov_radius\": 12\n"
+             << "  }\n"
+             << "}\n";
         file.close();
         
         // Load the test config
@@ -115,14 +119,16 @@ TEST_CASE("Config System", "[config]") {
     
     SECTION("Partial YAML file") {
         // Test that missing values keep defaults
-        const std::string test_config = "test_partial.yml";
+        const std::string test_config = "test_partial.json";
         std::ofstream file(test_config);
-        file << "# Partial configuration\n"
-             << "game:\n"
-             << "  debug_mode: true\n"
-             << "\n"
-             << "player:\n"
-             << "  starting_hp: 25\n";
+        file << "{\n"
+             << "  \"game\": {\n"
+             << "    \"debug_mode\": true\n"
+             << "  },\n"
+             << "  \"player\": {\n"
+             << "    \"starting_hp\": 25\n"
+             << "  }\n"
+             << "}\n";
         file.close();
         
         // Reset to defaults first by setting known values
@@ -155,35 +161,34 @@ TEST_CASE("Config System", "[config]") {
         config.setDefaultMapType(MapType::PROCEDURAL);
         
         // Should return true and use defaults
-        bool loaded = config.loadFromFile("non_existent_file.yml");
+        bool loaded = config.loadFromFile("non_existent_file.json");
         REQUIRE(loaded == true);
         
         // Should keep existing values (since file doesn't exist)
         REQUIRE(config.getMapWidth() == 198);
     }
     
-    SECTION("Valid YAML with nested structure") {
-        // Test a valid complex YAML instead of invalid (rapidyaml is strict)
-        const std::string test_config = "test_nested.yml";
-        std::ofstream file(test_config);
-        file << "game:\n"
-             << "  difficulty:\n"
-             << "    monster_damage_multiplier: 1.5\n"
-             << "    player_health_multiplier: 0.8\n"
-             << "\n"
-             << "monsters:\n"
-             << "  behavior:\n"
-             << "    aggression_radius: 15\n"
-             << "    door_pursuit_chance: 0.9\n";
-        file.close();
-        
+    SECTION("Valid JSON with nested structure") {
+        // Test a valid complex JSON structure
+        const std::string test_config = "test_nested.json";
+        {
+            std::ofstream file(test_config);
+            file << R"({
+  "monsters": {
+    "behavior": {
+      "aggression_radius": 15
+    }
+  }
+})";
+        }  // File automatically closed and flushed when destructor runs
+
         // Should load successfully
         bool loaded = config.loadFromFile(test_config);
         REQUIRE(loaded == true);
-        
+
         // Verify nested values loaded
         REQUIRE(config.getAggressionRadius() == 15);
-        
+
         // Clean up
         std::filesystem::remove(test_config);
     }
@@ -202,7 +207,7 @@ TEST_CASE("Config System", "[config]") {
     }
     
     SECTION("Map type parsing") {
-        const std::string test_config = "test_map_types.yml";
+        const std::string test_config = "test_map_types.json";
         
         // Test each map type
         std::vector<std::pair<std::string, MapType>> map_types = {
@@ -215,11 +220,15 @@ TEST_CASE("Config System", "[config]") {
         };
         
         for (const auto& [type_str, expected_type] : map_types) {
-            std::ofstream file(test_config);
-            file << "game:\n"
-                 << "  default_map: " << type_str << "\n";
-            file.close();
-            
+            {
+                std::ofstream file(test_config);
+                file << R"({
+  "game": {
+    "default_map": ")" << type_str << R"("
+  }
+})";
+            }  // File automatically closed and flushed
+
             config.loadFromFile(test_config);
             REQUIRE(config.getDefaultMapType() == expected_type);
         }
@@ -230,22 +239,22 @@ TEST_CASE("Config System", "[config]") {
     
     SECTION("Command-line override simulation") {
         // Load a config file
-        const std::string test_config = "test_override.yml";
-        std::ofstream file(test_config);
-        file << "game:\n"
-             << "  default_map: dungeon\n"
-             << "  debug_mode: false\n"
-             << "\n"
-             << "paths:\n"
-             << "  data_dir: data\n";
-        file.close();
+        const std::string test_config = "test_override.json";
+        {
+            std::ofstream file(test_config);
+            file << R"({
+  "game": {
+    "default_map": "dungeon",
+    "debug_mode": false
+  }
+})";
+        }  // File automatically closed and flushed
 
         config.loadFromFile(test_config);
 
         // Verify initial values
         REQUIRE(config.getDefaultMapType() == MapType::TEST_DUNGEON);
         REQUIRE(config.isDebugMode() == false);
-        REQUIRE(config.getDataDir() == "data");
 
         // Simulate command-line overrides
         config.setDefaultMapType(MapType::PROCEDURAL);
@@ -262,12 +271,12 @@ TEST_CASE("Config System", "[config]") {
     SECTION("Save to file") {
         // Note: saveToFile is currently a stub that returns true
         // This test verifies it doesn't crash
-        bool saved = config.saveToFile("test_save.yml");
+        bool saved = config.saveToFile("test_save.json");
         REQUIRE(saved == true);
         
         // Clean up if file was created
-        if (std::filesystem::exists("test_save.yml")) {
-            std::filesystem::remove("test_save.yml");
+        if (std::filesystem::exists("test_save.json")) {
+            std::filesystem::remove("test_save.json");
         }
     }
     

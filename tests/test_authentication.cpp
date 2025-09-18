@@ -632,7 +632,7 @@ TEST_CASE("Authentication Service - Input Validation", "[auth]") {
         REQUIRE(short_password.has_value());
         REQUIRE_THAT(short_password.value(), ContainsSubstring("at least"));
 
-        auto no_uppercase = fixture.auth_service->validatePassword("password123!");
+        auto no_uppercase = fixture.auth_service->validatePassword("Password123!");
         REQUIRE(no_uppercase.has_value());
         REQUIRE_THAT(no_uppercase.value(), ContainsSubstring("uppercase"));
 

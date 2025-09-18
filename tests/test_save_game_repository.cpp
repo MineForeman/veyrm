@@ -39,7 +39,7 @@ public:
 
         // Create test user
         test_username = "repo_test_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-        auto reg_result = auth_service->registerUser(test_username, "test_password", "repo@test.com");
+        auto reg_result = auth_service->registerUser(test_username, "repo_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "@test.com", "TestPassword123");
         if (!reg_result.success) {
             throw std::runtime_error("Failed to create test user");
         }

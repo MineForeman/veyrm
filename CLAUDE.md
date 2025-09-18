@@ -256,9 +256,9 @@ The project includes both PostgreSQL database and Redis cache integration. The D
 ./build.sh restore       # Interactive restore from backup
 
 # Direct Docker commands
-docker-compose up -d          # Start all services
-docker-compose logs postgres  # View PostgreSQL logs
-docker-compose down          # Stop all services
+docker compose up -d          # Start all services
+docker compose logs postgres  # View PostgreSQL logs
+docker compose down          # Stop all services
 ```
 
 **Connection Details:**
