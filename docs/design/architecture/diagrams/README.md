@@ -5,15 +5,19 @@ Visual documentation of system architecture.
 ## Diagram Types
 
 ### System Overview
+
 High-level view of all systems and their interactions.
 
 ### Data Flow
+
 How data moves through the game systems.
 
 ### Component Relationships
+
 How components relate to each other.
 
 ### Sequence Diagrams
+
 Step-by-step flow of key operations.
 
 ## Current Diagrams
@@ -23,6 +27,7 @@ Step-by-step flow of key operations.
 ## Diagram Format
 
 Diagrams can be provided in:
+
 - ASCII art (for terminal viewing)
 - Mermaid format (for rendering)
 - SVG/PNG files (for documentation)

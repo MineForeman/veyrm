@@ -10,6 +10,7 @@
 - **Eel-Knight** *(aquifer cavalier)* — shield rush; electrified javelins.
 
 ## Boss Seeds
+
 - **The Lock That Learned** (Labyrinth): a sentient door that eats keys (and then doors).
 - **Threefold Bishop** (Quiet Choir): rotates bodies, keeps one vulnerable at a time.
 - **The Never-King** (Final): stationary tyrant; crater that slides like a clock hand.

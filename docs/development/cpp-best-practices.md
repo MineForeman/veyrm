@@ -3,6 +3,7 @@
 This document defines the coding standards and best practices for the Veyrm codebase. These guidelines prioritize safety, performance, and maintainability.
 
 ## Table of Contents
+
 1. [Core Principles](#core-principles)
 2. [Class Design](#class-design)
 3. [Resource Management](#resource-management)
@@ -15,39 +16,46 @@ This document defines the coding standards and best practices for the Veyrm code
 ## Core Principles
 
 ### 1. Prefer Composition Over Inheritance
+
 - Use inheritance **only** for is-a polymorphic interfaces (behavior)
 - Never use inheritance for code sharing or "kind-of" relationships
 - Favor composition, free functions, or templates for code reuse
 
 ### 2. Rule of Zero
+
 - Let the standard library manage resources (RAII)
 - Write special members only when you directly own a resource
 - Use smart pointers and standard containers
 
 ### 3. Small, Value-Like, Immutable Classes
+
 - Keep classes small and focused on a single responsibility
 - Make classes value-like (copyable, comparable) when appropriate
 - Prefer immutability - establish invariants in constructors/factories
 - Avoid setters; prefer constructing new instances
 
 ### 4. Interface Design
+
 - Use pure abstract base classes for runtime polymorphism
 - Always mark overrides with `override`
 - Mark concrete leaf classes with `final`
 - Virtual destructors for all polymorphic base classes
 
 ### 5. No Raw Owning Pointers
+
 - **Owning**: `std::unique_ptr<T>` or `std::shared_ptr<T>`
 - **Non-owning**: References, `std::span<T>`, `std::string_view`
 - **Observer**: `T*` only when nullable observation is needed
 
 ### 6. Const-Correctness and Explicit
+
 - Be const-correct everywhere
 - Mark single-argument constructors `explicit`
 - Use `noexcept` where appropriate (move constructors, swap)
 - Use `[[nodiscard]]` for important return values
 
 ### 7. Minimize Class Surface Area
+
 - Prefer non-member, non-friend functions when possible
 - Keep classes minimal - expose behavior, not state
 - Hide implementation details
@@ -756,6 +764,7 @@ private:
 ## Anti-Patterns to Avoid
 
 ### 1. God Classes
+
 ```cpp
 // Bad: Class doing too much
 class Game {
@@ -779,6 +788,7 @@ class Game {
 ```
 
 ### 2. Primitive Obsession
+
 ```cpp
 // Bad: Using primitives everywhere
 void transfer(int from_account, int to_account, double amount);
@@ -788,6 +798,7 @@ void transfer(AccountId from, AccountId to, Money amount);
 ```
 
 ### 3. Deep Inheritance Hierarchies
+
 ```cpp
 // Bad: Deep hierarchy
 class Entity { };

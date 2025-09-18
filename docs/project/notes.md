@@ -189,3 +189,14 @@ Crafting
 Player Houseing
 Guilds
 Guild Halls
+
+
+# Tech/Methadolagies use
+
+## MVC
+
+## ECS
+
+## Postgres
+
+## Redis

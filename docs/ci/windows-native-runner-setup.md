@@ -13,6 +13,7 @@ This guide explains how to set up a native Windows GitLab Runner that executes j
 ### 1. Download GitLab Runner
 
 Download the Windows binary (64-bit):
+
 ```powershell
 # Create directory for runner
 New-Item -ItemType Directory -Path 'C:\GitLab-Runner' -Force
@@ -25,12 +26,14 @@ Invoke-WebRequest -Uri "https://gitlab-runner-downloads.s3.amazonaws.com/latest/
 ### 2. Register the Runner with Shell Executor
 
 #### Interactive Registration
+
 ```powershell
 cd C:\GitLab-Runner
 .\gitlab-runner.exe register
 ```
 
 When prompted, enter:
+
 - **GitLab instance URL:** `http://horse.local:8929` (or your GitLab URL)
 - **Registration token:** Get from GitLab project → Settings → CI/CD → Runners
 - **Description:** `Windows Native Runner`
@@ -39,6 +42,7 @@ When prompted, enter:
 - **Shell:** `powershell` (recommended) or `pwsh` or `cmd`
 
 #### Non-Interactive Registration (One Command)
+
 ```powershell
 cd C:\GitLab-Runner
 .\gitlab-runner.exe register `
@@ -77,6 +81,7 @@ Get-Service gitlab-runner
 ```
 
 You should see:
+
 - **Executor:** `shell` (NOT docker or docker-windows)
 - **Status:** Running
 
@@ -85,6 +90,7 @@ You should see:
 For the runner to build C++ projects, install these tools:
 
 ### Option A: Visual Studio Build Tools (Recommended)
+
 ```powershell
 # Download and install Visual Studio Build Tools
 # Visit: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
@@ -95,6 +101,7 @@ choco install visualstudio2022-workload-vctools
 ```
 
 ### Option B: MinGW (Lighter Alternative)
+
 ```powershell
 # Install via Chocolatey
 choco install mingw
@@ -102,6 +109,7 @@ choco install cmake
 ```
 
 ### Option C: Full Development Environment
+
 ```powershell
 # Install everything needed
 choco install cmake
@@ -117,11 +125,13 @@ choco install visualstudio2022-workload-vctools
 If your runner is still using docker-windows executor:
 
 1. **Stop the runner:**
+
    ```powershell
    .\gitlab-runner.exe stop
    ```
 
 2. **Unregister the wrong runner:**
+
    ```powershell
    .\gitlab-runner.exe unregister --all-runners
    ```
@@ -129,6 +139,7 @@ If your runner is still using docker-windows executor:
 3. **Re-register with shell executor** (see Step 2 above)
 
 4. **Restart the service:**
+
    ```powershell
    .\gitlab-runner.exe start
    ```
@@ -136,6 +147,7 @@ If your runner is still using docker-windows executor:
 ### Verify Shell Executor is Active
 
 Check the config file at `C:\GitLab-Runner\config.toml`:
+
 ```toml
 [[runners]]
   name = "Windows Native Runner"
@@ -148,6 +160,7 @@ Check the config file at `C:\GitLab-Runner\config.toml`:
 ### PowerShell Execution Policy
 
 If scripts fail to run, you may need to adjust the execution policy:
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 ```

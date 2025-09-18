@@ -24,6 +24,7 @@
 #include "ecs/event.h"
 #include "ecs/experience_component.h"
 #include "ecs/loot_component.h"
+#include "ecs/player_component.h"
 #include "turn_manager.h"
 #include "message_log_adapter.h"
 
@@ -247,11 +248,21 @@ void GameWorld::updateRenderSystem() {
     }
 }
 
-EntityID GameWorld::createPlayer(int x, int y) {
+EntityID GameWorld::createPlayer(int x, int y, int user_id,
+                                const std::string& session_token,
+                                const std::string& player_name) {
 
     // Create player using factory
     auto player_entity = PlayerFactory().create(x, y);
     EntityID id = player_entity->getID();
+
+    // Link to authentication if provided
+    if (auto* player_comp = player_entity->getComponent<PlayerComponent>()) {
+        if (user_id > 0 && !session_token.empty()) {
+            player_comp->linkToUser(user_id, session_token, player_name);
+            Log::info("Player linked to authenticated user: " + std::to_string(user_id));
+        }
+    }
 
     // Add to world
     world.addEntity(std::move(player_entity));
@@ -546,6 +557,26 @@ void GameWorld::removeDeadEntities() {
     for (EntityID id : to_remove) {
         removeEntity(id);
     }
+}
+
+Entity& GameWorld::addEntityWithTracking(std::unique_ptr<Entity> entity) {
+    // Check if this is a player entity before adding
+    bool is_player = entity->hasComponent<PlayerComponent>() || entity->hasTag("player");
+
+    Entity& added_entity = world.addEntity(std::move(entity));
+
+    // Update player ID if this was a player entity
+    if (is_player) {
+        player_id = added_entity.getID();
+        LOG_INFO("Player entity restored with ID: " + std::to_string(player_id));
+
+        // Update AI system with player ID
+        if (native_ai_system) {
+            native_ai_system->setPlayerId(player_id);
+        }
+    }
+
+    return added_entity;
 }
 
 } // namespace ecs

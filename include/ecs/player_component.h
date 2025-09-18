@@ -25,7 +25,34 @@ public:
     // Experience thresholds
     int exp_to_next_level = 100;
 
+    // Authentication linkage
+    int user_id = 0;  // Database user ID (0 = guest/unauthenticated)
+    std::string session_token;  // Current session token for saves/cloud sync
+    std::string player_name = "Hero";  // Display name
+
     PlayerComponent() = default;
+
+    /**
+     * @brief Link player to authenticated user
+     * @param uid User ID from database
+     * @param token Session token
+     * @param name Player display name
+     */
+    void linkToUser(int uid, const std::string& token, const std::string& name = "") {
+        user_id = uid;
+        session_token = token;
+        if (!name.empty()) {
+            player_name = name;
+        }
+    }
+
+    /**
+     * @brief Check if player is authenticated
+     * @return true if linked to a user account
+     */
+    bool isAuthenticated() const {
+        return user_id > 0 && !session_token.empty();
+    }
 
     /**
      * @brief Award experience points

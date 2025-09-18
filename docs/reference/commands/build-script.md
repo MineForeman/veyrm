@@ -22,6 +22,7 @@ The `build.sh` script is a comprehensive build helper for the Veyrm project, pro
 ```
 
 Shows an interactive menu with options:
+
 1. Build (Debug)
 2. Build (Release)
 3. Clean Build (Debug)
@@ -115,6 +116,7 @@ Select map type:
 The build script supports two modes of automated testing:
 
 ### Dump Mode Testing
+
 The dump mode provides frame-by-frame output for debugging:
 
 ```bash
@@ -126,6 +128,7 @@ The dump mode provides frame-by-frame output for debugging:
 ```
 
 ### Automated Key Input Testing
+
 For testing AI behavior and gameplay features:
 
 ```bash
@@ -170,6 +173,7 @@ verym/
 ## Terminal Reset
 
 The script includes terminal reset functionality that:
+
 - Disables all mouse tracking modes
 - Shows cursor
 - Resets terminal to default state
@@ -180,6 +184,7 @@ This is automatically called after running the game and can be manually triggere
 ## Error Handling
 
 The script includes:
+
 - Exit on error (`set -e`)
 - Color-coded error messages
 - Automatic terminal cleanup
@@ -188,6 +193,7 @@ The script includes:
 ## Platform Support
 
 The script is designed for Unix-like systems:
+
 - **macOS** - Full support
 - **Linux** - Full support
 - **Windows** - Use with WSL or Git Bash
@@ -206,6 +212,7 @@ The script is designed for Unix-like systems:
 ### Terminal Issues
 
 If the terminal becomes unresponsive or shows artifacts:
+
 ```bash
 ./build.sh reset
 ```
@@ -213,6 +220,7 @@ If the terminal becomes unresponsive or shows artifacts:
 ### Build Failures
 
 For clean rebuild:
+
 ```bash
 ./build.sh clean build
 ```
@@ -220,6 +228,7 @@ For clean rebuild:
 ### Missing Dependencies
 
 Check system requirements:
+
 ```bash
 ./build.sh check
 ```
@@ -227,6 +236,7 @@ Check system requirements:
 ## Integration with Veyrm
 
 The script is integrated with Veyrm's features:
+
 - Map type selection passes `--map` argument to the game
 - Dump mode uses `--dump` argument for automated testing
 - System check runs `--test` argument
@@ -248,6 +258,7 @@ Creates an animated visualization of the repository's development history:
 ```
 
 Features:
+
 - Animated commit history showing file changes over time
 - Developer contributions visualization
 - Configurable speed and duration
@@ -264,6 +275,7 @@ Generates UML-style class diagrams showing the project architecture:
 ```
 
 Features:
+
 - Visual representation of all classes and their relationships
 - Color-coded subsystems (Core, Entity, Map, Combat, AI, Utilities)
 - Shows inheritance, composition, and usage relationships
@@ -274,6 +286,7 @@ Features:
 ### Output Directory
 
 All visualization outputs are saved to the `tmp/` directory which is:
+
 - Automatically created if it doesn't exist
 - Excluded from git via `.gitignore`
 - Safe for temporary files and experiments
@@ -281,6 +294,7 @@ All visualization outputs are saved to the `tmp/` directory which is:
 ## Future Enhancements
 
 Planned improvements:
+
 - Profile-guided optimization builds
 - Parallel test execution
 - Installation targets

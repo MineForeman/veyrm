@@ -15,8 +15,12 @@
 #include "ecs/position_component.h"
 #include "ecs/data_loader.h"
 #include "ecs/health_component.h"
-#include "game_serializer.h"
+#include "ecs/renderable_component.h"
 #include "ecs/game_world.h"
+#include "db/database_manager.h"
+#include "db/save_game_repository.h"
+#include "db/game_entity_repository.h"
+#include <boost/json.hpp>
 #include <random>
 
 GameManager::GameManager(MapType initial_map) 
@@ -27,11 +31,13 @@ GameManager::GameManager(MapType initial_map)
       message_log(std::make_unique<MessageLog>()),
       frame_stats(std::make_unique<FrameStats>()),
       map(std::make_unique<Map>(Config::getInstance().getMapWidth(), Config::getInstance().getMapHeight())),
-      serializer(std::make_unique<GameSerializer>(this)),
       debug_mode(false) {
-    
+
     // Initialize color scheme with auto-detection
     ColorScheme::setCurrentTheme(TerminalTheme::AUTO_DETECT);
+
+    // Initialize database for auto-save
+    initializeDatabase();
     
     // Load ECS data (includes monsters and items)
     ecs::DataLoader::getInstance().loadAllData(
@@ -86,7 +92,7 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Clear existing entities from previous level
-    if (use_ecs && ecs_world) {
+    if (ecs_world) {
         ecs_world->clearEntities();
         LOG_INFO("Cleared all entities for level transition");
     }
@@ -102,18 +108,23 @@ void GameManager::initializeMap(MapType type) {
     }
     
     // Create player entity at spawn point
-    if (use_ecs && ecs_world) {
-        // Create player using ECS only
-        [[maybe_unused]] auto player_id = ecs_world->createPlayer(spawn.x, spawn.y);
+    if (ecs_world) {
+        // Create player using ECS with authentication info if available
+        [[maybe_unused]] auto player_id = ecs_world->createPlayer(
+            spawn.x, spawn.y,
+            auth_user_id,
+            auth_session_token,
+            auth_player_name
+        );
 
         // Spawn monsters and items in rooms
         spawnEntities();
     } else {
-        LOG_ERROR("Cannot create player without ECS enabled");
+        LOG_ERROR("ECS world not available");
     }
 
     // Sync player position from ECS for compatibility
-    if (use_ecs && ecs_world) {
+    if (ecs_world) {
         // Get player position from ECS
         auto player_entity = ecs_world->getPlayerEntity();
         if (player_entity) {
@@ -162,10 +173,7 @@ void GameManager::processPlayerAction(ActionSpeed speed) {
     turn_manager->executePlayerAction(speed);
     
     // After player acts, check for dynamic spawning
-    if (use_ecs) {
-        // ECS handles spawning
-    } else {
-    }
+    // ECS handles spawning
 }
 
 void* GameManager::getPlayer() {
@@ -181,8 +189,8 @@ void GameManager::update([[maybe_unused]] double deltaTime) {
         return;
     }
 
-    // Update ECS if enabled (PRIMARY)
-    if (use_ecs && ecs_world) {
+    // Update ECS systems
+    if (ecs_world) {
         // Don't update AI every frame - only when updateMonsters() is called
         // ecs_world->update(deltaTime);  // DISABLED - AI should be turn-based
 
@@ -238,7 +246,7 @@ void GameManager::updateFOV() {
 
     Point playerPos;
 
-    if (use_ecs && ecs_world) {
+    if (ecs_world) {
         // Use ECS player position
         playerPos = Point(player_x, player_y);  // These are synced from ECS
     } else {
@@ -315,50 +323,135 @@ void GameManager::updateFOV() {
         }
     }
 
-    // Update ECS FOV if enabled
-    if (use_ecs && ecs_world) {
+    // Update ECS FOV
+    if (ecs_world) {
         ecs_world->updateFOV(current_fov);
     }
 }
 
 void GameManager::updateMonsters() {
     // Update ECS AI system for one turn
-    if (use_ecs && ecs_world) {
+    if (ecs_world) {
         // Only update the AI system, not the entire world
         ecs_world->processMonsterAI();
     }
 }
 
-bool GameManager::saveGame(int slot) {
-    if (!serializer) {
-        LOG_ERROR("GameManager: Serializer not initialized");
+bool GameManager::autoSave() {
+    try {
+        if (!ecs_world) {
+            LOG_WARN("Auto-save not available - missing ECS world");
+            return false;
+        }
+
+        // Create entity repository
+        db::GameEntityRepository entity_repo;
+
+        // Serialize ECS world to entity data
+        auto& world = ecs_world->getWorld();
+        int user_id = auth_user_id > 0 ? auth_user_id : 1;
+        int save_slot = -1; // Auto-save slot
+
+        auto entities = db::GameEntityRepository::serializeWorld(world, user_id, save_slot);
+
+        // Create save metadata
+        db::GameSaveData save_data;
+        save_data.user_id = user_id;
+        save_data.save_slot = save_slot;
+        save_data.character_name = auth_player_name.empty() ? "Auto-saved Hero" : auth_player_name;
+        save_data.character_level = 1; // TODO: Get from ECS stats component
+        save_data.map_level = current_depth;
+        save_data.play_time_seconds = 0; // TODO: Calculate actual play time
+        save_data.game_version = "1.0.0";
+        save_data.save_version = "1.0";
+        save_data.device_id = "local_device";
+        save_data.device_name = "Local Game Client";
+        save_data.map_width = map->getWidth();
+        save_data.map_height = map->getHeight();
+        save_data.world_seed = 0; // TODO: Add getSeed() method to Map class
+
+        // Save complete game state to PostgreSQL
+        if (entity_repo.saveGameState(save_data, entities)) {
+            LOG_INFO("Auto-save completed successfully: " + std::to_string(entities.size()) + " entities saved to PostgreSQL");
+            if (message_log) {
+                message_log->addMessage("Game auto-saved (" + std::to_string(entities.size()) + " entities)");
+            }
+            return true;
+        } else {
+            LOG_ERROR("Auto-save failed for user " + std::to_string(user_id));
+            if (message_log) {
+                message_log->addMessage("Auto-save failed");
+            }
+            return false;
+        }
+
+    } catch (const std::exception& e) {
+        std::string error_msg = "Auto-save failed: " + std::string(e.what());
+        if (message_log) {
+            message_log->addMessage(error_msg);
+        }
+        LOG_ERROR(error_msg);
         return false;
     }
-
-    bool success = serializer->saveGame(slot);
-    if (success) {
-        message_log->addMessage("Game saved to slot " + std::to_string(slot));
-    } else {
-        message_log->addMessage("Failed to save game!");
-    }
-    return success;
 }
 
-bool GameManager::loadGame(int slot) {
-    if (!serializer) {
-        LOG_ERROR("GameManager: Serializer not initialized");
+bool GameManager::autoRestore() {
+    try {
+        if (!ecs_world) {
+            LOG_WARN("Auto-restore not available - missing ECS world");
+            return false;
+        }
+
+        // Create entity repository
+        db::GameEntityRepository entity_repo;
+
+        // Try to load from auto-save slot (-1)
+        int user_id = auth_user_id > 0 ? auth_user_id : 1;
+        int save_slot = -1;
+
+        auto game_state = entity_repo.loadGameState(user_id, save_slot);
+        if (!game_state.has_value()) {
+            LOG_INFO("No auto-save found in PostgreSQL");
+            if (message_log) {
+                message_log->addMessage("No saved game found");
+            }
+            return false;
+        }
+
+        auto& [save_data, entities] = game_state.value();
+        LOG_INFO("DEBUG: Loaded " + std::to_string(entities.size()) + " entities from database");
+
+        // Clear existing entities
+        LOG_INFO("DEBUG: Clearing existing ECS entities");
+        ecs_world->clearEntities();
+
+        // Restore entities to ECS world with proper player tracking
+        LOG_INFO("DEBUG: Starting deserialization of " + std::to_string(entities.size()) + " entities");
+        int restored_count = db::GameEntityRepository::deserializeWorld(entities, *ecs_world);
+        LOG_INFO("DEBUG: Deserialization complete, restored " + std::to_string(restored_count) + " entities");
+        LOG_INFO("DEBUG: Player entity ID after restore: " + std::to_string(ecs_world->getPlayerID()));
+
+        // Log restore results
+        LOG_INFO("Auto-restore completed: " + std::to_string(restored_count) + "/" +
+                std::to_string(entities.size()) + " entities restored from PostgreSQL");
+        LOG_INFO("Restored map size: " + std::to_string(save_data.map_width) + "x" + std::to_string(save_data.map_height));
+
+        if (message_log) {
+            message_log->addMessage("Game state restored from PostgreSQL");
+            message_log->addMessage("Character: " + save_data.character_name);
+            message_log->addMessage("Entities restored: " + std::to_string(restored_count));
+        }
+
+        return true;
+
+    } catch (const std::exception& e) {
+        std::string error_msg = "Auto-restore failed: " + std::string(e.what());
+        if (message_log) {
+            message_log->addMessage(error_msg);
+        }
+        LOG_ERROR(error_msg);
         return false;
     }
-
-    bool success = serializer->loadGame(slot);
-    if (success) {
-        message_log->addMessage("Game loaded from slot " + std::to_string(slot));
-        setState(GameState::PLAYING);
-        updateFOV();  // Recalculate FOV after loading
-    } else {
-        message_log->addMessage("Failed to load game!");
-    }
-    return success;
 }
 
 void GameManager::initializeECS(bool migrate_existing) {
@@ -552,5 +645,32 @@ unsigned int GameManager::getSeedForDepth(int depth) const {
     depth_seed ^= depth_seed >> 16;  // Mix again
 
     return depth_seed;
+}
+
+void GameManager::initializeDatabase() {
+    try {
+        // Initialize database connection for auto-save
+        db::DatabaseConfig config;
+        config.host = "localhost";
+        config.port = 5432;
+        config.database = "veyrm_db";
+        config.username = "veyrm_admin";
+        config.password = "changeme_to_secure_password";
+
+        try {
+            db::DatabaseManager::getInstance().initialize(config);
+            if (db::DatabaseManager::getInstance().isInitialized()) {
+                save_repository = std::make_unique<db::SaveGameRepository>(db::DatabaseManager::getInstance());
+                LOG_INFO("Database initialized successfully for auto-save");
+            } else {
+                LOG_WARN("Database initialization failed - auto-save will be disabled");
+            }
+        } catch (const std::exception& e) {
+            LOG_WARN("Database initialization error: " + std::string(e.what()) + " - auto-save will be disabled");
+        }
+    } catch (const std::exception& e) {
+        LOG_ERROR("Database initialization failed: " + std::string(e.what()));
+        save_repository.reset();
+    }
 }
 

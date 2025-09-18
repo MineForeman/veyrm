@@ -17,16 +17,19 @@ Performance analysis, optimization guides, and benchmarks for Veyrm.
 ## Optimization Areas
 
 ### Rendering
+
 - Map viewport rendering
 - Entity rendering
 - UI updates
 
 ### Memory
+
 - Entity management
 - Map storage
 - Message history
 
 ### Algorithms
+
 - FOV calculation
 - Pathfinding
 - Map generation

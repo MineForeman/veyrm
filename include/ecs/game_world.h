@@ -13,6 +13,7 @@
 #include <string>
 
 #include "system_manager.h"
+#include "../log.h"
 #include "health_component.h"
 // Bridge classes removed - no longer needed in full ECS mode
 #include "../game_state.h"
@@ -76,9 +77,14 @@ public:
      * @brief Create player entity using ECS
      * @param x Initial X position
      * @param y Initial Y position
+     * @param user_id Database user ID (0 for guest)
+     * @param session_token Authentication session token (empty for guest)
+     * @param player_name Player display name
      * @return Player entity ID
      */
-    EntityID createPlayer(int x, int y);
+    EntityID createPlayer(int x, int y, int user_id = 0,
+                         const std::string& session_token = "",
+                         const std::string& player_name = "Hero");
 
     /**
      * @brief Create monster entity using ECS
@@ -213,7 +219,17 @@ public:
     /**
      * @brief Clear all entities
      */
-    void clearEntities() { world.clearEntities(); }
+    void clearEntities() {
+        world.clearEntities();
+        player_id = 0; // Reset player ID when clearing entities
+    }
+
+    /**
+     * @brief Add an entity and update player tracking if needed
+     * @param entity Entity to add
+     * @return Reference to added entity
+     */
+    Entity& addEntityWithTracking(std::unique_ptr<Entity> entity);
 
     /**
      * @brief Get player entity ID

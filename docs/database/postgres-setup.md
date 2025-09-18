@@ -1,6 +1,7 @@
 # PostgreSQL Database Setup
 
 ## Overview
+
 Veyrm uses PostgreSQL for persistent game data storage including player profiles, save games, leaderboards, and telemetry data.
 
 ## Docker Development Environment
@@ -10,6 +11,7 @@ Veyrm uses PostgreSQL for persistent game data storage including player profiles
 The PostgreSQL development environment runs in Docker with the following setup:
 
 #### Environment Variables (.env)
+
 ```bash
 # PostgreSQL Configuration
 POSTGRES_DB=veyrm_db
@@ -24,6 +26,7 @@ PGADMIN_PORT=5050
 ```
 
 #### Dockerfile
+
 - Base image: `postgres:16-alpine`
 - Database name: `veyrm_db`
 - Default user: `veyrm_admin`
@@ -34,6 +37,7 @@ PGADMIN_PORT=5050
 #### Docker Compose Services
 
 **PostgreSQL Service:**
+
 - Container name: `veyrm-postgres`
 - Port: 5432 (configurable via POSTGRES_PORT)
 - Volumes:
@@ -44,6 +48,7 @@ PGADMIN_PORT=5050
 - Auto-restart: unless-stopped
 
 **PgAdmin Service (optional):**
+
 - Container name: `veyrm-pgadmin`
 - Port: 5050 (configurable via PGADMIN_PORT)
 - Profile: tools (run with `docker-compose --profile tools up`)
@@ -71,6 +76,7 @@ docker-compose down -v
 ### Connection Details
 
 From the host machine:
+
 - Host: `localhost`
 - Port: `5432`
 - Database: `veyrm_db`
@@ -78,6 +84,7 @@ From the host machine:
 - Password: `changeme_to_secure_password`
 
 From within Docker network:
+
 - Host: `veyrm-postgres`
 - Port: `5432`
 - Database: `veyrm_db`
@@ -121,6 +128,7 @@ docker exec -i veyrm-postgres psql -U veyrm_admin veyrm_db < ./backups/backup_fi
 ### Security Notes
 
 ⚠️ **Important**: The default passwords in the configuration are for development only. Before deploying:
+
 1. Change all passwords to secure values
 2. Use environment-specific .env files
 3. Never commit .env files with production credentials
@@ -131,12 +139,14 @@ docker exec -i veyrm-postgres psql -U veyrm_admin veyrm_db < ./backups/backup_fi
 ### Required Libraries
 
 To connect from C++, we'll use:
+
 - **libpqxx**: Official C++ client library for PostgreSQL
 - **Connection pooling**: For efficient connection management
 
 ### CMake Configuration
 
 Add to CMakeLists.txt:
+
 ```cmake
 find_package(PostgreSQL REQUIRED)
 find_package(pqxx REQUIRED)
@@ -181,16 +191,19 @@ public:
 ## Troubleshooting
 
 ### Container won't start
+
 - Check if port 5432 is already in use
 - Verify Docker daemon is running
 - Check logs: `docker-compose logs postgres`
 
 ### Connection refused
+
 - Ensure container is running: `docker ps`
 - Check firewall settings
 - Verify connection string parameters
 
 ### Permission denied
+
 - Check file permissions on volumes
 - Ensure postgres user has correct privileges
 - Review Docker user mappings

@@ -11,11 +11,13 @@ We use **C++23** with modern features encouraged where they improve code clarity
 ## Naming Conventions
 
 ### Files
+
 - **Source files**: `snake_case.cpp`
 - **Header files**: `snake_case.h`
 - **Test files**: `test_component_name.cpp`
 
 ### Classes and Structs
+
 ```cpp
 // PascalCase for types
 class GameManager { };
@@ -26,6 +28,7 @@ class IRenderable { };
 ```
 
 ### Functions and Methods
+
 ```cpp
 // camelCase for functions
 void updatePosition();
@@ -45,6 +48,7 @@ bool canMove() const;
 ```
 
 ### Variables
+
 ```cpp
 // Local variables: snake_case
 int player_health = 100;
@@ -68,6 +72,7 @@ int g_debug_level = 0;
 ```
 
 ### Enums
+
 ```cpp
 // Enum classes preferred, PascalCase
 enum class GameState {
@@ -86,6 +91,7 @@ enum Color {
 ```
 
 ### Namespaces
+
 ```cpp
 // snake_case for namespaces
 namespace game_systems {
@@ -96,6 +102,7 @@ namespace combat {
 ```
 
 ### Template Parameters
+
 ```cpp
 // PascalCase for type parameters
 template<typename TContainer, typename TValue>
@@ -109,11 +116,13 @@ class FixedArray { };
 ## Formatting
 
 ### Indentation
+
 - Use **4 spaces** (no tabs)
 - Indent access specifiers at class level
 - Indent case labels in switch statements
 
 ### Braces
+
 ```cpp
 // Allman style for classes and functions
 class Entity
@@ -142,10 +151,12 @@ if (condition) {
 ```
 
 ### Line Length
+
 - Maximum **100 characters** per line
 - Break at logical points for readability
 
 ### Spacing
+
 ```cpp
 // Space after keywords
 if (condition)
@@ -165,6 +176,7 @@ function(a, b, c);
 ```
 
 ### Function Declarations
+
 ```cpp
 // Short functions on one line
 int getValue() const { return value_; }
@@ -185,6 +197,7 @@ void complexFunction(
 ## Classes
 
 ### Class Layout
+
 ```cpp
 class Example {
 public:    // Public interface first
@@ -209,6 +222,7 @@ private:   // Private implementation
 ```
 
 ### Constructors
+
 ```cpp
 // Use member initializer lists
 Player::Player(int x, int y, int health)
@@ -228,6 +242,7 @@ private:
 ```
 
 ### Rule of Five
+
 ```cpp
 // If you define any, define all or delete
 class Resource {
@@ -251,6 +266,7 @@ public:
 ## Functions
 
 ### Function Design
+
 ```cpp
 // Prefer return values over out parameters
 Point getPosition() const;  // Good
@@ -267,6 +283,7 @@ int getHealth() const { return health_; }
 ```
 
 ### Parameter Passing
+
 ```cpp
 // Pass primitives by value
 void setHealth(int health);
@@ -289,6 +306,7 @@ void forward(T&& value) {
 ## Memory Management
 
 ### Smart Pointers
+
 ```cpp
 // Prefer unique_ptr for single ownership
 std::unique_ptr<Entity> player;
@@ -305,6 +323,7 @@ Entity* getPlayer() { return player_.get(); }
 ```
 
 ### RAII
+
 ```cpp
 // Always use RAII for resources
 class FileHandle {
@@ -322,6 +341,7 @@ public:
 ## Error Handling
 
 ### Exceptions
+
 ```cpp
 // Use exceptions for exceptional cases
 if (!file.open()) {
@@ -337,6 +357,7 @@ try {
 ```
 
 ### Error Codes
+
 ```cpp
 // Use std::optional or expected for expected failures
 std::optional<Config> loadConfig(const std::string& path);
@@ -353,6 +374,7 @@ enum class ErrorCode {
 ## Modern C++ Features
 
 ### Auto
+
 ```cpp
 // Use auto for complex types
 auto it = container.begin();
@@ -364,6 +386,7 @@ bool valid = isValid();  // Not auto
 ```
 
 ### Range-based For
+
 ```cpp
 // Prefer range-based for loops
 for (const auto& entity : entities) {
@@ -377,6 +400,7 @@ for (const auto& [key, value] : map) {
 ```
 
 ### Constexpr
+
 ```cpp
 // Use constexpr for compile-time constants
 constexpr int TILE_SIZE = 16;
@@ -389,6 +413,7 @@ constexpr int square(int x) {
 ```
 
 ### Lambda Expressions
+
 ```cpp
 // Use lambdas for local functions
 auto compare = [](const Entity& a, const Entity& b) {
@@ -404,6 +429,7 @@ auto compare = [](const Entity& a, const Entity& b) {
 ## Comments
 
 ### Documentation Comments
+
 ```cpp
 /**
  * @brief Calculate damage for an attack
@@ -415,6 +441,7 @@ int calculateDamage(const Entity& attacker, const Entity& defender);
 ```
 
 ### Implementation Comments
+
 ```cpp
 // Explain why, not what
 health_ -= damage;  // Apply damage after armor reduction
@@ -425,6 +452,7 @@ health_ -= damage;  // Apply damage after armor reduction
 ```
 
 ### Avoid Obvious Comments
+
 ```cpp
 // BAD: Increment counter
 counter++;
@@ -438,6 +466,7 @@ if (counter > MAX_COUNT) {
 ## Testing
 
 ### Test Naming
+
 ```cpp
 TEST_CASE("ComponentName: What is being tested", "[category]") {
     SECTION("Specific scenario") {
@@ -453,6 +482,7 @@ TEST_CASE("Combat: Damage calculation with armor", "[combat]") {
 ```
 
 ### Test Organization
+
 ```cpp
 // Arrange
 Entity attacker(10, 5);
@@ -469,6 +499,7 @@ REQUIRE(damage <= attacker.attack());
 ## Best Practices
 
 ### General
+
 1. **DRY** - Don't Repeat Yourself
 2. **KISS** - Keep It Simple, Stupid
 3. **YAGNI** - You Aren't Gonna Need It
@@ -476,6 +507,7 @@ REQUIRE(damage <= attacker.attack());
 5. **Composition over Inheritance** - Prefer composition
 
 ### Specific to Veyrm
+
 1. Use smart pointers for ownership
 2. Pass by const reference for large objects
 3. Mark methods const when they don't modify state
@@ -503,6 +535,7 @@ REQUIRE(damage <= attacker.attack());
 ## Tools
 
 ### Formatting
+
 ```bash
 # Format file
 clang-format -i src/file.cpp
@@ -512,6 +545,7 @@ find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 ```
 
 ### Static Analysis
+
 ```bash
 # Clang-tidy
 clang-tidy src/*.cpp -- -std=c++23
@@ -521,6 +555,7 @@ cppcheck --enable=all src/
 ```
 
 ### .clang-format Configuration
+
 ```yaml
 BasedOnStyle: LLVM
 IndentWidth: 4

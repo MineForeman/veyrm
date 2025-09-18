@@ -27,6 +27,7 @@ The original development was organized into phases:
 ## Historical Value
 
 These documents show:
+
 - Original design decisions
 - Implementation challenges
 - Solutions developed

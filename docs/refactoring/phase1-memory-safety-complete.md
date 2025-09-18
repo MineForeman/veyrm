@@ -9,6 +9,7 @@ Successfully refactored the Entity system to replace unsafe `void* user_data` wi
 ### 1. Entity Class Refactoring (`include/entity.h`, `src/entity.cpp`)
 
 **Before:**
+
 ```cpp
 class Entity {
 private:
@@ -20,6 +21,7 @@ public:
 ```
 
 **After:**
+
 ```cpp
 class Entity {
 private:
@@ -47,16 +49,19 @@ public:
 ### 3. Key Improvements
 
 #### Type Safety
+
 - No more `void*` casting - compile-time type checking
 - Clear ownership semantics with `std::shared_ptr`
 - Proper const-correctness throughout
 
 #### Memory Safety
+
 - RAII guarantees - no manual `delete` required
 - No memory leaks - automatic cleanup when entity destroyed
 - Safe sharing of AI data between entities if needed
 
 #### API Improvements
+
 - Clear, self-documenting method names
 - Type-safe access patterns
 - Backward compatibility through deprecated methods
@@ -64,6 +69,7 @@ public:
 ## Test Coverage
 
 Created comprehensive test suite in `tests/test_entity_memory_safety.cpp`:
+
 - Type-safe AI data access
 - Ownership and lifetime management
 - Shared data scenarios
@@ -76,11 +82,13 @@ Created comprehensive test suite in `tests/test_entity_memory_safety.cpp`:
 ## Migration Strategy
 
 ### Immediate Benefits
+
 - Type safety prevents incorrect usage
 - RAII ensures proper cleanup
 - Shared ownership model allows flexible AI data management
 
 ### Gradual Migration Path
+
 1. Legacy `getUserData()`/`setUserData()` marked deprecated but still functional
 2. New code uses type-safe interface
 3. Existing code continues to work during transition
@@ -95,6 +103,7 @@ Created comprehensive test suite in `tests/test_entity_memory_safety.cpp`:
 ## Next Steps
 
 ### Completed ✅
+
 - [x] Replace `void* user_data` with type-safe variant
 - [x] Update MonsterAI to use new interface
 - [x] Add comprehensive test coverage
@@ -102,6 +111,7 @@ Created comprehensive test suite in `tests/test_entity_memory_safety.cpp`:
 - [x] Verify no test regressions
 
 ### Remaining Phase 1 Tasks
+
 - [ ] Replace `Room* current_room` in GameManager with smart pointer
 - [ ] Audit remaining raw pointer usage
 - [ ] Add memory leak detection to CI/CD

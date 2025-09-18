@@ -9,12 +9,14 @@ Successfully implemented factories and migration adapters to bridge the legacy E
 ### 1. EntityBuilder (`include/ecs/entity_factory.h`)
 
 **Features:**
+
 - Fluent interface for building entities
 - Chain methods for adding components
 - Type-safe component configuration
 - Reset capability for reuse
 
 **Example Usage:**
+
 ```cpp
 auto entity = EntityBuilder()
     .withPosition(10, 10)
@@ -28,17 +30,20 @@ auto entity = EntityBuilder()
 ### 2. Factory Classes
 
 #### PlayerFactory
+
 - Creates player entities with standard components
 - Configurable name support
 - Consistent player stats
 
 #### MonsterFactoryECS
+
 - Registry-based monster creation
 - Pre-configured common monsters (goblin, orc, troll, skeleton, dragon)
 - Extensible through `registerMonster()`
 - Fallback for unknown types
 
 #### ItemFactoryECS
+
 - Registry-based item creation
 - Pre-configured common items (potion, sword, gold, scroll)
 - Extensible through `registerItem()`
@@ -47,36 +52,43 @@ auto entity = EntityBuilder()
 ### 3. EntityAdapter (`include/ecs/entity_adapter.h`)
 
 **Bidirectional Conversion:**
+
 - Legacy → ECS: `fromLegacyEntity()`, `fromPlayer()`, `fromMonster()`, `fromItem()`
 - ECS → Legacy: `updatePosition()`, `updateHealth()`, `updateRendering()`, `syncToLegacy()`
 
 **Type Detection:**
+
 - `isPlayer()` - Identifies player entities
 - `isMonster()` - Identifies monster entities
 - `isItem()` - Identifies item entities
 
 **Migration Utilities:**
+
 - `EntityMigrationHelper::migrateAll()` - Batch conversion
 - `EntityMigrationHelper::createMigrationMap()` - Mapping for references
 
 ## Architecture Benefits
 
 ### 1. **Gradual Migration**
+
 - Run both systems side-by-side
 - Convert entities as needed
 - No big-bang refactoring required
 
 ### 2. **Type Safety**
+
 - Compile-time component checking
 - No manual casting required
 - Clear ownership semantics
 
 ### 3. **Flexibility**
+
 - Add new entity types easily
 - Mix components freely
 - Runtime modification possible
 
 ### 4. **Testing**
+
 - Each factory testable in isolation
 - Adapter testing ensures compatibility
 - No legacy system breakage
@@ -86,7 +98,8 @@ auto entity = EntityBuilder()
 **New Tests:** 85 assertions in factory/adapter tests
 **Total Tests:** 1992 assertions in 151 test cases
 
-### Test Categories:
+### Test Categories
+
 - EntityBuilder functionality
 - PlayerFactory creation
 - MonsterFactoryECS with multiple types
@@ -98,6 +111,7 @@ auto entity = EntityBuilder()
 ## Migration Strategy
 
 ### Current State
+
 ```
 Legacy System          Bridge              ECS System
 ┌─────────┐      ┌──────────────┐      ┌────────────┐
@@ -176,11 +190,13 @@ factory.registerMonster("zombie", [](int x, int y) {
 ## Performance Considerations
 
 ### Current Impact
+
 - Small overhead from adapter layer
 - Dynamic allocation for components
 - Virtual function calls for polymorphism
 
 ### Optimization Opportunities
+
 - Component pools for allocation
 - Batch conversion operations
 - Cache adapter mappings
@@ -189,12 +205,14 @@ factory.registerMonster("zombie", [](int x, int y) {
 ## Metrics
 
 ### Code Quality
+
 - **Flexibility:** High - mix and match components
 - **Maintainability:** Improved - clear separation
 - **Type Safety:** Strong - compile-time checking
 - **Test Coverage:** Comprehensive - all paths tested
 
 ### Migration Risk
+
 - **Low Risk:** Adapter ensures compatibility
 - **Reversible:** Can revert to legacy if needed
 - **Incremental:** No big-bang changes
@@ -203,18 +221,21 @@ factory.registerMonster("zombie", [](int x, int y) {
 ## Next Steps
 
 ### Immediate (Phase 2.3)
+
 1. Implement MovementSystem for PositionComponent
 2. Implement RenderSystem for RenderableComponent
 3. Implement CombatSystem for combat resolution
 4. Create SystemManager for update ordering
 
 ### Medium Term
+
 1. Migrate EntityManager to use ECS
 2. Update save/load for ECS entities
 3. Profile performance differences
 4. Remove redundant legacy code
 
 ### Long Term
+
 1. Complete migration to pure ECS
 2. Remove adapter layer
 3. Optimize component storage
@@ -223,6 +244,7 @@ factory.registerMonster("zombie", [](int x, int y) {
 ## Conclusion
 
 Phase 2.2 successfully provides the bridge between legacy and modern architectures:
+
 - **Factories** enable consistent entity creation
 - **Adapters** ensure compatibility during migration
 - **Tests** validate correctness at every step

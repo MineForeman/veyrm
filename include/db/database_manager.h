@@ -10,9 +10,7 @@
 #include <chrono>
 #include <vector>
 
-#ifdef ENABLE_DATABASE
 #include <libpq-fe.h>
-#endif
 
 namespace db {
 
@@ -36,8 +34,6 @@ struct DatabaseConfig {
                " password=" + password;
     }
 };
-
-#ifdef ENABLE_DATABASE
 
 // RAII wrapper for PGresult
 class Result {
@@ -141,7 +137,7 @@ public:
         return Result(PQexec(conn, query.c_str()));
     }
 
-    // Execute with parameters
+    // Execute with parameters (vector version)
     Result execParams(const std::string& query,
                      const std::vector<std::string>& params) {
         if (!isValid()) throw std::runtime_error("Invalid connection");
@@ -159,6 +155,20 @@ public:
                                   nullptr,  // param lengths
                                   nullptr,  // param formats
                                   0));      // result format (text)
+    }
+
+    // Execute with parameters (array version)
+    Result execParams(const std::string& query, int nParams, const char* const* params) {
+        if (!isValid()) throw std::runtime_error("Invalid connection");
+        updateLastUsed();
+        return Result(PQexecParams(conn, query.c_str(), nParams, nullptr, params, nullptr, nullptr, 0));
+    }
+
+    // Get number of affected rows
+    std::string cmdTuples(PGresult* res) const {
+        if (!res) return "";
+        const char* tuples = PQcmdTuples(res);
+        return tuples ? std::string(tuples) : "";
     }
 
     // Escape string for safe inclusion in queries
@@ -323,26 +333,5 @@ public:
     QueryException(const std::string& query, const std::string& error)
         : DatabaseException("Query failed: " + error + "\nQuery: " + query) {}
 };
-
-#else // !ENABLE_DATABASE
-
-// Stub implementation when database is disabled
-class DatabaseManager {
-public:
-    static DatabaseManager& getInstance() {
-        static DatabaseManager instance;
-        return instance;
-    }
-
-    void initialize(const DatabaseConfig&) {}
-    void shutdown() {}
-    bool isInitialized() const { return false; }
-    void runMigrations() {}
-    int getCurrentSchemaVersion() { return 0; }
-    bool testConnection() { return false; }
-    std::string getDatabaseVersion() { return "Database disabled"; }
-};
-
-#endif // ENABLE_DATABASE
 
 } // namespace db

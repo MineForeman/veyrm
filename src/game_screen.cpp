@@ -19,6 +19,8 @@
 #include "ecs/combat_system.h"
 #include "ecs/position_component.h"
 #include "ecs/event.h"
+#include "controllers/game_controller.h"
+#include "ui/game_view.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/terminal.hpp>
@@ -34,12 +36,54 @@ GameScreen::GameScreen(GameManager* manager, ScreenInteractive* screen)
       renderer(std::make_unique<MapRenderer>(200, 60)),  // Large default for fullscreen
       status_bar(std::make_unique<StatusBar>()),
       layout_system(std::make_unique<LayoutSystem>()),
-      inventory_renderer(nullptr) {
+      inventory_renderer(nullptr),
+      controller(nullptr),
+      view(nullptr) {
     // Center renderer on player's starting position
     renderer->centerOn(game_manager->player_x, game_manager->player_y);
+
+    // Initialize MVC components
+    if (game_manager) {
+        auto* ecs_world = game_manager->getECSWorld();
+        controller = std::make_unique<controllers::GameController>(game_manager, ecs_world);
+        view = std::make_unique<ui::GameView>(game_manager, screen);
+
+        // Set up controller callbacks
+        controllers::GameController::ViewCallbacks callbacks;
+        callbacks.refreshDisplay = []() {
+            // Display updates are handled automatically by FTXUI
+        };
+        callbacks.showMessage = [this](const std::string& msg) {
+            if (auto* msg_log = game_manager->getMessageLog()) {
+                msg_log->addMessage(msg);
+            }
+        };
+        callbacks.showPrompt = [this](const std::string& prompt) {
+            if (auto* msg_log = game_manager->getMessageLog()) {
+                msg_log->addMessage(prompt);
+            }
+        };
+        callbacks.clearPrompt = []() {
+            // Prompts clear automatically with new messages
+        };
+        callbacks.exitToMenu = [this]() {
+            game_manager->setState(GameState::MENU);
+        };
+        controller->setViewCallbacks(callbacks);
+    }
 }
 
 GameScreen::~GameScreen() = default;
+
+void GameScreen::setAuthenticationInfo(int user_id, const std::string& session_token) {
+    auth_user_id = user_id;
+    auth_session_token = session_token;
+
+    // Also update the GameManager
+    if (game_manager) {
+        game_manager->setAuthenticationInfo(user_id, session_token);
+    }
+}
 
 bool GameScreen::handleDoorInteraction() {
     auto* msg_log = game_manager->getMessageLog();
@@ -214,47 +258,44 @@ bool GameScreen::handleStairInteraction(bool going_down) {
 bool GameScreen::handlePlayerMovement(int dx, int dy, const std::string& direction) {
     LOG_DEBUG("handlePlayerMovement called: dx=" + std::to_string(dx) + ", dy=" + std::to_string(dy) + ", dir=" + direction);
 
-    // Use ECS movement if ECS mode is enabled
-    bool ecs_mode = game_manager->isECSMode();
+    auto ecs_world = game_manager->getECSWorld();
+    if (!ecs_world) {
+        LOG_ERROR("ECS world not available");
+        return false;
+    }
 
-    if (ecs_mode) {
-        auto ecs_world = game_manager->getECSWorld();
-        if (ecs_world) {
-            LOG_DEBUG("Using ECS movement system for " + direction);
-            ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
+    LOG_DEBUG("Using ECS movement system for " + direction);
+    ActionSpeed speed = ecs_world->processPlayerAction(0, dx, dy);
 
-            // Sync the ECS player position
-            auto player_entity = ecs_world->getPlayerEntity();
-            if (player_entity) {
-                auto* pos = player_entity->getComponent<ecs::PositionComponent>();
-                if (pos) {
-                    // Update the game manager's position variables
-                    game_manager->player_x = pos->position.x;
-                    game_manager->player_y = pos->position.y;
-                    LOG_DEBUG("ECS player moved to: (" + std::to_string(pos->position.x) +
-                             ", " + std::to_string(pos->position.y) + ")");
-                }
-            }
-
-            game_manager->processPlayerAction(speed);
-
-            // Update FOV and renderer
-            // Get updated player position from ECS (reuse existing player_entity variable)
-            if (player_entity && renderer) {
-                auto* pos = player_entity->getComponent<ecs::PositionComponent>();
-                if (pos) {
-                    renderer->centerOn(pos->position.x, pos->position.y);
-                }
-            }
-            game_manager->updateFOV();
-            game_manager->updateMonsters();
-            return true;
+    // Sync the ECS player position
+    auto player_entity = ecs_world->getPlayerEntity();
+    if (player_entity) {
+        auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+        if (pos) {
+            // Update the game manager's position variables
+            game_manager->player_x = pos->position.x;
+            game_manager->player_y = pos->position.y;
+            LOG_DEBUG("ECS player moved to: (" + std::to_string(pos->position.x) +
+                     ", " + std::to_string(pos->position.y) + ")");
         }
     }
 
-    // Legacy movement code - should not be reached in ECS mode
-    LOG_ERROR("Legacy movement code reached - this should not happen in ECS mode");
-    return false;
+    game_manager->processPlayerAction(speed);
+
+    // Update FOV and renderer
+    if (player_entity && renderer) {
+        auto* pos = player_entity->getComponent<ecs::PositionComponent>();
+        if (pos) {
+            renderer->centerOn(pos->position.x, pos->position.y);
+        }
+    }
+    game_manager->updateFOV();
+    game_manager->updateMonsters();
+
+    // Auto-save after successful movement to preserve current position
+    game_manager->autoSave();
+
+    return true;
 }
 
 Component GameScreen::CreateMapPanel() {
@@ -381,6 +422,17 @@ Component GameScreen::Create() {
 
     // Add input handling
     layout = CatchEvent(layout, [this](Event event) {
+        // Use the controller if available for MVC pattern
+        if (controller) {
+            bool controller_handled = controller->handleInput(event);
+            LOG_DEBUG("Controller returned: " + std::string(controller_handled ? "true" : "false"));
+            if (controller_handled) {
+                return true;
+            }
+        }
+
+        // Fallback to direct input handling if controller not available
+        LOG_DEBUG("Fallback input handling triggered");
         InputHandler* input = game_manager->getInputHandler();
         InputAction action = input->processEvent(event);
 
@@ -507,13 +559,17 @@ Component GameScreen::Create() {
             case InputAction::OPEN_SAVE_MENU:
                 LOG_INFO("Save menu triggered");
                 game_manager->setSaveMenuMode(true);
-                game_manager->setState(GameState::SAVE_LOAD);
+                // Auto-save and return to menu instead of save/load screen
+game_manager->autoSave();
+game_manager->setState(GameState::MENU);
                 return true;
 
             case InputAction::OPEN_LOAD_MENU:
                 LOG_INFO("Load menu triggered");
                 game_manager->setSaveMenuMode(false);
-                game_manager->setState(GameState::SAVE_LOAD);
+                // Auto-save and return to menu instead of save/load screen
+game_manager->autoSave();
+game_manager->setState(GameState::MENU);
                 return true;
 
             default:

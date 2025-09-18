@@ -5,16 +5,19 @@ Welcome to the Veyrm documentation. This is your starting point for all game and
 ## Quick Links
 
 ### 🎮 For Players
+
 - [Getting Started](getting-started/README.md) - Installation and first game
 - [Game Controls](getting-started/controls.md) - Complete control reference
 - [Gameplay Guide](guides/player/README.md) - How to play effectively
 
 ### 👩‍💻 For Developers
+
 - [Developer Setup](guides/developer/setup.md) - Setting up your development environment
 - [Architecture Overview](guides/developer/architecture.md) - System design and components
 - [Contributing Guide](guides/developer/contributing.md) - How to contribute
 
 ### 📚 For Content Creators
+
 - [Content Guide](guides/content/README.md) - Adding monsters, items, and maps
 - [Data Formats](reference/configuration/data-formats.md) - JSON and YAML specifications
 
@@ -48,6 +51,7 @@ docs/
 ## Finding Information
 
 ### By Topic
+
 - **Installation & Setup**: [Getting Started](getting-started/README.md)
 - **How to Play**: [Player Guides](guides/player/README.md)
 - **Development**: [Developer Guides](guides/developer/README.md)
@@ -56,6 +60,7 @@ docs/
 - **Project Status**: [Current Status](project/status.md)
 
 ### By Audience
+
 - **New Players**: Start with [Getting Started](getting-started/README.md)
 - **Experienced Players**: See [Player Guides](guides/player/README.md)
 - **New Developers**: Begin with [Developer Setup](guides/developer/setup.md)

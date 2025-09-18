@@ -7,6 +7,7 @@ Successfully configured a complete CI/CD pipeline using both GitHub Actions and 
 ## What We Accomplished
 
 ### 1. GitHub Actions Setup
+
 - ✅ **Cross-platform CI** - Linux and Windows builds
 - ✅ **Automated testing** - Runs test suite on both platforms
 - ✅ **Release automation** - Creates releases with binaries on version tags
@@ -19,18 +20,21 @@ Successfully configured a complete CI/CD pipeline using both GitHub Actions and 
 ### 2. GitLab CI Setup
 
 #### Linux Runner (Docker-based)
+
 - ✅ **Docker executor** with Ubuntu 24.04 image
 - ✅ **Automated builds and tests**
 - ✅ **Artifact generation**
 - ✅ **Release creation on tags**
 
 #### Windows Runner (Native)
+
 - ✅ **Shell executor** running PowerShell directly on Windows
 - ✅ **No Docker overhead** - runs natively
 - ✅ **CMake and compiler detection**
 - ✅ **PowerShell-based build scripts**
 
 ### 3. Repository Configuration
+
 - ✅ **Dual remote setup**:
   - Primary: GitLab at `ssh://git@horse.local:23/nrf/veyrm.git`
   - Mirror: GitHub at `github.com/MineForeman/veyrm`
@@ -39,12 +43,15 @@ Successfully configured a complete CI/CD pipeline using both GitHub Actions and 
 ## Technical Solutions Implemented
 
 ### Windows Docker Runner Issues Fixed
+
 - **Problem**: `invalid volume specification: "\\.\\pipe\\docker_engine:\\.\\pipe\\docker_engine"`
 - **Solution**: Switched from docker-windows to shell executor for native execution
 
 ### PowerShell vs CMD Syntax
+
 - **Problem**: CI scripts written in CMD syntax but runner using PowerShell
 - **Solution**: Rewrote all Windows CI scripts using proper PowerShell syntax:
+
   ```powershell
   # CMD syntax (doesn't work)
   if not exist build mkdir build
@@ -56,12 +63,14 @@ Successfully configured a complete CI/CD pipeline using both GitHub Actions and 
   ```
 
 ### CMake Version Requirements
+
 - **Problem**: Ubuntu 22.04 only has CMake 3.22, project requires 3.25+
 - **Solution**: Used Ubuntu 24.04 image which includes CMake 3.28+
 
 ## Current Pipeline Status
 
 ### GitLab CI Pipeline
+
 | Job | Platform | Executor | Status |
 |-----|----------|----------|--------|
 | build:linux | Linux | Docker | ✅ Working |
@@ -70,6 +79,7 @@ Successfully configured a complete CI/CD pipeline using both GitHub Actions and 
 | test:windows | Windows | Shell | ✅ Working |
 
 ### GitHub Actions
+
 | Workflow | Platform | Status |
 |----------|----------|--------|
 | CI | Linux, Windows | ✅ Working |
@@ -97,11 +107,13 @@ docs/ci/
 ## Build Tools Required
 
 ### Linux
+
 - CMake 3.25+
 - GCC or Clang
 - Git
 
 ### Windows
+
 - CMake
 - Visual Studio Build Tools 2022 OR MinGW
 - Git
@@ -110,6 +122,7 @@ docs/ci/
 ## Commands to Remember
 
 ### Trigger CI Build
+
 ```bash
 # GitLab (default)
 git push ssh://git@horse.local:23/nrf/veyrm.git main
@@ -119,6 +132,7 @@ git push origin main
 ```
 
 ### Create Release
+
 ```bash
 # Tag and push to trigger release workflows
 git tag -a v1.0.0 -m "Release v1.0.0"
@@ -127,6 +141,7 @@ git push origin v1.0.0  # If also releasing on GitHub
 ```
 
 ### Check Pipeline Status
+
 - GitLab: `http://horse.local:8929/nrf/veyrm/-/pipelines`
 - GitHub: `https://github.com/MineForeman/veyrm/actions`
 

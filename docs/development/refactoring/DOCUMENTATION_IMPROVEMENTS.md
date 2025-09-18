@@ -1,22 +1,26 @@
 # Documentation Refactoring Plan
 
 ## Executive Summary
+
 This document outlines needed improvements to the Veyrm documentation following the MVP milestone completion.
 
 ## Critical Issues to Address
 
 ### 1. Outdated Information
+
 - **README.md**: Shows v0.10.1, should be v1.0.0-MVP
 - **README.md**: Lists "Inventory System" as planned (it's complete)
 - **CURRENT_STATE.md**: Last updated 2025-01-14, missing Phase 12
 - **Version mismatches** across multiple files
 
 ### 2. Duplicate Files
+
 - `CHANGELOG.md` exists in both root and DOC/ (identical)
 - Multiple "changes summary" files for same phases
 - Overlapping content between SPEC.md, README.md, and MVP/00_README.md
 
 ### 3. Inconsistent Formatting
+
 - Mixed checkbox styles (✅, ✓, [x], - [x])
 - Different heading levels for similar content
 - Mixed date formats (YYYY-MM-DD vs other formats)
@@ -24,6 +28,7 @@ This document outlines needed improvements to the Veyrm documentation following 
 - Mixed file naming (underscores vs hyphens)
 
 ### 4. Missing Documentation
+
 - No consolidated architecture diagram
 - Missing API documentation
 - No developer onboarding guide
@@ -33,6 +38,7 @@ This document outlines needed improvements to the Veyrm documentation following 
 - Monster AI behavior details
 
 ### 5. Poor Organization
+
 - Controls documentation scattered across 4+ files
 - Build instructions repeated in multiple places
 - Architecture descriptions duplicated
@@ -42,6 +48,7 @@ This document outlines needed improvements to the Veyrm documentation following 
 ## Recommended Actions
 
 ### Immediate Priority ✅ COMPLETED
+
 1. **Update README.md** ✅
    - ✅ Changed version to v1.0.0-MVP
    - ✅ Marked Inventory System as complete
@@ -59,6 +66,7 @@ This document outlines needed improvements to the Veyrm documentation following 
    - ✅ Reflected MVP status
 
 ### High Priority ✅ COMPLETED
+
 1. **Create Architecture Document** ✅
    - ✅ Created `DOC/ARCHITECTURE.md`
    - ✅ Included system diagrams (ASCII art)
@@ -78,6 +86,7 @@ This document outlines needed improvements to the Veyrm documentation following 
    - Standardize bullet points to `-`
 
 ### Medium Priority ✅ COMPLETED
+
 1. **Archive Completed Phases** ✅
    - ✅ Moved all phase files to `DOC/PHASES/ARCHIVE/`
    - ✅ Created README.md in PHASES directory
@@ -96,6 +105,7 @@ This document outlines needed improvements to the Veyrm documentation following 
    - ✅ Organized file structure
 
 ### Low Priority ✅ COMPLETED
+
 1. **Add Missing Sections** ✅
    - ✅ API documentation generation guide created
    - ✅ Performance benchmarks documentation
@@ -111,23 +121,27 @@ This document outlines needed improvements to the Veyrm documentation following 
 ## File-Specific Changes
 
 ### Files to Update
+
 - `README.md` - Version, features, quick start
 - `CURRENT_STATE.md` - Phase 12, MVP status
 - `DOC/IMPLEMENTATION_PLAN.md` - Mark phases complete
 - `DOC/SPEC.md` - Add implementation links
 
 ### Files to Delete
+
 - `DOC/CHANGELOG.md` (duplicate)
 - Old session summaries in PHASES/
 - Redundant change summary files
 
 ### Files to Create
+
 - `DOC/ARCHITECTURE.md`
 - `DOC/CONTROLS.md` (consolidated)
 - `DOC/DEVELOPER_GUIDE.md`
 - `DOC/REFACTORING/` (for this plan)
 
 ## Success Metrics
+
 - [ ] No version mismatches
 - [ ] No duplicate content
 - [ ] Consistent formatting throughout
@@ -136,12 +150,14 @@ This document outlines needed improvements to the Veyrm documentation following 
 - [ ] Easy navigation between docs
 
 ## Timeline
+
 1. **Immediate**: Version updates, changelog consolidation (1 hour)
 2. **Today**: High priority items (2-3 hours)
 3. **This Week**: Medium priority items
 4. **Future**: Low priority enhancements
 
 ## Notes
+
 - Preserve all historical information in archives
 - Maintain backwards compatibility references
 - Keep user-facing docs separate from developer docs

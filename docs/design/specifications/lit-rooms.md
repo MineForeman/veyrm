@@ -16,12 +16,14 @@ Lit rooms are a classic roguelike feature from Angband where certain dungeon roo
 ### Strategic Considerations
 
 **Advantages:**
+
 - Full room visibility allows better tactical planning
 - Can see all doors, items, and room layout immediately
 - Easier to navigate and explore thoroughly
 - No surprises from hidden corners
 
 **Disadvantages:**
+
 - All monsters in the room are revealed at once
 - No element of surprise for the player
 - Monsters can see you clearly as well
@@ -72,6 +74,7 @@ const float LIT_ROOM_CHANCE = 0.3f;  // 30% probability
 ```
 
 Future enhancements could include:
+
 - Configurable lit room probability
 - Different lighting levels (dim, bright, magical)
 - Player-controlled lighting (torches, spells)

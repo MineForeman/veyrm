@@ -9,26 +9,33 @@ Veyrm's systems handle specific aspects of the game logic.
 ## Core Systems
 
 ### Input System
+
 Handles keyboard input and converts to game commands.
 
 ### Movement System
+
 Processes entity movement and collision detection.
 
 ### Combat System
+
 Resolves combat between entities.
 
 ### AI System
+
 Controls monster behavior and decision making.
 
 ### Inventory System
+
 Manages item storage and usage.
 
 ### Save/Load System
+
 Handles game serialization and deserialization.
 
 ## System Interfaces
 
 All systems follow a common pattern:
+
 ```cpp
 class System {
     void update(GameState& state, float dt);
@@ -40,6 +47,7 @@ class System {
 ## System Communication
 
 Systems communicate through:
+
 - Shared game state
 - Event messages
 - Direct method calls (minimal)

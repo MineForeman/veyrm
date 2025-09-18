@@ -7,11 +7,13 @@ Analysis of what can be safely removed from the DOC/ directory after migration t
 ## Files That MUST BE KEPT
 
 ### 1. DOC/VIBE.md
+
 - **Status**: DO NOT DELETE
 - **Reason**: User's personal notes file (per CLAUDE.md instructions)
 - **Action**: Keep in DOC/
 
 ### 2. DOC/REFACTORING/*
+
 - **Status**: KEEP FOR NOW
 - **Reason**: Active refactoring documentation
 - **Files**:
@@ -25,6 +27,7 @@ Analysis of what can be safely removed from the DOC/ directory after migration t
 ## Files SAFE TO REMOVE (Already Migrated)
 
 ### Core Documentation (Migrated to docs/)
+
 All these files have been copied to new locations and are safe to remove:
 
 | Original File | Migrated To | Safe to Remove |
@@ -62,6 +65,7 @@ All these files have been copied to new locations and are safe to remove:
 6. **DOC/FEATURES/** - Files migrated to docs/design/specifications/
 
 ### Navigation Files (Superseded)
+
 - **DOC/README.md** - Replaced by docs/README.md (safe to remove)
 
 ## Removal Commands (When Ready)
@@ -103,6 +107,7 @@ Before removing DOC files:
 ## Recommendation
 
 It is SAFE to remove the DOC directory EXCEPT for:
+
 1. DOC/VIBE.md (user's personal notes)
 2. DOC/REFACTORING/* (active refactoring documentation)
 

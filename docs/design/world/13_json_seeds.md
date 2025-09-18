@@ -1,6 +1,7 @@
 # 13 — JSON Seeds (MVP Slices)
 
 ## monsters.json
+
 ```json
 [
   { "id": "gutter_rat", "glyph": "r", "color": "grey", "hp": 3, "atk": [1,3], "def": 0, "speed": 100 },
@@ -9,6 +10,7 @@
 ```
 
 ## items.json
+
 ```json
 [
   { "id": "potion_minor", "glyph": "!", "color": "magenta", "heal": 6 },

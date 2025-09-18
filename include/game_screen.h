@@ -17,6 +17,14 @@ class StatusBar;
 class LayoutSystem;
 class InventoryRenderer;
 
+namespace controllers {
+    class GameController;
+}
+
+namespace ui {
+    class GameView;
+}
+
 /**
  * @class GameScreen
  * @brief Main game screen UI component that orchestrates all game display elements
@@ -57,14 +65,28 @@ public:
      * @return Complete FTXUI component for game display
      */
     ftxui::Component Create();
-    
+
+    /**
+     * @brief Set authentication information for player creation
+     * @param user_id Database user ID (0 for guest)
+     * @param session_token Authentication session token
+     */
+    void setAuthenticationInfo(int user_id, const std::string& session_token);
+
 private:
+    // Authentication state
+    int auth_user_id = 0;
+    std::string auth_session_token;
     GameManager* game_manager;                              ///< Game state manager
     [[maybe_unused]] ftxui::ScreenInteractive* screen_ref; ///< Screen reference
     std::unique_ptr<MapRenderer> renderer;                  ///< Map rendering system
     std::unique_ptr<StatusBar> status_bar;                  ///< Status bar component
     std::unique_ptr<LayoutSystem> layout_system;            ///< Layout management
     std::unique_ptr<InventoryRenderer> inventory_renderer;  ///< Inventory display
+
+    // MVC components
+    std::unique_ptr<controllers::GameController> controller; ///< Game controller for business logic
+    std::unique_ptr<ui::GameView> view;                     ///< Game view for UI rendering
 
     // Directional action state
     bool awaiting_direction = false;                        ///< Waiting for direction input

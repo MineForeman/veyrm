@@ -328,18 +328,21 @@ TEST_CASE("Component: Feature description", "[component]") {
 ### Current Coverage Areas
 
 ✅ **Well Covered:**
+
 - Entity system (creation, properties, movement)
-- Map system (generation, validation, rendering) 
+- Map system (generation, validation, rendering)
 - Input handling (keyboard commands, edge cases)
 - Message logging (types, limits, formatting)
 - Turn management (timing, state tracking)
 
 🔄 **Partially Covered:**
+
 - JSON integration (basic parsing only)
 - Rendering system (limited UI testing)
 - Error handling (some edge cases)
 
 ⏳ **Future Coverage:**
+
 - Combat system (not yet implemented)
 - Field of view system (planned)
 - Save/load functionality (planned)

@@ -7,6 +7,7 @@ This document tracks performance metrics and optimization opportunities for Veyr
 ## Current Performance Metrics
 
 ### Build Performance
+
 | Metric | Value | Target |
 |--------|-------|--------|
 | Clean Build Time | ~30 seconds | <30s |
@@ -16,6 +17,7 @@ This document tracks performance metrics and optimization opportunities for Veyr
 | Binary Size (Debug) | 8.1 MB | <15 MB |
 
 ### Runtime Performance
+
 | Metric | Value | Target |
 |--------|-------|--------|
 | Startup Time | <200ms | <500ms |
@@ -27,6 +29,7 @@ This document tracks performance metrics and optimization opportunities for Veyr
 | Map Generation | ~50ms | <100ms |
 
 ### Game Performance
+
 | Metric | Value | Target |
 |--------|-------|--------|
 | Entities per Frame | 100+ | 200+ |
@@ -38,6 +41,7 @@ This document tracks performance metrics and optimization opportunities for Veyr
 ## Benchmarking Tools
 
 ### Build Profiling
+
 ```bash
 # Time the build
 time cmake --build build -j
@@ -51,6 +55,7 @@ dot -Tpng build_graph.dot -o build_times.png
 ### Runtime Profiling
 
 #### Using Instruments (macOS)
+
 ```bash
 # Build with debug symbols
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
@@ -60,6 +65,7 @@ instruments -t "Time Profiler" ./build/bin/veyrm
 ```
 
 #### Using Perf (Linux)
+
 ```bash
 # Record performance data
 perf record -g ./build/bin/veyrm
@@ -70,6 +76,7 @@ perf script | flamegraph.pl > flamegraph.svg
 ```
 
 #### Using Valgrind
+
 ```bash
 # Memory profiling
 valgrind --tool=massif ./build/bin/veyrm
@@ -83,6 +90,7 @@ cg_annotate cachegrind.out.*
 ### Custom Benchmarks
 
 #### Frame Time Measurement
+
 ```cpp
 class FrameTimer {
     std::chrono::high_resolution_clock::time_point start;
@@ -112,9 +120,11 @@ public:
 ### High Impact
 
 #### 1. FOV Calculation Caching
+
 **Current**: Recalculates entire FOV each frame
 **Optimization**: Cache and update only on movement
 **Expected Improvement**: 80% reduction in FOV overhead
+
 ```cpp
 // Before
 void updateFOV() {
@@ -131,15 +141,18 @@ void updateFOV() {
 ```
 
 #### 2. Entity Spatial Indexing
+
 **Current**: Linear search for entities at position
 **Optimization**: Spatial hash map
 **Expected Improvement**: O(n) to O(1) lookup
+
 ```cpp
 // Spatial hash map
 std::unordered_map<Point, std::vector<Entity*>, PointHash> spatial_index;
 ```
 
 #### 3. String Interning
+
 **Current**: String allocations for entity types
 **Optimization**: String interning with IDs
 **Expected Improvement**: 50% reduction in string operations
@@ -147,16 +160,19 @@ std::unordered_map<Point, std::vector<Entity*>, PointHash> spatial_index;
 ### Medium Impact
 
 #### 4. Render Culling
+
 **Current**: Attempts to render entire map
 **Optimization**: Only render visible viewport
 **Expected Improvement**: 70% reduction in render calls
 
 #### 5. Message Log Optimization
+
 **Current**: Stores full message history
 **Optimization**: Ring buffer with fixed size
 **Expected Improvement**: Constant memory usage
 
 #### 6. Pathfinding Cache
+
 **Current**: Recalculates paths each turn
 **Optimization**: Cache paths, invalidate on map change
 **Expected Improvement**: 60% reduction in pathfinding
@@ -164,11 +180,13 @@ std::unordered_map<Point, std::vector<Entity*>, PointHash> spatial_index;
 ### Low Impact
 
 #### 7. Color Caching
+
 **Current**: Creates color objects each frame
 **Optimization**: Pre-create color palette
 **Expected Improvement**: Minor allocation reduction
 
 #### 8. Input Buffering
+
 **Current**: Processes one input per frame
 **Optimization**: Buffer and batch inputs
 **Expected Improvement**: Smoother input handling
@@ -176,6 +194,7 @@ std::unordered_map<Point, std::vector<Entity*>, PointHash> spatial_index;
 ## Memory Optimization
 
 ### Current Memory Usage
+
 ```
 Heap Usage:
 - Map: ~1.5 MB (198x66 tiles)
@@ -196,6 +215,7 @@ Heap Usage:
 ## Benchmark Suite
 
 ### Automated Benchmarks
+
 ```bash
 #!/bin/bash
 # benchmark.sh
@@ -226,6 +246,7 @@ echo "Save/Load Cycle:"
 ### Benchmark Results Tracking
 
 #### Template
+
 ```markdown
 ## Benchmark Run: [Date]
 Platform: [OS, CPU, RAM]
@@ -243,6 +264,7 @@ Build Type: [Debug/Release]
 ## Profiling Checklist
 
 ### Before Optimization
+
 - [ ] Establish baseline metrics
 - [ ] Profile to identify bottlenecks
 - [ ] Document current implementation
@@ -250,6 +272,7 @@ Build Type: [Debug/Release]
 - [ ] Set improvement targets
 
 ### During Optimization
+
 - [ ] Make one change at a time
 - [ ] Measure after each change
 - [ ] Document what worked/didn't
@@ -257,6 +280,7 @@ Build Type: [Debug/Release]
 - [ ] Update tests if needed
 
 ### After Optimization
+
 - [ ] Compare final metrics to baseline
 - [ ] Document improvements achieved
 - [ ] Update performance benchmarks
@@ -266,6 +290,7 @@ Build Type: [Debug/Release]
 ## Performance Guidelines
 
 ### Do's
+
 - Profile before optimizing
 - Focus on algorithmic improvements
 - Use appropriate data structures
@@ -273,6 +298,7 @@ Build Type: [Debug/Release]
 - Minimize allocations in hot paths
 
 ### Don'ts
+
 - Don't optimize prematurely
 - Don't sacrifice readability without measurement
 - Don't assume - always profile
@@ -282,12 +308,14 @@ Build Type: [Debug/Release]
 ## Historical Performance
 
 ### Version 1.0.0-MVP
+
 - Map generation: 50ms
 - Save file size: 7-8 KB (98.6% reduction from original)
 - Turn processing: <10ms
 - Memory usage: ~50 MB
 
 ### Pre-Optimization (v0.9)
+
 - Map generation: 200ms
 - Save file size: 540+ KB
 - Turn processing: ~30ms
@@ -296,6 +324,7 @@ Build Type: [Debug/Release]
 ## Future Optimizations
 
 ### Planned
+
 1. Multithreaded FOV calculation
 2. GPU-accelerated rendering (optional)
 3. Compressed save files
@@ -303,6 +332,7 @@ Build Type: [Debug/Release]
 5. Entity component system (ECS)
 
 ### Experimental
+
 1. SIMD for FOV calculations
 2. Custom memory allocator
 3. Compile-time string hashing
@@ -312,6 +342,7 @@ Build Type: [Debug/Release]
 ## Monitoring
 
 ### Runtime Metrics
+
 ```cpp
 class PerformanceMonitor {
     struct Metrics {

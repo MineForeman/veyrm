@@ -34,7 +34,23 @@ add_executable(veyrm_tests
     test_ecs_systems.cpp
     test_ecs_integration.cpp
     test_data_loader.cpp
+    test_game_controller.cpp
+    test_database_basic.cpp
+    test_cloud_save_basic.cpp
+    test_equipment_system_basic.cpp
+    test_color_scheme_basic.cpp
+    test_database_integration.cpp
+    test_save_game_repository.cpp
+    test_cloud_save_service.cpp
 )
+
+# Add authentication tests if database is enabled
+if(ENABLE_DATABASE AND ENABLE_AUTH)
+    target_sources(veyrm_tests PRIVATE
+        test_authentication.cpp
+        test_database.cpp
+    )
+endif()
 
 # Link with Catch2 and other dependencies
 target_link_libraries(veyrm_tests

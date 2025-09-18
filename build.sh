@@ -19,6 +19,32 @@ BUILD_DIR="${PROJECT_ROOT}/build"
 EXECUTABLE="${BUILD_DIR}/bin/veyrm"
 TEST_EXECUTABLE="${BUILD_DIR}/bin/veyrm_tests"
 
+# Source .env file if it exists for database configuration
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+    set -a  # Export all variables
+    source "${PROJECT_ROOT}/.env"
+    set +a  # Stop exporting
+    echo -e "${GREEN}Loaded environment variables from .env${NC}"
+fi
+
+# Help CMake find PostgreSQL on macOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Check common PostgreSQL installation paths
+    if [ -d "/opt/homebrew/opt/postgresql@16" ]; then
+        export PostgreSQL_ROOT="/opt/homebrew/opt/postgresql@16"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/usr/local/opt/postgresql@16" ]; then
+        export PostgreSQL_ROOT="/usr/local/opt/postgresql@16"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/opt/homebrew/opt/postgresql" ]; then
+        export PostgreSQL_ROOT="/opt/homebrew/opt/postgresql"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    elif [ -d "/usr/local/opt/postgresql" ]; then
+        export PostgreSQL_ROOT="/usr/local/opt/postgresql"
+        echo -e "${GREEN}Found PostgreSQL at $PostgreSQL_ROOT${NC}"
+    fi
+fi
+
 # Function to print header
 print_header() {
     echo -e "${CYAN}=========================================${NC}"
@@ -144,9 +170,21 @@ int main() {
 EOF
 }
 
+# Load environment variables from .env file
+load_env() {
+    if [ -f "${PROJECT_ROOT}/.env" ]; then
+        echo -e "${BLUE}Loading environment variables from .env...${NC}"
+        export $(grep -v '^#' "${PROJECT_ROOT}/.env" | xargs)
+    else
+        echo -e "${YELLOW}Warning: .env file not found. Using default values.${NC}"
+        echo -e "${YELLOW}Copy .env.example to .env and customize for your setup.${NC}"
+    fi
+}
+
 # Database command functions
 db_create() {
     echo -e "${YELLOW}Creating database tables...${NC}"
+    load_env
     create_db_program
 
     # Compile the database manager
@@ -160,12 +198,12 @@ db_create() {
             return 1
         }
 
-        # Run with environment variables
+        # Use environment variables from .env or defaults
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" create
     else
@@ -176,6 +214,7 @@ db_create() {
 
 db_clear() {
     echo -e "${YELLOW}Clearing database data...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -190,9 +229,9 @@ db_clear() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" clear
     else
@@ -203,6 +242,7 @@ db_clear() {
 
 db_load() {
     echo -e "${YELLOW}Loading initial database data...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -217,9 +257,9 @@ db_load() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" load
     else
@@ -230,6 +270,7 @@ db_load() {
 
 db_status() {
     echo -e "${YELLOW}Checking database status...${NC}"
+    load_env
     create_db_program
 
     if command -v g++ >/dev/null 2>&1; then
@@ -244,9 +285,9 @@ db_status() {
 
         export DB_HOST=${DB_HOST:-localhost}
         export DB_PORT=${DB_PORT:-5432}
-        export DB_NAME=${DB_NAME:-veyrm_game}
-        export DB_USER=${DB_USER:-veyrm_user}
-        export DB_PASS=${DB_PASS:-secure_password}
+        export DB_NAME=${DB_NAME:-veyrm_db}
+        export DB_USER=${DB_USER:-veyrm_admin}
+        export DB_PASS=${DB_PASS:-changeme_to_secure_password}
 
         "${BUILD_DIR}/db_manager" status
     else
@@ -672,6 +713,75 @@ EOF
     fi
 }
 
+# Function to lint markdown files
+lint_markdown() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Markdown Linter${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check if markdownlint is installed
+    if ! command -v markdownlint &> /dev/null; then
+        echo -e "${RED}markdownlint not found. Installing...${NC}"
+        npm install -g markdownlint-cli
+    fi
+
+    echo
+    echo -e "${BOLD}Markdown Lint Options:${NC}"
+    echo -e "${BLUE}1)${NC} Check all markdown files (no changes)"
+    echo -e "${BLUE}2)${NC} Fix all markdown files automatically"
+    echo -e "${BLUE}3)${NC} Check specific file"
+    echo -e "${BLUE}4)${NC} Fix specific file"
+    echo -e "${BLUE}5)${NC} Check CLAUDE.md"
+    echo -e "${BLUE}6)${NC} Fix CLAUDE.md"
+    echo -e "${BLUE}0)${NC} Back to main menu"
+    echo
+    read -p "Select option: " lint_option
+
+    case $lint_option in
+        1)
+            echo -e "${YELLOW}Checking all markdown files...${NC}"
+            markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        2)
+            echo -e "${YELLOW}Fixing all markdown files...${NC}"
+            markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        3)
+            read -p "Enter file path: " file_path
+            echo -e "${YELLOW}Checking ${file_path}...${NC}"
+            markdownlint "${file_path}" --config .markdownlint.json || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        4)
+            read -p "Enter file path: " file_path
+            echo -e "${YELLOW}Fixing ${file_path}...${NC}"
+            markdownlint "${file_path}" --config .markdownlint.json --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        5)
+            echo -e "${YELLOW}Checking CLAUDE.md...${NC}"
+            markdownlint "CLAUDE.md" --config .markdownlint.json || true
+            echo -e "${GREEN}Check complete${NC}"
+            ;;
+        6)
+            echo -e "${YELLOW}Fixing CLAUDE.md...${NC}"
+            markdownlint "CLAUDE.md" --config .markdownlint.json --fix
+            echo -e "${GREEN}Auto-fix complete${NC}"
+            ;;
+        0)
+            return
+            ;;
+        *)
+            echo -e "${RED}Invalid option${NC}"
+            ;;
+    esac
+
+    echo
+    read -p "Press Enter to continue..."
+}
+
 # Function to create a release
 create_release() {
     echo -e "${CYAN}=========================================${NC}"
@@ -938,6 +1048,163 @@ run_tests() {
     fi
 }
 
+# Function to build with coverage
+build_coverage() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Building with Coverage${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Clean previous coverage data
+    echo -e "${YELLOW}Cleaning previous coverage data...${NC}"
+    find "${BUILD_DIR}" -name "*.gcda" -delete 2>/dev/null || true
+    find "${BUILD_DIR}" -name "*.gcno" -delete 2>/dev/null || true
+    rm -rf "${BUILD_DIR}/coverage" 2>/dev/null || true
+
+    # Create build directory if it doesn't exist
+    mkdir -p "${BUILD_DIR}"
+
+    # Configure with coverage enabled using GCC for better coverage support
+    echo -e "${YELLOW}Configuring with coverage enabled...${NC}"
+    cd "${BUILD_DIR}" || exit 1
+
+    # Use GCC for coverage instead of Apple Clang for better coverage support
+    if command -v gcc-15 &> /dev/null; then
+        echo -e "${GREEN}Using GCC-15 for better coverage support${NC}"
+        CC=gcc-15 CXX=g++-15 cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON -DC4CORE_NO_DEBUG_BREAK=ON
+    else
+        echo -e "${YELLOW}Using default compiler (may have coverage issues on macOS)${NC}"
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DENABLE_AUTH=ON
+    fi
+
+    # Build the project using make for better coverage compatibility
+    echo -e "${YELLOW}Building project...${NC}"
+    JOBS=${JOBS:-$(nproc 2>/dev/null || echo 4)}
+    make -j "${JOBS}"
+
+    # Run tests to generate coverage data from project root (so data files are found)
+    echo -e "${YELLOW}Running tests to generate coverage data...${NC}"
+    cd "${PROJECT_ROOT}" || exit 1
+
+    # Run tests from project root where data files are available
+    if [ -f "${BUILD_DIR}/bin/veyrm_tests" ]; then
+        "${BUILD_DIR}/bin/veyrm_tests"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Warning: Some tests failed, but continuing with coverage generation${NC}"
+        fi
+    else
+        echo -e "${RED}Error: Test executable not found at ${BUILD_DIR}/bin/veyrm_tests${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}Coverage build complete!${NC}"
+    echo -e "${YELLOW}Run './build.sh coverage-report' to generate HTML report${NC}"
+}
+
+# Function to generate coverage report
+generate_coverage_report() {
+    echo -e "${CYAN}=========================================${NC}"
+    echo -e "${CYAN}       Coverage Report Generation${NC}"
+    echo -e "${CYAN}=========================================${NC}"
+
+    # Check for lcov
+    if ! command -v lcov &> /dev/null; then
+        echo -e "${RED}Error: lcov is not installed${NC}"
+        echo -e "${YELLOW}Install with:${NC}"
+        echo -e "${YELLOW}  macOS: brew install lcov${NC}"
+        echo -e "${YELLOW}  Linux: sudo apt install lcov${NC}"
+        exit 1
+    fi
+
+    # Check for genhtml
+    if ! command -v genhtml &> /dev/null; then
+        echo -e "${RED}Error: genhtml is not installed (part of lcov)${NC}"
+        exit 1
+    fi
+
+    # Check if coverage data exists
+    if ! find "${BUILD_DIR}" -name "*.gcda" 2>/dev/null | grep -q .; then
+        echo -e "${RED}No coverage data found!${NC}"
+        echo -e "${YELLOW}Run './build.sh coverage' first to build with coverage and run tests${NC}"
+        exit 1
+    fi
+
+    local COVERAGE_DIR="${BUILD_DIR}/coverage"
+    mkdir -p "${COVERAGE_DIR}"
+
+    echo -e "${YELLOW}Capturing coverage data...${NC}"
+    if ! lcov --capture \
+         --directory "${BUILD_DIR}" \
+         --output-file "${COVERAGE_DIR}/coverage.info" \
+         --rc branch_coverage=1 \
+         --ignore-errors deprecated,mismatch,inconsistent,gcov,source,unsupported,format,count,path,empty; then
+        echo -e "${RED}Error: Failed to capture coverage data${NC}"
+        exit 1
+    fi
+
+    # Check if coverage data was captured
+    if [ ! -f "${COVERAGE_DIR}/coverage.info" ] || [ ! -s "${COVERAGE_DIR}/coverage.info" ]; then
+        echo -e "${RED}Error: No coverage data captured${NC}"
+        echo -e "${YELLOW}Make sure tests were run with coverage enabled${NC}"
+        exit 1
+    fi
+
+    # Remove external libraries and test files from coverage
+    echo -e "${YELLOW}Filtering coverage data...${NC}"
+    if ! lcov --remove "${COVERAGE_DIR}/coverage.info" \
+         '/usr/*' \
+         '/Applications/*' \
+         '*/build/_deps/*' \
+         '*/tests/*' \
+         '*/test_*.cpp' \
+         '*/v1/*' \
+         '*/_deps/*' \
+         '*/catch2/*' \
+         '*/ftxui/*' \
+         '*/json/*' \
+         '*/ryml/*' \
+         --output-file "${COVERAGE_DIR}/coverage_filtered.info" \
+         --rc branch_coverage=1 \
+         --ignore-errors deprecated,mismatch,inconsistent,source,format,unused,path; then
+        echo -e "${RED}Error: Failed to filter coverage data${NC}"
+        exit 1
+    fi
+
+    # Generate HTML report
+    echo -e "${YELLOW}Generating HTML report...${NC}"
+    genhtml "${COVERAGE_DIR}/coverage_filtered.info" \
+            --output-directory "${COVERAGE_DIR}/html" \
+            --function-coverage \
+            --title "Veyrm Code Coverage Report" \
+            --legend \
+            --ignore-errors category,mismatch,inconsistent,unsupported,source,deprecated \
+            --show-details \
+            --demangle-cpp
+
+    # Check if HTML generation succeeded
+    if [ ! -f "${COVERAGE_DIR}/html/index.html" ]; then
+        echo -e "${RED}Error: HTML report generation failed${NC}"
+        echo -e "${YELLOW}Raw coverage data is available at: ${COVERAGE_DIR}/coverage_filtered.info${NC}"
+        exit 1
+    fi
+
+    # Print summary
+    echo -e "${GREEN}=========================================${NC}"
+    echo -e "${GREEN}Coverage report generated successfully!${NC}"
+    echo -e "${GREEN}=========================================${NC}"
+    lcov --summary "${COVERAGE_DIR}/coverage_filtered.info" --rc lcov_branch_coverage=1
+
+    echo
+    echo -e "${CYAN}HTML Report: ${COVERAGE_DIR}/html/index.html${NC}"
+
+    # Open in browser on macOS
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo -e "${YELLOW}Opening report in browser...${NC}"
+        open "${COVERAGE_DIR}/html/index.html"
+    else
+        echo -e "${YELLOW}Open ${COVERAGE_DIR}/html/index.html in your browser to view the report${NC}"
+    fi
+}
+
 # Function to run dump mode test
 run_dump_test() {
     # Don't interpret escape sequences - pass them as-is
@@ -966,6 +1233,68 @@ run_with_keys() {
         cd - > /dev/null
     else
         echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to run with auto-login and keys
+run_with_autologin() {
+    local keystrokes="${1:-\\njjjq}"
+    echo -e "${YELLOW}Running game with auto-login and automated keys...${NC}"
+    echo -e "${CYAN}Auto-login: NRF${NC}"
+    echo -e "${CYAN}Keystrokes: ${keystrokes}${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
+        "${EXECUTABLE}" --username NRF --password '@Cwtt4eva' --keys "${keystrokes}"
+        cd - > /dev/null
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to run with test credentials (manual play)
+run_with_testcreds() {
+    echo -e "${YELLOW}Running game with test credentials (manual play)...${NC}"
+    echo -e "${CYAN}Test login: NRF${NC}"
+    echo -e "${CYAN}Manual gameplay enabled${NC}"
+    if [ -f "${EXECUTABLE}" ]; then
+        # Run from project root
+        cd "${PROJECT_ROOT}"
+        "${EXECUTABLE}" --username NRF --password '@Cwtt4eva'
+        cd - > /dev/null
+    else
+        echo -e "${RED}Executable not found. Build first.${NC}"
+    fi
+}
+
+# Function to clear test data
+clear_test_data() {
+    echo -e "${YELLOW}Clearing test data for NRF user...${NC}"
+
+    # Check if PostgreSQL is running
+    if ! command -v docker-compose &> /dev/null; then
+        echo -e "${RED}Error: docker-compose not found${NC}"
+        return 1
+    fi
+
+    # Check if we're in the right directory or find PostgreSQL directory
+    local postgres_dir="/Users/nrf/repos/PostgreSQL"
+    if [ ! -f "${postgres_dir}/docker-compose.yml" ]; then
+        echo -e "${RED}Error: PostgreSQL docker-compose.yml not found at ${postgres_dir}${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Clearing game saves and entities for NRF (user_id=1)...${NC}"
+
+    # Execute SQL to clear test data
+    if docker-compose -f "${postgres_dir}/docker-compose.yml" exec postgres psql -U veyrm_admin -d veyrm_db -c "DELETE FROM game_entities WHERE user_id = 1; DELETE FROM game_saves WHERE user_id = 1;" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Test data cleared successfully${NC}"
+        echo -e "${CYAN}  - Cleared all game saves for NRF${NC}"
+        echo -e "${CYAN}  - Cleared all game entities for NRF${NC}"
+    else
+        echo -e "${RED}✗ Failed to clear test data${NC}"
+        echo -e "${YELLOW}Make sure PostgreSQL is running: cd ${postgres_dir} && docker-compose up -d${NC}"
+        return 1
     fi
 }
 
@@ -1094,6 +1423,12 @@ show_menu() {
     echo -e "${BLUE}13)${NC} Generate Class Diagrams"
     echo -e "${BLUE}14)${NC} Generate Doxygen Docs"
     echo -e "${BLUE}15)${NC} Create Release"
+    echo -e "${BLUE}16)${NC} Lint Markdown Files"
+    echo -e "${BLUE}17)${NC} Build with Coverage"
+    echo -e "${BLUE}18)${NC} Generate Coverage Report"
+    echo -e "${BLUE}19)${NC} Test with Credentials (Manual Play)"
+    echo -e "${BLUE}20)${NC} Test with Auto-login + Keys"
+    echo -e "${BLUE}21)${NC} Clear Test Data"
     echo -e "${BLUE}q)${NC} Quit"
     echo
 }
@@ -1108,8 +1443,13 @@ show_help() {
     echo "  clean                  Clean build directory"
     echo "  run [map_type]         Run the game (optionally specify map)"
     echo "  test                   Run tests"
+    echo "  coverage               Build with coverage enabled and run tests"
+    echo "  coverage-report        Generate HTML coverage report"
     echo "  dump [keystrokes]      Run dump mode test (frame-by-frame)"
     echo "  keys <keystrokes>      Run game with automated keys"
+    echo "  autologin [keystrokes] Run game with auto-login and automated keys"
+    echo "  testkeys               Run game with test credentials (manual play)"
+    echo "  cleardata              Clear test data for NRF user"
     echo
     echo -e "${BOLD}Database Commands:${NC}"
     echo "  db create              Create database tables"
@@ -1124,6 +1464,7 @@ show_help() {
     echo "  diagram                Generate class diagrams with graphviz"
     echo "  docs|doxygen           Generate API documentation with Doxygen"
     echo "  release [type]         Create a release (patch|minor|major|custom)"
+    echo "  lint|md [fix]          Check/fix markdown files (use 'fix' to auto-fix)"
     echo "  menu                   Show interactive menu (default)"
     echo "  help                   Show this help"
     echo
@@ -1139,8 +1480,15 @@ show_help() {
     echo "  $0 dump               # Run dump test with default keys"
     echo "  $0 dump '\\n\\u\\r'      # Run dump test with custom keys"
     echo "  $0 keys '\\n\\d\\d\\dq'    # Run game with automated keys (Enter, Down 3x, quit)"
+    echo "  $0 autologin          # Run game with auto-login and default keys"
+    echo "  $0 autologin '\\n\\d\\d\\dq' # Run game with auto-login and custom keys"
+    echo "  $0 testkeys           # Run game with test credentials (manual play)"
+    echo "  $0 cleardata          # Clear test data for NRF user"
     echo "  $0 gource             # Create Gource video"
     echo "  $0 reset              # Reset terminal"
+    echo "  $0 lint               # Check markdown files for issues"
+    echo "  $0 lint fix           # Auto-fix markdown issues"
+    echo "  $0 lint CLAUDE.md fix # Fix specific file"
     echo
 }
 
@@ -1187,6 +1535,14 @@ main() {
             print_header
             run_tests
             ;;
+        coverage)
+            print_header
+            build_coverage
+            ;;
+        coverage-report)
+            print_header
+            generate_coverage_report
+            ;;
         dump)
             print_header
             # Pass the keystrokes without interpreting escapes
@@ -1202,6 +1558,20 @@ main() {
             print_header
             run_with_keys "$2"
             reset_terminal
+            ;;
+        autologin)
+            print_header
+            run_with_autologin "$2"
+            reset_terminal
+            ;;
+        testkeys)
+            print_header
+            run_with_testcreds
+            reset_terminal
+            ;;
+        cleardata)
+            print_header
+            clear_test_data
             ;;
         check)
             print_header
@@ -1226,6 +1596,31 @@ main() {
         release)
             print_header
             create_release "${2}"
+            ;;
+        lint|markdown|md)
+            # Handle markdown linting
+            if [ "$2" = "fix" ] || [ "$2" = "--fix" ]; then
+                echo -e "${YELLOW}Fixing all markdown files...${NC}"
+                markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore --fix
+                echo -e "${GREEN}Auto-fix complete${NC}"
+            elif [ "$2" = "check" ] || [ "$2" = "--check" ] || [ -z "$2" ]; then
+                echo -e "${YELLOW}Checking all markdown files...${NC}"
+                markdownlint "**/*.md" --config .markdownlint.json --ignore-path .markdownlintignore || true
+                echo -e "${GREEN}Check complete${NC}"
+            elif [ -f "$2" ]; then
+                # If second argument is a file, lint that file
+                if [ "$3" = "fix" ] || [ "$3" = "--fix" ]; then
+                    echo -e "${YELLOW}Fixing ${2}...${NC}"
+                    markdownlint "${2}" --config .markdownlint.json --fix
+                    echo -e "${GREEN}Auto-fix complete${NC}"
+                else
+                    echo -e "${YELLOW}Checking ${2}...${NC}"
+                    markdownlint "${2}" --config .markdownlint.json || true
+                    echo -e "${GREEN}Check complete${NC}"
+                fi
+            else
+                lint_markdown
+            fi
             ;;
         db)
             print_header
@@ -1319,6 +1714,27 @@ main() {
                         ;;
                     15)
                         create_release
+                        ;;
+                    16)
+                        lint_markdown
+                        ;;
+                    17)
+                        build_coverage
+                        ;;
+                    18)
+                        generate_coverage_report
+                        ;;
+                    19)
+                        run_with_testcreds
+                        ;;
+                    20)
+                        echo -e "${CYAN}Enter keystrokes (or press Enter for default):${NC}"
+                        echo -e "${CYAN}Example: \\n\\d\\d\\dq for Enter, Down 3x, Quit${NC}"
+                        read -r custom_keys
+                        run_with_autologin "${custom_keys:-\n\d\d\dq}"
+                        ;;
+                    21)
+                        clear_test_data
                         ;;
                     q|Q)
                         echo -e "${GREEN}Goodbye!${NC}"

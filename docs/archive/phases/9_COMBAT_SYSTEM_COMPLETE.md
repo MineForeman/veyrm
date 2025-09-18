@@ -7,6 +7,7 @@ Phase 9 implements a complete d20-based combat system for Veyrm, including melee
 ## Implementation Status: ✅ COMPLETE
 
 All three sub-phases have been successfully implemented and tested:
+
 - Phase 9.1: Combat Stats ✅
 - Phase 9.2: Bump Combat ✅
 - Phase 9.3: Death Handling ✅
@@ -88,6 +89,7 @@ Final Damage = Final Damage * 2
 ## Death Handling
 
 ### Player Death
+
 - Triggers when HP reaches 0
 - Game state changes to `GameState::DEATH`
 - Death screen displayed with options:
@@ -96,6 +98,7 @@ Final Damage = Final Damage * 2
 - Death logged with ERROR level for visibility
 
 ### Monster Death
+
 - Entity removed from EntityManager
 - Experience points awarded to player
 - Death message displayed in combat log
@@ -104,6 +107,7 @@ Final Damage = Final Damage * 2
 ## Logging System
 
 ### Log Levels
+
 - **ERROR**: Critical events (player death)
 - **WARN**: Important warnings
 - **INFO**: General information
@@ -111,12 +115,14 @@ Final Damage = Final Damage * 2
 - **TRACE**: Very detailed tracing
 
 ### Log Categories
+
 - **COMBAT**: Combat calculations and results
 - **AI**: Monster AI decisions
 - **MOVEMENT**: Entity movement
 - **SYSTEM**: System events
 
 ### Combat Log Format
+
 ```
 [COMBAT] === COMBAT START ===
 [COMBAT] Attacker: You (HP: 50/50)
@@ -153,6 +159,7 @@ CRITICAL_MISS_THRESHOLD: 1
 ## Testing
 
 ### Unit Tests
+
 - `test_combat_system.cpp`: Core combat mechanics
 - Player vs Monster combat scenarios
 - Critical hit/miss edge cases
@@ -160,12 +167,14 @@ CRITICAL_MISS_THRESHOLD: 1
 - Death state transitions
 
 ### Integration Testing
+
 - Bump-to-attack functionality
 - Combat message display
 - Monster AI combat integration
 - Death screen transitions
 
 ### Manual Testing Commands
+
 ```bash
 # Test with automated input
 ./build.sh keys '\njjjhhhhq'  # Move and attack
@@ -180,6 +189,7 @@ tail -f logs/veyrm_debug.log | grep COMBAT
 ## Files Modified
 
 ### New Files Created
+
 - `include/combat_system.h` - Combat system interface
 - `src/combat_system.cpp` - Combat implementation
 - `include/log.h` - Logging system interface
@@ -187,6 +197,7 @@ tail -f logs/veyrm_debug.log | grep COMBAT
 - `tests/test_combat_system.cpp` - Combat unit tests
 
 ### Modified Files
+
 - `include/entity.h` - Added combat interface
 - `include/player.h` - Removed duplicate HP members
 - `src/player.cpp` - Fixed HP initialization
@@ -199,12 +210,14 @@ tail -f logs/veyrm_debug.log | grep COMBAT
 ## Known Issues and Future Improvements
 
 ### Current Limitations
+
 - Combat is melee-only (no ranged attacks)
 - No combat animations or delays
 - No dodge or parry mechanics
 - No status effects (poison, stun, etc.)
 
 ### Potential Enhancements
+
 - Weapon and armor system
 - Combat skills and abilities
 - Multi-target attacks

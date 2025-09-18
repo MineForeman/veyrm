@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 #include <random>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 namespace db {
 
@@ -59,7 +59,6 @@ protected:
         return uuid;
     }
 
-#ifdef ENABLE_DATABASE
     // Helper to check if table exists
     bool tableExists(const std::string& tableName) {
         return db.executeQuery([&tableName](Connection& conn) {
@@ -79,16 +78,15 @@ protected:
     // Helper to convert JSON string to object
     template<typename JsonType>
     JsonType jsonToObject(const std::string& json) {
-        return nlohmann::json::parse(json).get<JsonType>();
+        return boost::json::value::parse(json).get<JsonType>();
     }
 
     // Helper to convert object to JSON string
     template<typename JsonType>
     std::string objectToJson(const JsonType& obj) {
-        nlohmann::json j = obj;
+        boost::json::value j = obj;
         return j.dump();
     }
-#endif
 };
 
 } // namespace db

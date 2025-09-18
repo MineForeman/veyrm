@@ -307,38 +307,66 @@ std::unique_ptr<Entity> EntityFactory::createProjectile(int x, int y,
     return projectile;
 }
 
-std::unique_ptr<Entity> EntityFactory::createFromJSON(const nlohmann::json& json) {
+std::unique_ptr<Entity> EntityFactory::createFromJSON(const boost::json::value& json) {
     auto entity = std::make_unique<Entity>();
 
     // Parse position
-    if (json.contains("position")) {
-        int x = json["position"]["x"];
-        int y = json["position"]["y"];
-        entity->addComponent<PositionComponent>(x, y);
+    if (json.is_object() && json.as_object().contains("position")) {
+        const auto& pos_obj = json.as_object().at("position");
+        if (pos_obj.is_object()) {
+            const auto& pos = pos_obj.as_object();
+            int x = pos.contains("x") ? boost::json::value_to<int>(pos.at("x")) : 0;
+            int y = pos.contains("y") ? boost::json::value_to<int>(pos.at("y")) : 0;
+            entity->addComponent<PositionComponent>(x, y);
+        }
     }
 
     // Parse renderable
-    if (json.contains("renderable")) {
-        auto& renderable = entity->addComponent<RenderableComponent>();
-        renderable.glyph = json["renderable"]["glyph"].get<std::string>()[0];
-        renderable.name = json["renderable"]["name"];
-        if (json["renderable"].contains("color")) {
-            auto color = json["renderable"]["color"];
-            renderable.color = {color[0], color[1], color[2]};
+    if (json.is_object() && json.as_object().contains("renderable")) {
+        const auto& rend_obj = json.as_object().at("renderable");
+        if (rend_obj.is_object()) {
+            auto& renderable = entity->addComponent<RenderableComponent>();
+            const auto& rend = rend_obj.as_object();
+            if (rend.contains("glyph")) {
+                std::string glyph_str = boost::json::value_to<std::string>(rend.at("glyph"));
+                renderable.glyph = glyph_str.empty() ? '?' : glyph_str[0];
+            }
+            if (rend.contains("name")) {
+                renderable.name = boost::json::value_to<std::string>(rend.at("name"));
+            }
+            if (rend.contains("color")) {
+                const auto& color = rend.at("color");
+                if (color.is_array() && color.as_array().size() >= 3) {
+                    const auto& color_array = color.as_array();
+                    renderable.color = ftxui::Color::RGB(
+                        boost::json::value_to<int>(color_array[0]),
+                        boost::json::value_to<int>(color_array[1]),
+                        boost::json::value_to<int>(color_array[2])
+                    );
+                }
+            }
         }
     }
 
     // Parse health
-    if (json.contains("health")) {
+    if (json.is_object() && json.as_object().contains("health")) {
+        const auto& health_obj = json.as_object().at("health");
         auto& health = entity->addComponent<HealthComponent>();
-        health.max_hp = json["health"]["max"];
-        health.hp = json["health"]["current"];
+        if (health_obj.is_object() && health_obj.as_object().contains("max")) {
+            health.max_hp = boost::json::value_to<int>(health_obj.as_object().at("max"));
+        }
+        if (health_obj.is_object() && health_obj.as_object().contains("current")) {
+            health.hp = boost::json::value_to<int>(health_obj.as_object().at("current"));
+        }
     }
 
     // Parse tags
-    if (json.contains("tags")) {
-        for (const auto& tag : json["tags"]) {
-            entity->addTag(tag);
+    if (json.is_object() && json.as_object().contains("tags")) {
+        const auto& tags_array = json.as_object().at("tags");
+        if (tags_array.is_array()) {
+            for (const auto& tag : tags_array.as_array()) {
+                entity->addTag(boost::json::value_to<std::string>(tag));
+            }
         }
     }
 

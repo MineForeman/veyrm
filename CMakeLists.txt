@@ -20,12 +20,27 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
+# Coverage configuration
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+        message(STATUS "Coverage reporting enabled")
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type forced to Debug for coverage" FORCE)
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    else()
+        message(WARNING "Coverage is only supported with GCC/Clang but found: ${CMAKE_CXX_COMPILER_ID}")
+        set(ENABLE_COVERAGE OFF)
+    endif()
+endif()
+
 message(STATUS "========================================")
 message(STATUS "Veyrm Build Configuration")
 message(STATUS "========================================")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "Coverage: ${ENABLE_COVERAGE}")
 
 # ========================================
 # FetchContent for dependencies
@@ -44,14 +59,9 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# nlohmann/json
-message(STATUS "Configuring nlohmann/json...")
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-)
+# Boost libraries
+message(STATUS "Configuring Boost...")
+find_package(Boost 1.75 REQUIRED COMPONENTS json)
 
 # Catch2
 message(STATUS "Configuring Catch2...")
@@ -62,31 +72,29 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# rapidyaml - Fast, modern C++ YAML library
-message(STATUS "Configuring rapidyaml...")
-FetchContent_Declare(
-    ryml
-    GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
-    GIT_TAG v0.5.0
-    GIT_SHALLOW TRUE
-)
 
-# PostgreSQL database support (using libpq directly)
+# PostgreSQL database support (REQUIRED)
 message(STATUS "Configuring PostgreSQL...")
-find_package(PostgreSQL QUIET)
-if(PostgreSQL_FOUND)
-    message(STATUS "Found PostgreSQL: ${PostgreSQL_VERSION}")
-    message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")
-    message(STATUS "PostgreSQL include dirs: ${PostgreSQL_INCLUDE_DIRS}")
-    message(STATUS "Using libpq directly for database connectivity")
-    set(ENABLE_DATABASE ON)
+find_package(PostgreSQL REQUIRED)
+message(STATUS "Found PostgreSQL: ${PostgreSQL_VERSION}")
+message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")
+message(STATUS "PostgreSQL include dirs: ${PostgreSQL_INCLUDE_DIRS}")
+message(STATUS "Using libpq directly for database connectivity")
+
+# OpenSSL for authentication (password hashing)
+message(STATUS "Configuring OpenSSL...")
+find_package(OpenSSL QUIET)
+if(OpenSSL_FOUND)
+    message(STATUS "Found OpenSSL: ${OPENSSL_VERSION}")
+    message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+    set(ENABLE_AUTH ON)
 else()
-    message(WARNING "PostgreSQL not found - database features will be disabled")
-    set(ENABLE_DATABASE OFF)
+    message(WARNING "OpenSSL not found - authentication features will be limited")
+    set(ENABLE_AUTH OFF)
 endif()
 
 # Make dependencies available
-FetchContent_MakeAvailable(ftxui json Catch2 ryml)
+FetchContent_MakeAvailable(ftxui Catch2)
 
 message(STATUS "All dependencies configured successfully")
 
@@ -175,8 +183,18 @@ add_library(veyrm_core STATIC
     # src/item_manager.cpp removed - using ECS item system
     # src/inventory.cpp  # Legacy - removed, using ECS InventoryComponent
     src/inventory_renderer.cpp
-    src/game_serializer.cpp
-    src/save_load_screen.cpp
+    src/login_screen.cpp
+    src/controllers/game_controller.cpp
+    src/controllers/main_menu_controller.cpp
+    src/ui/game_view.cpp
+    src/ui/main_menu_view.cpp
+    # UI component library
+    src/ui/components/button.cpp
+    src/ui/components/list.cpp
+    src/ui/components/progress.cpp
+    src/ui/components/dialog.cpp
+    src/ui/components/panel.cpp
+    src/ui/components/form.cpp
     src/ecs/entity.cpp
     src/ecs/movement_system.cpp
     src/ecs/render_system.cpp
@@ -187,20 +205,32 @@ add_library(veyrm_core STATIC
     src/ecs/event.cpp
     src/ecs/inventory_system.cpp
     src/ecs/input_system.cpp
-    src/ecs/save_load_system.cpp
     src/ecs/status_effect_system.cpp
     src/ecs/loot_system.cpp
     src/ecs/equipment_system.cpp
     src/ecs/experience_system.cpp
     src/ecs/entity_factory.cpp
     src/ecs/data_loader.cpp
-    src/ecs/persistence_system.cpp
+    # UI components
+    src/ui/cloud_save_indicator.cpp
+    src/ui/login_view.cpp
 )
 
-# Database source files (conditional)
-if(ENABLE_DATABASE)
+# Database source files (always included)
+target_sources(veyrm_core PRIVATE
+    src/db/database_manager.cpp
+    src/db/player_repository.cpp
+    src/db/save_game_repository.cpp
+    src/db/game_entity_repository.cpp
+    src/services/cloud_save_service.cpp
+)
+
+# Authentication requires OpenSSL
+if(ENABLE_AUTH)
     target_sources(veyrm_core PRIVATE
-        src/db/database_manager.cpp
+        src/auth/authentication_service.cpp
+        src/auth/validation_service.cpp
+        src/auth/login_controller.cpp
     )
 endif()
 
@@ -210,23 +240,33 @@ target_link_libraries(veyrm_core
         ftxui::screen
         ftxui::dom
         ftxui::component
-        nlohmann_json::nlohmann_json
-        ryml::ryml
+        Boost::headers
+        Boost::json
 )
 
-# Link PostgreSQL if available
-if(ENABLE_DATABASE)
+# Link PostgreSQL (always required)
+target_link_libraries(veyrm_core
+    PUBLIC
+        ${PostgreSQL_LIBRARIES}
+)
+target_include_directories(veyrm_core
+    PUBLIC
+        ${PostgreSQL_INCLUDE_DIRS}
+)
+
+# Link OpenSSL if available
+if(ENABLE_AUTH)
     target_link_libraries(veyrm_core
         PUBLIC
-            ${PostgreSQL_LIBRARIES}
+            ${OPENSSL_LIBRARIES}
     )
     target_include_directories(veyrm_core
         PUBLIC
-            ${PostgreSQL_INCLUDE_DIRS}
+            ${OPENSSL_INCLUDE_DIR}
     )
     target_compile_definitions(veyrm_core
         PUBLIC
-            ENABLE_DATABASE
+            ENABLE_AUTH
     )
 endif()
 
@@ -279,11 +319,13 @@ install(DIRECTORY data/ DESTINATION share/veyrm/data)
 message(STATUS "========================================")
 message(STATUS "Veyrm Configuration Summary:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Coverage enabled: ${ENABLE_COVERAGE}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "  Executable: ${CMAKE_BINARY_DIR}/bin/veyrm")
 message(STATUS "  Dependencies:")
 message(STATUS "    - FTXUI: v5.0.0")
 message(STATUS "    - nlohmann/json: v3.11.3")
 message(STATUS "    - Catch2: v3.5.1")
-message(STATUS "    - rapidyaml: v0.5.0")
+message(STATUS "    - rapidyaml: v0.9.0")
 message(STATUS "========================================")

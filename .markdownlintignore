@@ -1,0 +1,7 @@
+node_modules/
+build/
+.git/
+vendor/
+dist/
+coverage/
+*.min.md

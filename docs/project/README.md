@@ -14,6 +14,7 @@ Essential project metadata and status information for Veyrm.
 **Veyrm** is a modern roguelike game inspired by Angband, written in C++23 with a terminal-based UI.
 
 ### Key Facts
+
 - **Version**: 1.0.0-MVP
 - **Language**: C++23
 - **UI Framework**: FTXUI (terminal)
@@ -22,6 +23,7 @@ Essential project metadata and status information for Veyrm.
 - **Repository**: [GitHub](https://github.com/yourusername/veyrm)
 
 ### Project Stats
+
 - **Lines of Code**: ~27,000
 - **Test Cases**: 135
 - **Test Coverage**: >90%
@@ -31,9 +33,11 @@ Essential project metadata and status information for Veyrm.
 ## Development Status
 
 ### Current Phase
+
 **MVP Complete** - The game has reached Minimum Viable Product status with all core features implemented.
 
 ### Completed Features
+
 - ✅ Procedural map generation
 - ✅ Turn-based gameplay
 - ✅ Monster AI system
@@ -43,11 +47,13 @@ Essential project metadata and status information for Veyrm.
 - ✅ Complete terminal UI
 
 ### In Development
+
 - 🚧 Performance optimizations
 - 🚧 Documentation improvements
 - 🚧 Bug fixes
 
 ### Planned Features
+
 - 📋 Multiple dungeon levels
 - 📋 Character progression
 - 📋 Magic system
@@ -57,12 +63,14 @@ Essential project metadata and status information for Veyrm.
 ## Milestones
 
 ### Completed
+
 - ✅ **v0.1**: Project setup
 - ✅ **v0.5**: Core systems
 - ✅ **v0.9**: Gameplay complete
 - ✅ **v1.0.0-MVP**: Feature complete
 
 ### Upcoming
+
 - 📅 **v1.1**: Polish and optimization
 - 📅 **v1.2**: Extended content
 - 📅 **v2.0**: Major feature expansion
@@ -70,9 +78,11 @@ Essential project metadata and status information for Veyrm.
 ## Team
 
 ### Core Contributors
+
 - See [Credits](credits.md) for full list
 
 ### How to Contribute
+
 - Read [Contributing Guide](../guides/developer/contributing.md)
 - Check [Current Issues](https://github.com/yourusername/veyrm/issues)
 - Join development discussions
@@ -80,11 +90,13 @@ Essential project metadata and status information for Veyrm.
 ## Links
 
 ### Documentation
+
 - [Main Documentation](../README.md)
 - [Developer Guide](../guides/developer/README.md)
 - [API Reference](../reference/api/README.md)
 
 ### External
+
 - [GitHub Repository](https://github.com/yourusername/veyrm)
 - [Issue Tracker](https://github.com/yourusername/veyrm/issues)
 - [Releases](https://github.com/yourusername/veyrm/releases)
@@ -92,6 +104,7 @@ Essential project metadata and status information for Veyrm.
 ## Contact
 
 For questions or support:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review closed issues

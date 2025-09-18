@@ -25,7 +25,7 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 namespace ecs {
 
@@ -159,7 +159,7 @@ public:
      * @param json Entity data
      * @return Entity or nullptr on error
      */
-    static std::unique_ptr<Entity> createFromJSON(const nlohmann::json& json);
+    static std::unique_ptr<Entity> createFromJSON(const boost::json::value& json);
 
     /**
      * @brief Create random monster for level

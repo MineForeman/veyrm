@@ -11,6 +11,7 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 ## Core Guides
 
 ### Essential
+
 - [Development Setup](setup.md) - Environment and tools
 - [Architecture](architecture.md) - System design and components
 - [Build System](../../reference/commands/build-script.md) - Using build.sh
@@ -18,12 +19,14 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 - [Debugging](debugging.md) - Debugging techniques
 
 ### Development Workflow
+
 - [Contributing](contributing.md) - Contribution guidelines
 - [Git Workflow](../../development/standards/git-workflow.md) - Branching and commits
 - [Code Review](code-review.md) - Review process
 - [Release Process](release.md) - Creating releases
 
 ### System Guides
+
 - [Entity System](systems/entities.md) - Working with entities
 - [Map System](systems/maps.md) - Map generation and manipulation
 - [Combat System](systems/combat.md) - Combat mechanics
@@ -33,11 +36,13 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 ## Advanced Topics
 
 ### Performance
+
 - [Profiling](../../development/performance/profiling.md) - Performance analysis
 - [Optimization](../../development/performance/optimization.md) - Optimization techniques
 - [Benchmarks](../../development/performance/benchmarks.md) - Performance metrics
 
 ### Architecture
+
 - [Design Patterns](patterns.md) - Patterns used in Veyrm
 - [Memory Management](memory.md) - Smart pointers and RAII
 - [Threading](threading.md) - Future: Multithreading
@@ -45,6 +50,7 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 ## Quick Reference
 
 ### Common Tasks
+
 - [Adding a Monster](../content/monsters.md)
 - [Adding an Item](../content/items.md)
 - [Creating a Map](../content/maps.md)
@@ -52,6 +58,7 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 - [Implementing a System](systems.md)
 
 ### Debugging
+
 - Enable debug mode: `--debug` flag
 - Check logs: `logs/veyrm_debug.log`
 - Run tests: `./build.sh test`
@@ -60,12 +67,14 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 ## Best Practices
 
 ### Code Quality
+
 - Follow [Code Style Guide](../../development/standards/code-style.md)
 - Write tests for new features
 - Document public APIs
 - Handle errors gracefully
 
 ### Development Process
+
 1. Create feature branch
 2. Write tests first (TDD)
 3. Implement feature
@@ -75,11 +84,13 @@ Comprehensive guides for Veyrm developers, from setup to advanced topics.
 ## Resources
 
 ### Internal
+
 - [API Reference](../../reference/api/README.md)
 - [Configuration](../../reference/configuration/README.md)
 - [Standards](../../development/standards/README.md)
 
 ### External
+
 - [FTXUI Documentation](https://github.com/ArthurSonzogni/FTXUI)
 - [Catch2 Documentation](https://github.com/catchorg/Catch2)
 - [CMake Documentation](https://cmake.org/documentation/)

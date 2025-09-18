@@ -33,14 +33,19 @@ bool DataLoader::loadMonsters(const std::string& filepath) {
             return false;
         }
 
-        nlohmann::json data;
-        file >> data;
+        std::string json_content((std::istreambuf_iterator<char>(file)),
+                                std::istreambuf_iterator<char>());
+        file.close();
 
+        boost::json::value data = boost::json::parse(json_content);
         monster_templates.clear();
 
-        for (const auto& monster_json : data["monsters"]) {
-            MonsterTemplate monster = parseMonster(monster_json);
-            monster_templates[monster.id] = monster;
+        if (data.is_object() && data.as_object().contains("monsters") &&
+            data.as_object().at("monsters").is_array()) {
+            for (const auto& monster_json : data.as_object().at("monsters").as_array()) {
+                MonsterTemplate monster = parseMonster(monster_json);
+                monster_templates[monster.id] = monster;
+            }
         }
 
         std::cout << "Loaded " << monster_templates.size() << " monster templates" << std::endl;
@@ -60,14 +65,19 @@ bool DataLoader::loadItems(const std::string& filepath) {
             return false;
         }
 
-        nlohmann::json data;
-        file >> data;
+        std::string json_content((std::istreambuf_iterator<char>(file)),
+                                std::istreambuf_iterator<char>());
+        file.close();
 
+        boost::json::value data = boost::json::parse(json_content);
         item_templates.clear();
 
-        for (const auto& item_json : data["items"]) {
-            ItemTemplate item = parseItem(item_json);
-            item_templates[item.id] = item;
+        if (data.is_object() && data.as_object().contains("items") &&
+            data.as_object().at("items").is_array()) {
+            for (const auto& item_json : data.as_object().at("items").as_array()) {
+                ItemTemplate item = parseItem(item_json);
+                item_templates[item.id] = item;
+            }
         }
 
         std::cout << "Loaded " << item_templates.size() << " item templates" << std::endl;
@@ -121,77 +131,100 @@ ftxui::Color DataLoader::parseColor(const std::string& color_str) const {
     return (it != color_map.end()) ? it->second : ftxui::Color::White;
 }
 
-MonsterTemplate DataLoader::parseMonster(const nlohmann::json& json) const {
+MonsterTemplate DataLoader::parseMonster(const boost::json::value& json) const {
     MonsterTemplate monster;
 
     // Basic properties
-    monster.id = json["id"];
-    monster.name = json["name"];
-    monster.description = json.value("description", "");
+    if (json.is_object()) {
+        const auto& obj = json.as_object();
+        if (obj.contains("id")) monster.id = boost::json::value_to<std::string>(obj.at("id"));
+        if (obj.contains("name")) monster.name = boost::json::value_to<std::string>(obj.at("name"));
+        if (obj.contains("description")) monster.description = boost::json::value_to<std::string>(obj.at("description"));
+        else monster.description = "";
 
-    // Visual
-    std::string glyph_str = json["glyph"];
-    monster.glyph = glyph_str.empty() ? '?' : glyph_str[0];
-    monster.color = parseColor(json["color"]);
+        // Visual
+        if (obj.contains("glyph")) {
+            std::string glyph_str = boost::json::value_to<std::string>(obj.at("glyph"));
+            monster.glyph = glyph_str.empty() ? '?' : glyph_str[0];
+        }
+        if (obj.contains("color")) monster.color = parseColor(boost::json::value_to<std::string>(obj.at("color")));
 
-    // Components
-    const auto& components = json["components"];
+        // Components
+        if (obj.contains("components")) {
+            const auto& components = obj.at("components");
 
-    // Health component
-    if (components.contains("health")) {
-        const auto& health = components["health"];
-        monster.hp = health["max_hp"];
-    }
+            // Health component
+            if (components.is_object() && components.as_object().contains("health")) {
+                const auto& health = components.as_object().at("health");
+                if (health.is_object() && health.as_object().contains("max_hp")) {
+                    monster.hp = boost::json::value_to<int>(health.as_object().at("max_hp"));
+                }
+            }
 
-    // Combat component
-    if (components.contains("combat")) {
-        const auto& combat = components["combat"];
-        monster.attack = combat.value("attack_bonus", 0);
-        monster.defense = combat.value("defense_bonus", 0);
-    }
+            // Combat component
+            if (components.is_object() && components.as_object().contains("combat")) {
+                const auto& combat = components.as_object().at("combat");
+                if (combat.is_object()) {
+                    const auto& combat_obj = combat.as_object();
+                    monster.attack = combat_obj.contains("attack_bonus") ? boost::json::value_to<int>(combat_obj.at("attack_bonus")) : 0;
+                    monster.defense = combat_obj.contains("defense_bonus") ? boost::json::value_to<int>(combat_obj.at("defense_bonus")) : 0;
+                }
+            }
 
-    // Stats component (for speed calculation)
-    if (components.contains("stats")) {
-        const auto& stats = components["stats"];
-        int dexterity = stats.value("dexterity", 10);
-        monster.speed = 100 + (dexterity - 10) * 5; // Speed based on dexterity
-    }
+            // Stats component (for speed calculation)
+            if (components.is_object() && components.as_object().contains("stats")) {
+                const auto& stats = components.as_object().at("stats");
+                if (stats.is_object()) {
+                    int dexterity = stats.as_object().contains("dexterity") ? boost::json::value_to<int>(stats.as_object().at("dexterity")) : 10;
+                    monster.speed = 100 + (dexterity - 10) * 5; // Speed based on dexterity
+                }
+            }
 
-    // AI component
-    if (components.contains("ai")) {
-        const auto& ai = components["ai"];
-        std::string behavior = ai.value("behavior", "aggressive");
-        monster.aggressive = (behavior == "aggressive");
-    }
-
-    // Spawn data
-    if (json.contains("spawn")) {
-        const auto& spawn = json["spawn"];
-        monster.spawn_weight = spawn.value("weight", 1.0f);
-        monster.min_depth = spawn.value("min_depth", 1);
-        monster.max_depth = spawn.value("max_depth", 100);
-
-        if (spawn.contains("pack_size")) {
-            const auto& pack = spawn["pack_size"];
-            if (pack.is_array() && pack.size() >= 2) {
-                monster.min_pack_size = pack[0];
-                monster.max_pack_size = pack[1];
+            // AI component
+            if (components.is_object() && components.as_object().contains("ai")) {
+                const auto& ai = components.as_object().at("ai");
+                if (ai.is_object()) {
+                    std::string behavior = ai.as_object().contains("behavior") ? boost::json::value_to<std::string>(ai.as_object().at("behavior")) : "aggressive";
+                    monster.aggressive = (behavior == "aggressive");
+                }
             }
         }
-    }
 
-    // XP value
-    monster.xp_value = json.value("xp_value", 10);
+        // Spawn data
+        if (obj.contains("spawn")) {
+            const auto& spawn = obj.at("spawn");
+            if (spawn.is_object()) {
+                const auto& spawn_obj = spawn.as_object();
+                monster.spawn_weight = spawn_obj.contains("weight") ? boost::json::value_to<float>(spawn_obj.at("weight")) : 1.0f;
+                monster.min_depth = spawn_obj.contains("min_depth") ? boost::json::value_to<int>(spawn_obj.at("min_depth")) : 1;
+                monster.max_depth = spawn_obj.contains("max_depth") ? boost::json::value_to<int>(spawn_obj.at("max_depth")) : 100;
 
-    // Tags for special abilities
-    if (json.contains("tags")) {
-        for (const auto& tag : json["tags"]) {
-            std::string tag_str = tag;
-            if (tag_str == "intelligent") {
-                monster.can_open_doors = true;
+                if (spawn_obj.contains("pack_size")) {
+                    const auto& pack = spawn_obj.at("pack_size");
+                    if (pack.is_array() && pack.as_array().size() >= 2) {
+                        monster.min_pack_size = boost::json::value_to<int>(pack.as_array()[0]);
+                        monster.max_pack_size = boost::json::value_to<int>(pack.as_array()[1]);
+                    }
+                }
             }
-            else if (tag_str == "magical") {
-                monster.can_see_invisible = true;
+        }
+
+        // XP value
+        monster.xp_value = obj.contains("xp_value") ? boost::json::value_to<int>(obj.at("xp_value")) : 10;
+
+        // Tags for special abilities
+        if (obj.contains("tags")) {
+            const auto& tags = obj.at("tags");
+            if (tags.is_array()) {
+                for (const auto& tag : tags.as_array()) {
+                    std::string tag_str = boost::json::value_to<std::string>(tag);
+                    if (tag_str == "intelligent") {
+                        monster.can_open_doors = true;
+                    }
+                    else if (tag_str == "magical") {
+                        monster.can_see_invisible = true;
+                    }
+                }
             }
         }
     }
@@ -199,45 +232,60 @@ MonsterTemplate DataLoader::parseMonster(const nlohmann::json& json) const {
     return monster;
 }
 
-ItemTemplate DataLoader::parseItem(const nlohmann::json& json) const {
+ItemTemplate DataLoader::parseItem(const boost::json::value& json) const {
     ItemTemplate item;
 
     // Basic properties
-    item.id = json["id"];
-    item.name = json["name"];
-    item.description = json.value("description", "");
-    item.type = json.value("type", "misc");
+    if (json.is_object()) {
+        const auto& obj = json.as_object();
+        if (obj.contains("id")) item.id = boost::json::value_to<std::string>(obj.at("id"));
+        if (obj.contains("name")) item.name = boost::json::value_to<std::string>(obj.at("name"));
+        if (obj.contains("description")) item.description = boost::json::value_to<std::string>(obj.at("description"));
+        else item.description = "";
+        if (obj.contains("type")) item.type = boost::json::value_to<std::string>(obj.at("type"));
+        else item.type = "misc";
 
-    // Visual
-    std::string glyph_str = json["glyph"];
-    item.symbol = glyph_str.empty() ? '*' : glyph_str[0];
-    item.color = parseColor(json["color"]);
+        // Visual
+        if (obj.contains("glyph")) {
+            std::string glyph_str = boost::json::value_to<std::string>(obj.at("glyph"));
+            item.symbol = glyph_str.empty() ? '*' : glyph_str[0];
+        }
+        if (obj.contains("color")) item.color = parseColor(boost::json::value_to<std::string>(obj.at("color")));
 
-    // Components
-    const auto& components = json["components"];
+        // Components
+        if (obj.contains("components")) {
+            const auto& components = obj.at("components");
 
-    // Item component
-    if (components.contains("item")) {
-        const auto& item_comp = components["item"];
-        item.value = item_comp.value("value", 0);
-        item.weight = item_comp.value("weight", 1);
-        item.stackable = item_comp.value("stackable", false);
-        item.max_stack = item_comp.value("max_stack", 1);
+            // Item component
+            if (components.is_object() && components.as_object().contains("item")) {
+                const auto& item_comp = components.as_object().at("item");
+                if (item_comp.is_object()) {
+                    const auto& item_obj = item_comp.as_object();
+                    item.value = item_obj.contains("value") ? boost::json::value_to<int>(item_obj.at("value")) : 0;
+                    item.weight = item_obj.contains("weight") ? boost::json::value_to<int>(item_obj.at("weight")) : 1;
+                    item.stackable = item_obj.contains("stackable") ? boost::json::value_to<bool>(item_obj.at("stackable")) : false;
+                    item.max_stack = item_obj.contains("max_stack") ? boost::json::value_to<int>(item_obj.at("max_stack")) : 1;
 
-        // Properties based on item type
-        item.heal_amount = item_comp.value("heal_amount", 0);
-        item.damage_amount = item_comp.value("damage_amount", 0);
-        item.attack_bonus = item_comp.value("attack_bonus", 0);
-        item.defense_bonus = item_comp.value("defense_bonus", 0);
-        item.min_damage = item_comp.value("min_damage", 0);
-        item.max_damage = item_comp.value("max_damage", 0);
-    }
+                    // Properties based on item type
+                    item.heal_amount = item_obj.contains("heal_amount") ? boost::json::value_to<int>(item_obj.at("heal_amount")) : 0;
+                    item.damage_amount = item_obj.contains("damage_amount") ? boost::json::value_to<int>(item_obj.at("damage_amount")) : 0;
+                    item.attack_bonus = item_obj.contains("attack_bonus") ? boost::json::value_to<int>(item_obj.at("attack_bonus")) : 0;
+                    item.defense_bonus = item_obj.contains("defense_bonus") ? boost::json::value_to<int>(item_obj.at("defense_bonus")) : 0;
+                    item.min_damage = item_obj.contains("min_damage") ? boost::json::value_to<int>(item_obj.at("min_damage")) : 0;
+                    item.max_damage = item_obj.contains("max_damage") ? boost::json::value_to<int>(item_obj.at("max_damage")) : 0;
+                }
+            }
+        }
 
-    // Spawn data
-    if (json.contains("spawn")) {
-        const auto& spawn = json["spawn"];
-        item.min_depth = spawn.value("min_depth", 1);
-        item.max_depth = spawn.value("max_depth", 100);
+        // Spawn data
+        if (obj.contains("spawn")) {
+            const auto& spawn = obj.at("spawn");
+            if (spawn.is_object()) {
+                const auto& spawn_obj = spawn.as_object();
+                item.min_depth = spawn_obj.contains("min_depth") ? boost::json::value_to<int>(spawn_obj.at("min_depth")) : 1;
+                item.max_depth = spawn_obj.contains("max_depth") ? boost::json::value_to<int>(spawn_obj.at("max_depth")) : 100;
+            }
+        }
     }
 
     return item;

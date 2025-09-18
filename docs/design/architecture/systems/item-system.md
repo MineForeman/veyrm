@@ -7,6 +7,7 @@ The Item System in Veyrm provides a flexible, data-driven framework for managing
 ## Core Components
 
 ### 1. Item (`include/item.h`)
+
 The base representation of all collectible objects.
 
 ```cpp
@@ -38,6 +39,7 @@ public:
 ```
 
 ### 2. ItemFactory (`include/item_factory.h`)
+
 Singleton factory for creating items from JSON templates.
 
 ```cpp
@@ -50,6 +52,7 @@ class ItemFactory {
 ```
 
 ### 3. ItemManager (`include/item_manager.h`)
+
 Manages all items currently in the game world.
 
 ```cpp
@@ -100,6 +103,7 @@ Items are defined in `data/items.json`:
 ## Integration Points
 
 ### Map Generation
+
 ```cpp
 // In GameManager::initializeMap()
 item_manager->spawnRandomItem(x, y, current_depth);
@@ -107,6 +111,7 @@ item_manager->spawnGold(x, y, amount);
 ```
 
 ### Rendering
+
 ```cpp
 // In MapRenderer::renderTerrainWithPlayer()
 if (map.isVisible(x, y)) {
@@ -119,6 +124,7 @@ if (map.isVisible(x, y)) {
 ```
 
 ### Player Interaction
+
 ```cpp
 // In GameScreen input handling
 case InputAction::GET_ITEM:
@@ -141,11 +147,13 @@ case InputAction::GET_ITEM:
 ## Performance Considerations
 
 ### Current Implementation
+
 - O(n) lookup for items at position
 - Linear search through all items
 - Suitable for ~100 items per level
 
 ### Future Optimizations
+
 - Spatial indexing (quadtree/grid)
 - Item pooling for frequently created/destroyed items
 - Lazy loading of item descriptions
@@ -153,11 +161,13 @@ case InputAction::GET_ITEM:
 ## Extensibility
 
 ### Adding New Item Types
+
 1. Add entry to `items.json`
 2. No code changes required for basic items
 3. Special effects need handler in use system
 
 ### Adding New Properties
+
 1. Add to properties map in JSON
 2. Access via `item->properties["key"]`
 3. Type-safe wrappers can be added as needed
@@ -165,6 +175,7 @@ case InputAction::GET_ITEM:
 ## Configuration
 
 ### config.yml Integration
+
 ```yaml
 paths:
   data_dir: "data"  # Location of items.json
@@ -177,12 +188,14 @@ game:
 ## Testing
 
 ### Unit Tests
+
 - Item creation and properties
 - Factory template loading
 - Manager spawn/remove operations
 - Edge cases (invalid positions, etc.)
 
 ### Integration Tests
+
 - Items spawn during map generation
 - Items render correctly
 - Pickup system works
@@ -191,16 +204,19 @@ game:
 ## Future Enhancements
 
 ### Phase 10.2: Inventory System
+
 - Player inventory container
 - Weight/encumbrance limits
 - Inventory UI screen
 
 ### Phase 10.3: Item Use
+
 - Consumable effects
 - Equipment system
 - Item identification
 
 ### Phase 10.4: Advanced Items
+
 - Procedural generation
 - Magic properties
 - Cursed items
@@ -217,6 +233,7 @@ game:
 ## Common Patterns
 
 ### Spawning Items in Rooms
+
 ```cpp
 for (const Room& room : map->getRooms()) {
     int x = room.x + 1 + (rand() % (room.width - 2));
@@ -228,6 +245,7 @@ for (const Room& room : map->getRooms()) {
 ```
 
 ### Checking for Items
+
 ```cpp
 auto items = item_manager->getItemsAt(x, y);
 for (auto* item : items) {
@@ -236,6 +254,7 @@ for (auto* item : items) {
 ```
 
 ### Gold Handling
+
 ```cpp
 auto item = item_manager->getItemAt(x, y);
 if (item && item->type == Item::ItemType::GOLD) {
@@ -249,11 +268,13 @@ if (item && item->type == Item::ItemType::GOLD) {
 ## Debugging
 
 ### Logging Categories
+
 - `LOG_INFO` - Item spawning
 - `LOG_DEBUG` - Template loading
 - `LOG_ERROR` - Invalid operations
 
 ### Common Issues
+
 1. Items not appearing - Check FOV and visibility
 2. Pickup not working - Verify input mapping
 3. Wrong colors - Check color string mapping

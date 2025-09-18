@@ -1,6 +1,7 @@
 # 8) Build & Run
 
 ## CMake quickstart
+
 ```bash
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -9,6 +10,7 @@ cmake --build . -j
 ```
 
 ## CMakeLists.txt (excerpt)
+
 ```cmake
 cmake_minimum_required(VERSION 3.25)
 project(ang-modern LANGUAGES CXX)
@@ -34,6 +36,8 @@ target_compile_definitions(ang PRIVATE FTXUI_MICROSOFT_TERMINAL_FALLBACK_COLORS)
 ```
 
 ## Notes
+
 - Use UTF-8 locale in your terminal.
 - If resizing, keep at least 80×24 for the default viewport.
+
 ```

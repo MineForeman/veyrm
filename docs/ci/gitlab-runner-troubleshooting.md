@@ -1,7 +1,9 @@
 # Fixing Windows Docker Runner
 
 ## The Problem
+
 The Windows Docker runner fails with:
+
 ```
 ERROR: Failed to remove network for build
 ERROR: Job failed: invalid volume specification: "\\.\\pipe\\docker_engine:\\.\\pipe\\docker_engine"
@@ -10,12 +12,14 @@ ERROR: Job failed: invalid volume specification: "\\.\\pipe\\docker_engine:\\.\\
 ## Solution Options
 
 ### Option 1: Fix the config.toml (Recommended)
+
 1. On the Windows machine, find the GitLab Runner config file:
    - Usually at `C:\GitLab-Runner\config.toml`
 
 2. Look for the `[[runners]]` section and find the volumes configuration
 
 3. Either remove the problematic volume:
+
    ```toml
    [[runners]]
      executor = "docker-windows"
@@ -25,6 +29,7 @@ ERROR: Job failed: invalid volume specification: "\\.\\pipe\\docker_engine:\\.\\
    ```
 
 4. Or fix it to use proper Windows format:
+
    ```toml
    [[runners]]
      executor = "docker-windows"
@@ -33,11 +38,13 @@ ERROR: Job failed: invalid volume specification: "\\.\\pipe\\docker_engine:\\.\\
    ```
 
 5. Restart the runner:
+
    ```powershell
    gitlab-runner restart
    ```
 
 ### Option 2: Re-register with Shell Executor (Simplest)
+
 Instead of using docker-windows executor, use the shell executor which runs PowerShell directly:
 
 ```powershell
@@ -59,6 +66,7 @@ gitlab-runner start
 ```
 
 ### Option 3: Use Linux Containers on Windows
+
 Switch Docker Desktop to Linux containers mode and register as a regular docker executor:
 
 ```powershell
@@ -79,6 +87,7 @@ gitlab-runner register `
 If you want to build Windows executables, you need:
 
 1. **Install Build Tools**:
+
    ```powershell
    # Install Chocolatey first
    Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -94,6 +103,7 @@ If you want to build Windows executables, you need:
 2. **Use Shell Executor** (Option 2 above)
 
 3. **Update .gitlab-ci.yml**:
+
    ```yaml
    build:windows:
      stage: build
@@ -108,4 +118,5 @@ If you want to build Windows executables, you need:
    ```
 
 ## Current Status
+
 The Windows build is currently disabled in the CI pipeline. Once you fix the runner using one of the options above, update the `.gitlab-ci.yml` to use the correct tags.

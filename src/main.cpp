@@ -17,22 +17,32 @@
 #include <ftxui/screen/screen.hpp>
 
 // JSON include
-#include <nlohmann/json.hpp>
+#include <boost/json.hpp>
 
 #include "log.h"
 
 // Game includes
 #include "game_state.h"
 #include "game_screen.h"
-#include "save_load_screen.h"
+#include "login_screen.h"
 #include "test_input.h"
 #include "game_loop.h"
 #include "ecs/game_world.h"
 #include "ecs/health_component.h"
 #include "ecs/stats_component.h"
+#include "ecs/player_component.h"
 #include "frame_stats.h"
 #include "map_generator.h"
 #include "config.h"
+
+// Database and authentication
+#include "db/database_manager.h"
+#include "db/player_repository.h"
+#include "auth/authentication_service.h"
+
+// MVC components
+#include "controllers/main_menu_controller.h"
+#include "ui/main_menu_view.h"
 
 // Platform-specific includes for UTF-8 support
 #ifdef PLATFORM_WINDOWS
@@ -79,19 +89,20 @@ void initializePlatform() {
 bool testJsonLibrary() {
     try {
         // Create a simple JSON object
-        nlohmann::json testData = {
+        boost::json::value testData = {
             {"version", VEYRM_VERSION},
             {"test", true},
             {"entities", {"player", "monster", "item"}}
         };
         
         // Serialize to string
-        std::string jsonStr = testData.dump();
+        std::string jsonStr = boost::json::serialize(testData);
         
         // Parse back
-        auto parsed = nlohmann::json::parse(jsonStr);
+        auto parsed = boost::json::parse(jsonStr);
         
-        return parsed["test"] == true;
+        return parsed.as_object().contains("test") &&
+               boost::json::value_to<bool>(parsed.as_object().at("test")) == true;
     } catch (const std::exception& e) {
         std::cerr << "JSON test failed: " << e.what() << std::endl;
         return false;
@@ -136,28 +147,128 @@ bool runSystemChecks() {
     return allPassed;
 }
 
+// Menu state - needs to be accessible from input handler
+static int menu_selected = 0;
+
 /**
- * Create main menu component
+ * Create main menu component using MVC pattern
  */
-ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteractive*) {
+ftxui::Component createMainMenu(GameManager* game_manager, [[maybe_unused]] ftxui::ScreenInteractive* screen,
+                               auth::AuthenticationService* auth_service,
+                               LoginScreen* login_screen,
+                               int* user_id, std::string* session_token, std::string* username) {
     using namespace ftxui;
-    
+
+    // Create MVC components
+    static std::unique_ptr<controllers::MainMenuController> controller;
+    static std::unique_ptr<ui::MainMenuView> view;
+
+    if (!controller) {
+        controller = std::make_unique<controllers::MainMenuController>(
+            game_manager,
+            auth_service,
+            login_screen
+        );
+    }
+
+    if (!view) {
+        view = std::make_unique<ui::MainMenuView>();
+    }
+
+    // Update authentication state in controller when user_id changes
+    if (user_id && session_token && username) {
+        controller->setAuthenticationInfo(*user_id, *session_token, *username);
+    }
+
+    // Set controller callbacks
+    controllers::MainMenuController::ViewCallbacks callbacks;
+    callbacks.showMessage = [](const std::string& msg) {
+        LOG_INFO("Menu message: " + msg);
+    };
+    callbacks.showError = [](const std::string& error) {
+        LOG_ERROR("Menu error: " + error);
+    };
+    callbacks.refreshMenu = [view = view.get()]() {
+        if (view) {
+            view->refresh();
+        }
+    };
+    callbacks.exitApplication = []() {
+        // This will be handled by game_manager state
+    };
+    controller->setViewCallbacks(callbacks);
+
+    // Create view callbacks for controller
+    ui::MainMenuView::ControllerCallbacks view_callbacks;
+    view_callbacks.onMenuSelect = [controller = controller.get()](int index) {
+        // Main menu is only shown after authentication, so always handle as authenticated
+        switch(index) {
+            case 0: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME); break;
+            case 1: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE); break;
+            case 2: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES); break;
+            case 3: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS); break;
+            case 4: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS); break;
+            case 5: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE); break;
+            case 6: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT); break;
+            case 7: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT); break;
+            case 8: controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT); break;
+        }
+    };
+    view_callbacks.onAboutToggle = [controller = controller.get()]() {
+        controller->toggleAbout();
+    };
+    view_callbacks.onExit = []() {
+        // Handled by game manager
+    };
+    view_callbacks.isAuthenticated = [controller = controller.get()]() {
+        return controller->isAuthenticated();
+    };
+    view_callbacks.getUsername = [controller = controller.get()]() {
+        return controller->getUsername();
+    };
+    view_callbacks.getAuthStatus = [controller = controller.get()]() {
+        return controller->getAuthStatus();
+    };
+
+    view->setControllerCallbacks(view_callbacks);
+    view->setAuthenticated(controller->isAuthenticated());
+
+    // Create the FTXUI component that integrates with the MVC pattern
+    using namespace ftxui;
+
     // Menu state
     static int selected = 0;
-    
-    // Menu options
-    static std::vector<std::string> menu_entries = {
-        "New Game",
-        "Continue",
-        "Settings",
-        "About",
-        "Quit"
-    };
-    
+    static std::vector<std::string> menu_entries;
+
+    // Update menu entries based on authentication state
+    menu_entries.clear();
+
+    if (controller->isAuthenticated()) {
+        menu_entries = {
+            "New Game",
+            "Continue",
+            "Cloud Saves",
+            "Leaderboards",
+            "Settings",
+            "Profile",
+            "Logout",
+            "About",
+            "Quit"
+        };
+    } else {
+        // If not authenticated, only show login options
+        menu_entries = {
+            "Login",
+            "Register",
+            "About",
+            "Quit"
+        };
+    }
+
     auto menu = Menu(&menu_entries, &selected);
-    
+
     // Create the main component with renderer
-    auto component = Renderer(menu, [=] {
+    auto component = Renderer(menu, [controller = controller.get(), menu, user_id, session_token, username] {
         // ANSI art title - properly centered
         auto title = vbox({
             text(""),
@@ -182,7 +293,7 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
         
         // Clean about box
         Element about_box = emptyElement();
-        if (selected == 3) {  // Show about when About is selected
+        if (selected == 3 || (controller->isAuthenticated() && selected == 7) || (!controller->isAuthenticated() && selected == 2)) {  // Show about when About is selected
             about_box = vbox({
                 text(""),
                 window(text(" About ") | bold, vbox({
@@ -198,9 +309,22 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
             });
         }
         
-        // Clean status line
+        // Clean status line with auth status
+        // Re-check authentication state since it might have changed
+        bool is_currently_authenticated = (user_id && *user_id > 0);
+        std::string auth_status;
+        if (is_currently_authenticated && user_id && session_token) {
+            if (username && !username->empty()) {
+                auth_status = " | Logged in as: " + *username;
+            } else {
+                auth_status = " | Logged in (ID: " + std::to_string(*user_id) + ")";
+            }
+        } else {
+            auth_status = " | Playing as Guest";
+        }
+
         auto status = hbox({
-            text("[↑↓] Navigate  [Enter] Select  [Q] Quit") | dim,
+            text("[↑↓] Navigate  [Enter] Select  [Q] Quit" + auth_status) | dim,
         }) | center;
         
         // Combine all elements
@@ -216,29 +340,77 @@ ftxui::Component createMainMenu(GameManager* game_manager, ftxui::ScreenInteract
     });
     
     // Add event handling
-    component |= CatchEvent([=](Event event) {
+    // Capture pointers explicitly
+    component |= CatchEvent([controller = controller.get(), selected = &selected, user_id, session_token, username](Event event) {
+        // Handle Enter key for menu selection
         if (event == Event::Return) {
-            switch(selected) {
-                case 0: // New Game
-                    game_manager->setState(GameState::PLAYING);
-                    break;
-                case 1: // Continue
-                    // TODO: Load save game
-                    break;
-                case 2: // Settings
-                    // TODO: Settings menu
-                    break;
-                case 3: // About
-                    // Toggle about is handled in renderer directly
-                    break;
-                case 4: // Quit
-                    game_manager->setState(GameState::QUIT);
-                    break;
+            if (controller->isAuthenticated()) {
+                // Authenticated menu
+                switch(*selected) {
+                    case 0: // New Game
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::NEW_GAME);
+                        break;
+                    case 1: // Continue
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CONTINUE);
+                        break;
+                    case 2: // Cloud Saves
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::CLOUD_SAVES);
+                        break;
+                    case 3: // Leaderboards
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LEADERBOARDS);
+                        break;
+                    case 4: // Settings
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::SETTINGS);
+                        break;
+                    case 5: // Profile
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::PROFILE);
+                        break;
+                    case 6: // Logout
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::LOGOUT);
+                        if (user_id) *user_id = 0;
+                        if (session_token) session_token->clear();
+                        if (username) username->clear();
+                        break;
+                    case 7: // About
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::ABOUT);
+                        break;
+                    case 8: // Quit
+                        controller->handleAuthenticatedSelection(controllers::MainMenuController::AuthenticatedOption::QUIT);
+                        break;
+                }
+            } else {
+                // Unauthenticated menu - only login/register/about/quit
+                switch(*selected) {
+                    case 0: // Login
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::LOGIN);
+                        // Update auth state if successful
+                        if (controller->isAuthenticated()) {
+                            if (user_id) *user_id = controller->getUserId();
+                            // Session token is managed internally by controller
+                            if (username) *username = controller->getUsername();
+                        }
+                        break;
+                    case 1: // Register
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::REGISTER);
+                        // Update auth state if successful
+                        if (controller->isAuthenticated()) {
+                            if (user_id) *user_id = controller->getUserId();
+                            // Session token is managed internally by controller
+                            if (username) *username = controller->getUsername();
+                        }
+                        break;
+                    case 2: // About
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::ABOUT);
+                        break;
+                    case 3: // Quit
+                        controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT);
+                        break;
+                }
             }
             return true;
         }
         if (event == Event::Character('q') || event == Event::Escape) {
-            game_manager->setState(GameState::QUIT);
+            controller->handleUnauthenticatedSelection(controllers::MainMenuController::UnauthenticatedOption::QUIT);
             return true;
         }
         return false;
@@ -279,11 +451,16 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
     
     // Create components
     auto screen = ScreenInteractive::Fullscreen();
-    Component main_menu = createMainMenu(&game_manager, &screen);
+    // Dummy auth state for dump mode
+    int dump_user_id = 0;
+    std::string dump_session_token;
+    std::string dump_username;
+    Component main_menu = createMainMenu(&game_manager, &screen,
+                                        nullptr,  // No auth service in dump mode
+                                        nullptr,  // No login screen in dump mode
+                                        &dump_user_id, &dump_session_token, &dump_username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
-    SaveLoadScreen save_load_screen(&game_manager);
-    Component save_load_component = save_load_screen.create();
     
     int frame_count = 0;
     
@@ -298,6 +475,13 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             switch(game_manager.getState()) {
                 case GameState::MENU:
                     return main_menu->Render();
+                case GameState::LOGIN:
+                    return vbox({
+                        text("LOGIN SCREEN") | bold | center,
+                        separator(),
+                        text("Authentication not available in dump mode") | center,
+                        text("Press ESC to return") | center
+                    }) | border;
                 case GameState::PLAYING:
                     return game_component->Render();
                 case GameState::PAUSED:
@@ -308,8 +492,6 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
                     }) | border;
                 case GameState::INVENTORY:
                     return game_component->Render();  // Use game screen's inventory panel
-                case GameState::SAVE_LOAD:
-                    return save_load_component->Render();
                 case GameState::HELP:
                     return vbox({
                         text("HELP") | bold,
@@ -363,11 +545,11 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
         std::cout << "State: ";
         switch(game_manager.getState()) {
             case GameState::MENU: std::cout << "MENU"; break;
+            case GameState::LOGIN: std::cout << "LOGIN"; break;
             case GameState::PLAYING: std::cout << "PLAYING"; break;
             case GameState::PAUSED: std::cout << "PAUSED"; break;
             case GameState::INVENTORY: std::cout << "INVENTORY"; break;
             case GameState::HELP: std::cout << "HELP"; break;
-            case GameState::SAVE_LOAD: std::cout << "SAVE_LOAD"; break;
             case GameState::DEATH: std::cout << "DEATH"; break;
             case GameState::QUIT: std::cout << "QUIT"; break;
         }
@@ -396,15 +578,16 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
             case GameState::INVENTORY:  // Inventory also needs game_component events
                 game_component->OnEvent(event);
                 break;
-            case GameState::SAVE_LOAD:
-                if (save_load_screen.handleInput(event)) {
-                    // Input was handled
-                }
-                break;
             case GameState::PAUSED:
             case GameState::HELP:
                 if (event == Event::Escape) {
                     game_manager.returnToPreviousState();
+                }
+                break;
+            case GameState::LOGIN:
+                // In dump mode, just escape back to menu
+                if (event == Event::Escape) {
+                    game_manager.setState(GameState::MENU);
                 }
                 break;
             case GameState::DEATH:
@@ -428,7 +611,8 @@ void runFrameDumpMode(TestInput* test_input, MapType initial_map = MapType::TEST
 /**
  * Run FTXUI interface
  */
-void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType::TEST_DUNGEON) {
+void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType::TEST_DUNGEON,
+                  const std::string& auth_username = "", const std::string& auth_password = "") {
     using namespace ftxui;
     
     // Set up cleanup handlers for unexpected exits
@@ -441,25 +625,111 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
     // Disable mouse tracking to prevent terminal artifacts
     screen.TrackMouse(false);
     GameManager game_manager(initial_map);
-    
+
     // Enable debug mode if requested
     const char* debug_env = std::getenv("VEYRM_DEBUG");
     if (debug_env && std::string(debug_env) == "1") {
         game_manager.setDebugMode(true);
     }
-    
+
+    // Authentication state
+    int user_id = 0;
+    std::string session_token;
+    std::string username;  // Store the logged-in username
+    std::string player_name = "Hero";
+
+    // Initialize authentication service (always required)
+    std::unique_ptr<db::PlayerRepository> player_repo;
+    std::unique_ptr<auth::AuthenticationService> auth_service;
+    std::unique_ptr<LoginScreen> login_screen;
+    Component login_component;
+
+    if (!db::DatabaseManager::getInstance().isInitialized()) {
+        LOG_ERROR("Database not initialized - cannot continue");
+        std::cerr << "Error: Database connection required. Please ensure PostgreSQL is running.\n";
+        return;
+    }
+
+    player_repo = std::make_unique<db::PlayerRepository>(db::DatabaseManager::getInstance());
+    auth_service = std::make_unique<auth::AuthenticationService>(*player_repo, db::DatabaseManager::getInstance());
+    login_screen = std::make_unique<LoginScreen>(*auth_service);
+
+    // Set callback for successful login
+    login_screen->setOnLoginSuccess([&user_id, &session_token, &game_manager](int uid, const std::string& token) {
+        user_id = uid;
+        session_token = token;
+        // TODO: Get player name from database
+        game_manager.setState(GameState::MENU);
+    });
+
+    // Check if command line credentials were provided
+    if (!auth_username.empty() && !auth_password.empty()) {
+        LOG_INFO("Attempting command line authentication for user: " + auth_username);
+        auto login_result = auth_service->login(auth_username, auth_password, false, "127.0.0.1", "veyrm-cli");
+        if (login_result.success && login_result.user_id.has_value() && login_result.session_token.has_value()) {
+            user_id = login_result.user_id.value();
+            session_token = login_result.session_token.value();
+            username = auth_username;
+            LOG_INFO("Command line authentication successful: " + username + " (ID=" + std::to_string(user_id) + ")");
+            game_manager.setState(GameState::MENU);
+        } else {
+            LOG_ERROR("Command line authentication failed for user: " + auth_username + " - " + login_result.error_message);
+            std::cerr << "Error: Authentication failed for user '" << auth_username << "': " << login_result.error_message << "\n";
+            return;
+        }
+    } else if (user_id == 0 && !test_input) {
+        // Not authenticated and not in test mode - go directly to login
+        LOG_INFO("No authenticated user - launching login screen");
+        auto result = login_screen->run();
+        if (result == LoginScreen::Result::SUCCESS) {
+            user_id = login_screen->getUserId();
+            session_token = login_screen->getSessionToken();
+            // Get username from database
+            try {
+                username = db::DatabaseManager::getInstance().executeQuery([&user_id](db::Connection& conn) {
+                    auto result = conn.execParams(
+                        "SELECT username FROM users WHERE id = $1",
+                        {std::to_string(user_id)}
+                    );
+                    if (result.isOk() && result.numRows() > 0) {
+                        return result.getValue(0, 0);
+                    }
+                    return std::string("");
+                });
+            } catch (const std::exception& e) {
+                LOG_ERROR("Failed to get username: " + std::string(e.what()));
+            }
+            LOG_INFO("User authenticated at startup: " + username + " (ID=" + std::to_string(user_id) + ")");
+
+            // Transition to main menu after successful authentication
+            game_manager.setState(GameState::MENU);
+        } else {
+            LOG_INFO("Login cancelled or failed - exiting");
+            return;  // Exit if user cancels login
+        }
+    }
+
     // Create components
-    Component main_menu = createMainMenu(&game_manager, &screen);
+    Component main_menu = createMainMenu(&game_manager, &screen,
+                                        auth_service.get(),
+                                        login_screen.get(),
+                                        &user_id, &session_token, &username);
     GameScreen game_screen(&game_manager, &screen);
     Component game_component = game_screen.Create();
-    SaveLoadScreen save_load_screen(&game_manager);
-    Component save_load_component = save_load_screen.create();
-    
+
     // State-based renderer
     auto main_renderer = Renderer([&] {
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->Render();
+            case GameState::LOGIN:
+                // LoginScreen will be handled separately
+                // Show a transitional message
+                return vbox({
+                    text("Launching authentication screen...") | center,
+                    separator(),
+                    text("Please wait...") | center
+                }) | border | center;
             case GameState::PLAYING:
                 return game_component->Render();
             case GameState::PAUSED:
@@ -470,8 +740,6 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
                 }) | border;
             case GameState::INVENTORY:
                 return game_component->Render();  // Use game screen's inventory panel
-            case GameState::SAVE_LOAD:
-                return save_load_component->Render();
             case GameState::HELP:
                 return vbox({
                     text("VEYRM HELP") | bold | center,
@@ -610,11 +878,52 @@ void runInterface(TestInput* test_input = nullptr, MapType initial_map = MapType
         switch(game_manager.getState()) {
             case GameState::MENU:
                 return main_menu->OnEvent(event);
+            case GameState::LOGIN:
+                // Launch login screen when we first enter LOGIN state
+                {
+                    static bool login_launched = false;
+                    if (!login_launched && login_screen) {
+                        login_launched = true;
+
+                        // Determine mode based on which menu item was selected
+                        bool is_register = (menu_selected == 1);  // Register is 2nd item (index 1) in unauthenticated menu
+                        login_screen->setMode(is_register ? LoginScreen::Mode::REGISTER : LoginScreen::Mode::LOGIN);
+
+                        // Stop the refresh thread
+                        refresh_running = false;
+                        refresh_thread.join();
+
+                        // Exit the current screen
+                        screen.ExitLoopClosure()();
+
+                        // Run the login screen
+                        LOG_INFO("Running LoginScreen...");
+                        auto result = login_screen->run();
+
+                        if (result == LoginScreen::Result::SUCCESS) {
+                            user_id = login_screen->getUserId();
+                            session_token = login_screen->getSessionToken();
+                            LOG_INFO("Authentication successful: ID=" + std::to_string(user_id));
+                        }
+
+                        // Reset state
+                        login_launched = false;
+                        game_manager.setState(GameState::MENU);
+
+                        // Restart everything
+                        return true;
+                    }
+
+                    if (event == Event::Escape) {
+                        login_launched = false;
+                        game_manager.setState(GameState::MENU);
+                        return true;
+                    }
+                }
+                return false;
             case GameState::PLAYING:
             case GameState::INVENTORY:  // Inventory needs game_component events too
                 return game_component->OnEvent(event);
-            case GameState::SAVE_LOAD:
-                return save_load_screen.handleInput(event);
             case GameState::PAUSED:
             case GameState::HELP:
                 if (event == Event::Escape) {
@@ -692,10 +1001,56 @@ int main(int argc, char* argv[]) {
     // Load configuration file
     Config& config = Config::getInstance();
     config.loadFromFile("config.yml");
+
+    // Initialize database (REQUIRED)
+    {
+        LOG_INFO("Initializing database connection...");
+        db::DatabaseConfig db_config;
+
+        // Try environment variables first
+        const char* db_host = std::getenv("DB_HOST");
+        const char* db_port = std::getenv("DB_PORT");
+        const char* db_name = std::getenv("DB_NAME");
+        const char* db_user = std::getenv("DB_USER");
+        const char* db_pass = std::getenv("DB_PASS");  // Changed from DB_PASSWORD to match .env
+
+        // Use environment variables or defaults
+        db_config.host = db_host ? db_host : "localhost";
+        db_config.port = db_port ? std::stoi(db_port) : 5432;
+        db_config.database = db_name ? db_name : "veyrm_db";
+        db_config.username = db_user ? db_user : "veyrm_admin";
+        db_config.password = db_pass ? db_pass : "changeme_to_secure_password";
+
+        LOG_INFO("Attempting database connection with:");
+        LOG_INFO("  Host: " + db_config.host);
+        LOG_INFO("  Port: " + std::to_string(db_config.port));
+        LOG_INFO("  Database: " + db_config.database);
+        LOG_INFO("  Username: " + db_config.username);
+        LOG_INFO("  Password: " + std::string(db_config.password.empty() ? "NOT SET" : "SET"));
+
+        try {
+            db::DatabaseManager::getInstance().initialize(db_config);
+            LOG_INFO("Database connection established successfully");
+
+            // Create tables if they don't exist
+            if (db::DatabaseManager::getInstance().createTables()) {
+                LOG_INFO("Database tables verified/created");
+            }
+        } catch (const std::exception& e) {
+            LOG_ERROR("Database initialization failed: " + std::string(e.what()));
+            std::cerr << "Error: Database connection required. Please ensure PostgreSQL is running.\n";
+            std::cerr << "Error details: " << e.what() << "\n";
+            return 1;  // Exit if database is not available
+        }
+    }
     
     // Get default map type from config
     MapType map_type = config.getDefaultMapType();
-    
+
+    // Authentication options for testing
+    std::string cmdline_username;
+    std::string cmdline_password;
+
     // Parse command-line arguments for config options (CLI overrides config file)
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -743,6 +1098,17 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
+
+        // Authentication arguments for testing
+        if (arg == "--username" && i + 1 < argc) {
+            cmdline_username = argv[++i];
+            continue;
+        }
+
+        if (arg == "--password" && i + 1 < argc) {
+            cmdline_password = argv[++i];
+            continue;
+        }
     }
     
     // Handle command-line arguments
@@ -769,6 +1135,8 @@ int main(int argc, char* argv[]) {
             std::cout << "  --map <type>        Start with specific map type\n";
             std::cout << "                      Types: procedural (random), room, dungeon,\n";
             std::cout << "                             corridor, arena, stress\n";
+            std::cout << "  --username <user>   Login with specified username (skips login screen)\n";
+            std::cout << "  --password <pass>   Password for auto-login (requires --username)\n";
             std::cout << "\nKeystroke format:\n";
             std::cout << "  Regular characters are sent as-is\n";
             std::cout << "  Escape sequences:\n";
@@ -803,7 +1171,7 @@ int main(int argc, char* argv[]) {
             TestInput test_input;
             test_input.loadKeystrokes(argv[2]);
             std::cout << "Running with automated input: " << argv[2] << "\n";
-            runInterface(&test_input, map_type);
+            runInterface(&test_input, map_type, cmdline_username, cmdline_password);
             return 0;
         } else if (arg == "--dump" && argc > 2) {
             // Run in frame dump mode
@@ -812,8 +1180,9 @@ int main(int argc, char* argv[]) {
             test_input.setFrameDumpMode(true);
             runFrameDumpMode(&test_input, map_type);
             return 0;
-        } else if (arg != "--map") {
-            // --map is already handled above, only show error for truly unknown options
+        } else if (arg != "--map" && arg != "--username" && arg != "--password" &&
+                   arg != "--config" && arg != "--data-dir") {
+            // Options already handled above, only show error for truly unknown options
             std::cerr << "Unknown option: " << arg << "\n";
             std::cerr << "Use --help for usage information\n";
             return 1;
@@ -821,7 +1190,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Run the interface normally with selected map type
-    runInterface(nullptr, map_type);
+    runInterface(nullptr, map_type, cmdline_username, cmdline_password);
     
     return 0;
 }
